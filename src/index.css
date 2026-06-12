@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(utilities);
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
@@ -17,12 +19,11 @@
   --text: #111827;
 }
 
-* { font-family: 'Inter', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
-
-body { background: var(--bg); color: var(--text); }
+#react-dashboard-wrapper { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+#react-dashboard-wrapper * { box-sizing: border-box; }
 
 /* ── Navbar ──────────────────────────────────── */
-.navbar {
+.react-navbar {
   background: #fff;
   border-bottom: 1px solid var(--border);
   height: 52px;
@@ -334,3 +335,23 @@ body { background: var(--bg); color: var(--text); }
 .page-btn:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
 .page-btn.active { background: var(--green); border-color: var(--green); color: #fff; font-weight: 700; }
 .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── OVERRIDES TO PROTECT COLDFUSION HEADER FROM TAILWIND PREFLIGHT ── */
+body > nav.page-controls img, header.logo img, .navbar-brand img {
+    display: inline-block !important;
+    max-width: none !important;
+}
+h1.page-title select, select.chosen-select, select.chosenElement {
+    appearance: auto !important;
+    -webkit-appearance: auto !important;
+    background-color: Field !important;
+    border: 1px solid #ccc !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    font-size: 16px !important;
+    margin-left: 8px !important;
+}
+h1.page-title {
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+}

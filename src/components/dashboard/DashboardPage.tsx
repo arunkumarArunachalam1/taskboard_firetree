@@ -8,24 +8,24 @@ import { useDashboard } from '../../hooks/useDashboard';
 const DashboardPage: React.FC = () => {
   const {
     summary, loadingSummary,
-    charts,  loadingCharts,
-    tasks,   loadingTasks,
+    charts, loadingCharts,
+    tasks, loadingTasks,
     page, fetchTasks,
   } = useDashboard();
 
   return (
     <>
-      <Navbar />
+      <Navbar user={summary?.user} />
       <div className="page-content">
-        <PageHeader onFilter={() => console.log('Filters clicked')} />
+        {/* <PageHeader user={summary?.user} onFilter={() => console.log('Filters clicked')} /> */}
         <KpiGrid data={summary} loading={loadingSummary} />
-        {/* <ChartsSection data={charts} loading={loadingCharts} />
+        <ChartsSection data={charts} loading={loadingCharts} />
         <TaskTable
           data={tasks}
           loading={loadingTasks}
           page={page}
           onPageChange={fetchTasks}
-        /> */}
+        />
       </div>
     </>
   );

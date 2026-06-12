@@ -5,6 +5,11 @@ export interface DashboardSummary {
   pending: number;
   completed: number;
   totalAssigned: number;
+  user?: {
+    firstName: string;
+    lastName: string;
+    role: string;
+  };
 }
 
 // ─── Chart Data Types ──────────────────────────────────────────────────

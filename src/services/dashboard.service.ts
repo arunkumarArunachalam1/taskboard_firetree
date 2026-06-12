@@ -78,9 +78,38 @@ const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 // These will eventually call /api/dashboard/* ColdFusion endpoints
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
-  await delay(700);
-  // Future: return fetch('/CORE/retrieveData?action=dashboardSummary').then(r => r.json());
-  return mockSummary;
+  try {
+    const response = await fetch('/Taskboard/GetDashboardKPIs', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch KPI summary: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    
+    if (json.isSuccess && json.data) {
+      return {
+        dueToday: json.data.dueToday,
+        overdue: json.data.overdue,
+        pending: json.data.pending,
+        completed: json.data.completed,
+        totalAssigned: json.data.totalAssigned,
+        user: json.data.user
+      };
+    } else {
+      console.warn('Backend returned failure or no data, falling back to mock KPIs', json.errorMessage);
+      return mockSummary;
+    }
+
+  } catch (error) {
+    console.error('Error fetching KPIs from ColdFusion API:', error);
+    // Fallback to mock data if there's an error so UI doesn't break
+    return mockSummary;
+  }
 }
 
 export async function getDashboardCharts(): Promise<DashboardCharts> {
