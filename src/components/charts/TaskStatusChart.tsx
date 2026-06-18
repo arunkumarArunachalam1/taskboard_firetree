@@ -25,7 +25,7 @@ const TaskStatusChart: React.FC<Props> = ({ data }) => (
       </Pie>
       <Tooltip
         contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }}
-        formatter={(v: number, _name: string, props: { payload?: { name: string } }) => [v, props?.payload?.name ?? '']}
+        formatter={(v: any, _name: any, props: any) => [v, props?.payload?.name ?? '']}
       />
       <Legend
         iconType="circle"

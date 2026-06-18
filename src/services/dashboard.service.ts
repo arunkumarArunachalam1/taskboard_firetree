@@ -2,7 +2,15 @@ import type {
   DashboardSummary,
   DashboardCharts,
   TaskListResponse,
+  Task,
 } from '../types/dashboard.types';
+import type { AppUser } from '../context/AppContext';
+
+let activeContext: AppUser | null = null;
+
+export function setServiceContext(context: AppUser) {
+  activeContext = context;
+}
 
 // ─── Mock Data ─────────────────────────────────────────────────────────
 const mockSummary: DashboardSummary = {
@@ -46,30 +54,12 @@ const mockCharts: DashboardCharts = {
   }),
   statusDistribution: [
     { name: 'Completed', value: 22, color: '#10B981' },
-    { name: 'Pending',   value: 21, color: '#F59E0B' },
-    { name: 'Overdue',   value: 76, color: '#EF4444' },
-    { name: 'Due Today', value: 1,  color: '#3B82F6' },
+    { name: 'Pending', value: 21, color: '#F59E0B' },
+    { name: 'Overdue', value: 76, color: '#EF4444' },
+    { name: 'Due Today', value: 1, color: '#3B82F6' },
   ],
 };
 
-const mockTasks: TaskListResponse = {
-  total: 120,
-  page: 1,
-  pageSize: 25,
-  tasks: Array.from({ length: 25 }, (_, i) => ({
-    TaskID: i + 1,
-    TaskName: ['Aftercare Followup', '7-Day Followup', 'Medication Review', 'Discharge Planning', 'Wellness Check'][i % 5],
-    TaskDescription: 'Review patient status and update care plan accordingly.',
-    CreatedBy: ['Dr. Smith', 'Dr. Patel', 'Nurse Johnson'][i % 3],
-    ClientName: ['Alice Martin', 'Bob Torres', 'Carol Lee', 'David Kim', 'Emma Davis'][i % 5],
-    ExpectedStartDate: new Date(Date.now() - i * 86400000 * 2).toLocaleDateString('en-US'),
-    ExpectedDueDate: new Date(Date.now() + (i % 7) * 86400000).toLocaleDateString('en-US'),
-    AssignedTo: ['Dr. Smith', 'Dr. Patel', 'Nurse Johnson', 'Case Manager Rivera'][i % 4],
-    Facility: ['Main Campus', 'North Wing', 'South Outpatient'][i % 3],
-    Status: (['Active', 'Late', 'Pending', 'Completed'] as const)[i % 4],
-    TaskTypeID: (i % 3) + 1,
-  })),
-};
 
 // ─── Simulated delay ────────────────────────────────────────────────────
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -78,38 +68,20 @@ const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 // These will eventually call /api/dashboard/* ColdFusion endpoints
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
-  try {
-    const response = await fetch('/Taskboard/GetDashboardKPIs', {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      credentials: 'include'
-    });
+  const context = activeContext;
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch KPI summary: ${response.statusText}`);
+  return {
+    ...mockSummary,
+    user: context ? {
+      firstName: context.firstName || 'User',
+      lastName: context.lastName || '',
+      role: Object.keys(context.roles || {})[0] || 'Unknown Role'
+    } : {
+      firstName: 'Local',
+      lastName: 'Dev',
+      role: 'Developer'
     }
-
-    const json = await response.json();
-    
-    if (json.isSuccess && json.data) {
-      return {
-        dueToday: json.data.dueToday,
-        overdue: json.data.overdue,
-        pending: json.data.pending,
-        completed: json.data.completed,
-        totalAssigned: json.data.totalAssigned,
-        user: json.data.user
-      };
-    } else {
-      console.warn('Backend returned failure or no data, falling back to mock KPIs', json.errorMessage);
-      return mockSummary;
-    }
-
-  } catch (error) {
-    console.error('Error fetching KPIs from ColdFusion API:', error);
-    // Fallback to mock data if there's an error so UI doesn't break
-    return mockSummary;
-  }
+  };
 }
 
 export async function getDashboardCharts(): Promise<DashboardCharts> {
@@ -118,60 +90,159 @@ export async function getDashboardCharts(): Promise<DashboardCharts> {
   return mockCharts;
 }
 
-// ─── Constants ─────────────────────────────────────────────────────────
-// IMPORTANT: Replace this with the actual tableListingID UUID for "Tasks"
-const TABLE_LISTING_ID = 'YOUR_TABLE_LISTING_ID_HERE';
+// ─── Constants & Dynamic ID Fetching ──────────────────────────────────────
+let cachedTableListingInfo: { id: string, listColumns: string } | null = null;
+
+async function getTableListingInfo(): Promise<{ id: string, listColumns: string }> {
+  if (cachedTableListingInfo) return cachedTableListingInfo;
+
+  try {
+    const response = await fetch('/ReactTaskBoard/getTableListingIdByName?name=Tasks', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-Token': activeContext?.csrfToken || '',
+        'X-Requested-With': 'React'
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) throw new Error(`API returned ${response.status}`);
+
+    const data = await response.json();
+    if (data.success && data.tableListingID) {
+      cachedTableListingInfo = {
+        id: data.tableListingID,
+        listColumns: data.listColumns || ''
+      };
+      return cachedTableListingInfo;
+    }
+    throw new Error(data.error || 'Could not find table listing ID');
+  } catch (error) {
+    console.error('Failed to dynamically fetch TableListingID, falling back to default:', error);
+    // Fallback to the known default in case the API call fails
+    return {
+      id: 'F50A1C73-CFAA-48A1-AF56-6B1A145C291F',
+      listColumns: ''
+    };
+  }
+}
 
 export async function getTaskList(
   page = 1,
-  pageSize = 25,
-  filters: Record<string, string> = {}
+  pageSize = 15,
+  options: {
+    search?: string;
+    sortColumn?: number;
+    sortDir?: 'asc' | 'desc';
+    filters?: Record<string, string>;
+  } = {}
 ): Promise<TaskListResponse> {
-  // If no table listing ID is provided, return mock data for now
-  if (TABLE_LISTING_ID === 'YOUR_TABLE_LISTING_ID_HERE') {
-    console.warn('TABLE_LISTING_ID is not set. Returning mock data.');
-    await delay(800);
-    return { ...mockTasks, page, pageSize };
-  }
+
 
   const start = (page - 1) * pageSize;
-  const url = `/CORE/retrieveData?tableListingID=${TABLE_LISTING_ID}&start=${start}&length=${pageSize}`;
+
+  // Build DataTables server-side parameters
+  let dtParams = `&draw=1&start=${start}&length=${pageSize}`;
+  if (options.search) {
+    dtParams += `&search[value]=${encodeURIComponent(options.search)}`;
+  }
+  if (options.sortColumn !== undefined) {
+    dtParams += `&order[0][column]=${options.sortColumn}&order[0][dir]=${options.sortDir || 'asc'}`;
+  }
+
+  // Pass a default filter (Completed = 0) in the DataTables format.
+  // This is required to force ColdFusion to re-evaluate volatile parameters
+  // because CORE.cfc skips query preparation if there are no filters.
+  const filterParams = `&tableFilters=tableFilter.Completed&tableFilter.Completed=[0][Completed][=][0][]`;
+
+  const tableListingInfo = await getTableListingInfo();
+  if (tableListingInfo.listColumns) {
+    dtParams += `&listColumns=${encodeURIComponent(tableListingInfo.listColumns)}`;
+  }
+  const url = `/CORE/retrieveData?tableListingID=${tableListingInfo.id}${dtParams}${filterParams}`;
 
   try {
     const response = await fetch(url, {
       method: 'GET',
-      headers: { 'Accept': 'application/json' },
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-Token': activeContext?.csrfToken || '',
+        'X-Requested-With': 'React'
+      },
       // Credentials 'include' ensures ColdFusion session cookies are sent!
-      credentials: 'include' 
+      credentials: 'include'
     });
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("Your session has timed out or access is denied. Please check your login session.");
+      }
       throw new Error(`Failed to fetch tasks: ${response.statusText}`);
     }
 
-    const json = await response.json();
-    
-    // The legacy DataTables API returns { iTotalRecords: number, iTotalDisplayRecords: number, aaData: any[][] }
-    // We map the raw array data (aaData) back to our React object structure.
-    // NOTE: The exact column indices [0], [1], etc. will depend on your ColdFusion CORE_Table_Listing_Column sequence!
-    // The mapping below is an educated guess based on standard DataTables implementation.
-    
-    const tasks: Task[] = (json.aaData || []).map((row: any[], index: number) => ({
-      TaskID: index + start, // Assuming ID is not easily accessible or is part of a link
-      TaskName: extractTextFromHTML(row[1] || 'Unknown Task'),
-      TaskDescription: row[2] || 'No description',
-      CreatedBy: 'EM System',
-      ClientName: row[3] || 'Unknown Client',
-      ExpectedStartDate: row[4] || '',
-      ExpectedDueDate: row[5] || '',
-      AssignedTo: row[6] || 'Unassigned',
-      Facility: row[7] || 'Unknown',
-      Status: row[8] && row[8].includes('Late') ? 'Late' : 'Active',
-      TaskTypeID: 1,
-    }));
+    const rawText = await response.text();
+    // ColdFusion API might return "Table listing information is not available." instead of JSON if session is missing
+    if (rawText.includes("Table listing information is not available")) {
+      throw new Error("Table session not initialized. Please visit the legacy Taskboard once to initialize it, or log out and log back in.");
+    }
+
+    let json: any;
+    try {
+      json = JSON.parse(rawText);
+    } catch (e) {
+      console.error('Failed to parse JSON. Returning empty tasks list. Raw response:', rawText.substring(0, 500) + '...');
+      // Return empty data instead of breaking the whole page with an error boundary
+      return {
+        total: 0,
+        page,
+        pageSize,
+        tasks: []
+      };
+    }
+
+    // The legacy CF API returns `data` (array of objects) when returnResultsType is "Data" (default)
+    // and `aaData` (array of arrays) in older modes. We handle both.
+    const rawData = json.data || json.aaData || [];
+
+    console.log("Raw tasks data from API:", rawData.slice(0, 2)); // Log first 2 rows for debugging
+
+    const tasks: Task[] = rawData.map((row: any, idx: number) => {
+      // If row is an array, we try to guess indices. If it's an object, we map by Column Labels.
+      if (Array.isArray(row)) {
+        return {
+          TaskID: Number(row[0]) || idx,
+          TaskName: row[1] || 'Unknown Task',
+          TaskDescription: row[2] || 'No description',
+          CreatedBy: row[11] || 'EM System',
+          ClientName: row[12] || 'Unknown Client',
+          ExpectedStartDate: row[3] || '',
+          ExpectedDueDate: row[4] || '',
+          AssignedTo: row[13] || 'Unassigned',
+          Facility: row[14] || 'Unknown',
+          Status: row[16] || 'Active',
+          TaskTypeID: Number(row[15]) || 1,
+        };
+      }
+
+      // If row is an object, the keys are usually the ColdFusion column labels (e.g., 'Task Name', 'Client')
+      return {
+        TaskID: Number(row['Task ID'] || row['ID'] || row['DT_RowId'] || idx),
+        TaskName: row['Task Name'] || row['Task'] || row['TaskName'] || 'Unknown Task',
+        TaskDescription: row['Description'] || row['TaskDescription'] || '',
+        CreatedBy: row['Created By'] || row['CreatedBy'] || 'EM System',
+        ClientName: row['Client'] || row['Client Name'] || row['ClientName'] || 'Unknown Client',
+        ExpectedStartDate: row['Exp Start'] || row['Start Date'] || row['ExpectedStartDate'] || '',
+        ExpectedDueDate: row['Due'] || row['Due Date'] || row['ExpectedDueDate'] || '',
+        AssignedTo: row['Assigned To'] || row['AssignedTo'] || 'Unassigned',
+        Facility: row['Facility'] || row['FacilityName'] || 'Unknown',
+        Status: row['Status'] || 'Active',
+        TaskTypeID: 1, // Default
+      };
+    });
 
     return {
-      total: json.iTotalRecords || 0,
+      total: json.recordsTotal || json.iTotalRecords || 0,
       page,
       pageSize,
       tasks
@@ -179,15 +250,48 @@ export async function getTaskList(
 
   } catch (error) {
     console.error('Error fetching tasks from ColdFusion API:', error);
-    // Fallback to mock data if there's an error so the UI doesn't completely break during dev
-    return { ...mockTasks, page, pageSize };
+    // Throw so the React UI layer can show the error gracefully
+    throw error;
   }
 }
 
 // Helper function to strip HTML tags if ColdFusion sends back fully-formed <a> tags
 function extractTextFromHTML(htmlString: string): string {
   if (typeof htmlString !== 'string') return htmlString;
-  const tmp = document.createElement('DIV');
-  tmp.innerHTML = htmlString;
-  return tmp.textContent || tmp.innerText || '';
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    return (doc.body.textContent || doc.body.innerText || '').trim().replace(/\s+/g, ' ');
+  } catch (e) {
+    // Fallback regex to strip tags if DOMParser is unsupported
+    return htmlString.replace(/<\/?[^>]+(>|$)/g, "").trim().replace(/\s+/g, ' ');
+  }
 }
+
+
+export async function setCurrentFacility(facilityId: string | number): Promise<void> {
+  try {
+    const formData = new FormData();
+    formData.append('selectedFacility', String(facilityId));
+
+    const response = await fetch('/Home/setCurrentClientCountFacilityID', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-Token': activeContext?.csrfToken || '',
+        'X-Requested-With': 'React'
+      },
+      credentials: 'include'
+    });
+
+    if (response.ok) {
+      window.location.reload();
+    } else {
+      console.error('Failed to update facility', response.statusText);
+    }
+  } catch (error) {
+    console.error('Error updating facility:', error);
+  }
+}
+

@@ -18,7 +18,7 @@ const CompletionTrendChart: React.FC<Props> = ({ data }) => (
       <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
       <Tooltip
         contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }}
-        formatter={(v: number) => [v, 'Cumulative']}
+        formatter={(v: any) => [v, 'Cumulative']}
       />
       <Line
         type="monotone" dataKey="cumulative" stroke="#22C55E" strokeWidth={2}
