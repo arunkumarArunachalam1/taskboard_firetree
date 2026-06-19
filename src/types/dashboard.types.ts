@@ -59,9 +59,22 @@ export interface TaskListResponse {
   pageSize: number;
 }
 
+export interface FacilityStaff {
+  Value: number;
+  Display: string;
+  IsInactive: number;
+}
+
+export interface AssignTasksResponse {
+  isSuccess: number;
+  errorMessage?: string;
+  successMessage?: string;
+}
+
 // ─── API State ─────────────────────────────────────────────────────────
 export interface ApiState<T> {
   data: T | null;
   loading: boolean;
   error: string | null;
 }
+

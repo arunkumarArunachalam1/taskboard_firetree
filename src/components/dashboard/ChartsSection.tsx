@@ -1,16 +1,16 @@
-import React, { Suspense, lazy } from 'react';
+import React from 'react';
 import { BarChart3, LineChart, TrendingUp, PieChart } from 'lucide-react';
 import type { DashboardCharts } from '../../types/dashboard.types';
 
-const DailyCompletion7DaysChart  = lazy(() => import('../charts/DailyCompletion7DaysChart'));
-const DailyCompletion30DaysChart = lazy(() => import('../charts/DailyCompletion30DaysChart'));
-const CompletionTrendChart       = lazy(() => import('../charts/CompletionTrendChart'));
-const TaskStatusChart            = lazy(() => import('../charts/TaskStatusChart'));
+import DailyCompletion7DaysChart from '../charts/DailyCompletion7DaysChart';
+import DailyCompletion30DaysChart from '../charts/DailyCompletion30DaysChart';
+import CompletionTrendChart from '../charts/CompletionTrendChart';
+import TaskStatusChart from '../charts/TaskStatusChart';
 
 const ChartSkeleton: React.FC = () => (
   <div className="chart-card">
     <div className="skeleton" style={{ height: 16, width: '55%', marginBottom: 20 }} />
-    <div className="skeleton" style={{ height: 160 }} />
+    <div className="skeleton" style={{ height: 120 }} />
   </div>
 );
 
@@ -26,9 +26,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ title, icon, children }) => (
       {icon && <span style={{ display: 'flex', alignItems: 'center', color: '#6B7280' }}>{icon}</span>}
       {title}
     </p>
-    <Suspense fallback={<div className="skeleton" style={{ height: 160 }} />}>
-      {children}
-    </Suspense>
+    {children}
   </div>
 );
 

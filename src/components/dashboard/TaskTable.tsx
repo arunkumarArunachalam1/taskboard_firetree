@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { TaskListResponse, Task } from '../../types/dashboard.types';
-import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted } from '../../services/dashboard.service';
+import type { TaskListResponse, Task, FacilityStaff } from '../../types/dashboard.types';
+import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted, getFacilityStaff, assignTasks } from '../../services/dashboard.service';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -19,6 +19,73 @@ export const getAvatarColor = (name: string) => {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
+};
+
+export const appendOrUpdateReturnTo = (urlStr: string, returnToValue: string, taskName?: string): string => {
+  let normalizedReturnTo = returnToValue;
+  if (normalizedReturnTo === '/Taskboard' || normalizedReturnTo === '/Taskboard/') {
+    normalizedReturnTo = '/ReactTaskBoard/react';
+  } else if (normalizedReturnTo.startsWith('/Taskboard?')) {
+    normalizedReturnTo = normalizedReturnTo.replace('/Taskboard', '/ReactTaskBoard/react');
+  }
+
+  try {
+    const isAbsolute = urlStr.startsWith('http://') || urlStr.startsWith('https://');
+    const dummyBase = 'http://dummy.com';
+    const parsedUrl = new URL(urlStr, isAbsolute ? undefined : dummyBase);
+    
+    const originalReturnTo = parsedUrl.searchParams.get('returnTo');
+    if (originalReturnTo) {
+      let newReturnTo = originalReturnTo;
+      if (newReturnTo.includes('returnTo=')) {
+        newReturnTo = newReturnTo.replace(/returnTo=[^&]*/, `returnTo=${encodeURIComponent(normalizedReturnTo)}`);
+      } else {
+        newReturnTo = newReturnTo + (newReturnTo.includes('?') ? '&' : '?') + `returnTo=${encodeURIComponent(normalizedReturnTo)}`;
+      }
+      parsedUrl.searchParams.set('returnTo', newReturnTo);
+      // Remove IsTask so the legacy Document page does not override the returnTo parameter
+      parsedUrl.searchParams.delete('IsTask');
+    } else {
+      parsedUrl.searchParams.set('returnTo', normalizedReturnTo);
+    }
+
+    if (taskName) {
+      parsedUrl.searchParams.set('taskName', taskName);
+    }
+    
+    return isAbsolute ? parsedUrl.toString() : (parsedUrl.pathname + parsedUrl.search + parsedUrl.hash);
+  } catch (e) {
+    let cleanUrl = urlStr;
+    if (cleanUrl.includes('returnTo=')) {
+      if (cleanUrl.includes('IsTask=')) {
+        cleanUrl = cleanUrl.replace(/([&?])IsTask=[^&]*/, '');
+        // Clean up double query separators if any were created
+        cleanUrl = cleanUrl.replace(/\?&/, '?').replace(/&&/, '&');
+      }
+      const match = cleanUrl.match(/returnTo=([^&]*)/);
+      if (match) {
+        try {
+          const decodedOriginal = decodeURIComponent(match[1]);
+          let updatedOriginal = decodedOriginal;
+          if (updatedOriginal.includes('returnTo=')) {
+            updatedOriginal = updatedOriginal.replace(/returnTo=[^&]*/, `returnTo=${encodeURIComponent(normalizedReturnTo)}`);
+          } else {
+            updatedOriginal = updatedOriginal + (updatedOriginal.includes('?') ? '&' : '?') + `returnTo=${encodeURIComponent(normalizedReturnTo)}`;
+          }
+          cleanUrl = cleanUrl.replace(/returnTo=[^&]*/, `returnTo=${encodeURIComponent(updatedOriginal)}`);
+        } catch (err) {}
+      } else {
+        cleanUrl = cleanUrl.replace(/returnTo=[^&]*/, `returnTo=${encodeURIComponent(normalizedReturnTo)}`);
+      }
+    } else {
+      cleanUrl = cleanUrl + (cleanUrl.includes('?') ? '&' : '?') + `returnTo=${encodeURIComponent(normalizedReturnTo)}`;
+    }
+
+    if (taskName) {
+      cleanUrl = cleanUrl + (cleanUrl.includes('?') ? '&' : '?') + `taskName=${encodeURIComponent(taskName)}`;
+    }
+    return cleanUrl;
+  }
 };
 
 export const StatusBadge: React.FC<{ status: Task['Status'] }> = ({ status }) => {
@@ -77,13 +144,49 @@ interface TaskTableProps {
 
 // ── Component ─────────────────────────────────────────────────────────────
 
-const TaskTable: React.FC<TaskTableProps> = ({ 
-  data, loading, page, onPageChange, 
-  search, onSearchChange, 
-  sortColumn, sortDir, onSortChange 
+const TaskTable: React.FC<TaskTableProps> = ({
+  data, loading, page, onPageChange,
+  search, onSearchChange,
+  sortColumn, sortDir, onSortChange
 }) => {
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  // Reassign Modal State
+  const [isReassignOpen, setIsReassignOpen] = useState(false);
+  const [reassignTaskIds, setReassignTaskIds] = useState<number[]>([]);
+  const [staffList, setStaffList] = useState<FacilityStaff[]>([]);
+  const [loadingStaff, setLoadingStaff] = useState(false);
+  const [staffSearch, setStaffSearch] = useState('');
+  const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Custom Confirm Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'complete' | 'reassign' | 'warning';
+    taskIds?: number[];
+  } | null>(null);
+
+  const showConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    type: 'complete' | 'reassign' | 'warning' = 'warning',
+    taskIds?: number[]
+  ) => {
+    setConfirmDialog({
+      isOpen: true,
+      title,
+      message,
+      onConfirm,
+      type,
+      taskIds
+    });
+  };
 
   useEffect(() => {
     if (toast) {
@@ -108,21 +211,76 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const handleRowClick = (task: Task, e: React.MouseEvent<HTMLTableRowElement>) => {
     const target = e.target as HTMLElement;
     if (
-      target.tagName === 'A' || 
-      target.tagName === 'INPUT' || 
+      target.tagName === 'A' ||
+      target.tagName === 'INPUT' ||
       target.tagName === 'BUTTON' ||
-      target.closest('a') || 
-      target.closest('input') || 
+      target.closest('a') ||
+      target.closest('input') ||
       target.closest('button')
     ) {
       return;
     }
 
-    const url = extractHrefFromHTML(task.TaskDescription);
-    if (url) {
+    const rawUrl = extractHrefFromHTML(task.TaskDescription) || extractHrefFromHTML(task.TaskName) || extractHrefFromHTML(task.ClientName);
+    if (rawUrl) {
+      let url = rawUrl;
+      // Resolve relative URLs to the index.cfm base path
+      if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/')) {
+        const path = window.location.pathname;
+        const indexCFMIdx = path.toLowerCase().indexOf('index.cfm');
+        if (indexCFMIdx !== -1) {
+          const base = path.substring(0, indexCFMIdx + 9);
+          url = `${base}/${url}`;
+        } else {
+          url = `/${url}`;
+        }
+      }
+
+      // Always override or append the returnTo parameter so the user redirects back to the React Taskboard
+      const returnToUrl = window.location.pathname + window.location.search;
+      const cleanTaskName = extractTextFromHTML(task.TaskName);
+      url = appendOrUpdateReturnTo(url, returnToUrl, cleanTaskName);
+
       window.location.href = url;
     } else {
       showToast(`No linked page for task: "${extractTextFromHTML(task.TaskName)}"`, 'info');
+    }
+  };
+
+  const handleTableClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const anchor = target.tagName === 'A' ? target as HTMLAnchorElement : target.closest('a');
+    if (anchor) {
+      const href = anchor.getAttribute('href');
+      if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+        e.preventDefault();
+
+        let url = href;
+        if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/')) {
+          const path = window.location.pathname;
+          const indexCFMIdx = path.toLowerCase().indexOf('index.cfm');
+          if (indexCFMIdx !== -1) {
+            const base = path.substring(0, indexCFMIdx + 9);
+            url = `${base}/${url}`;
+          } else {
+            url = `/${url}`;
+          }
+        }
+
+        // Always override or append the returnTo parameter so the user redirects back to the React Taskboard
+        const returnToUrl = window.location.pathname + window.location.search;
+        
+        // Find task details from the row
+        const row = target.closest('tr');
+        const taskIdStr = row?.getAttribute('data-task-id');
+        const taskId = taskIdStr ? parseInt(taskIdStr) : null;
+        const task = taskId ? data.tasks.find(t => t.TaskID === taskId) : null;
+        const cleanTaskName = task ? extractTextFromHTML(task.TaskName) : undefined;
+        
+        url = appendOrUpdateReturnTo(url, returnToUrl, cleanTaskName);
+
+        window.location.href = url;
+      }
     }
   };
 
@@ -132,18 +290,21 @@ const TaskTable: React.FC<TaskTableProps> = ({
     );
   };
 
-  const isAllSelected = filtered.length > 0 && filtered.every(task => selectedIds.includes(task.TaskID));
+  const selectableTasks = filtered.filter(t => t.Status !== 'Completed');
+  const isAllSelected = selectableTasks.length > 0 && selectableTasks.every(task => selectedIds.includes(task.TaskID));
 
   const handleSelectAll = () => {
-    if (isAllSelected) {
-      const pageTaskIds = filtered.map(t => t.TaskID);
-      setSelectedIds(prev => prev.filter(id => !pageTaskIds.includes(id)));
+    const selectableTaskIds = selectableTasks.map(t => t.TaskID);
+    const isAllSelectableSelected = selectableTaskIds.length > 0 && selectableTaskIds.every(id => selectedIds.includes(id));
+
+    if (isAllSelectableSelected) {
+      setSelectedIds(prev => prev.filter(id => !selectableTaskIds.includes(id)));
     } else {
       setSelectedIds(prev => {
         const next = [...prev];
-        filtered.forEach(task => {
-          if (!next.includes(task.TaskID)) {
-            next.push(task.TaskID);
+        selectableTaskIds.forEach(id => {
+          if (!next.includes(id)) {
+            next.push(id);
           }
         });
         return next;
@@ -151,27 +312,106 @@ const TaskTable: React.FC<TaskTableProps> = ({
     }
   };
 
-  const handleMarkSelectedComplete = async () => {
+  const handleMarkSelectedComplete = () => {
     if (selectedIds.length === 0) return;
 
     const confirmMessage = selectedIds.length === 1
       ? 'Are you sure you want to mark the selected task complete?'
       : `Are you sure you want to mark the ${selectedIds.length} selected tasks complete?`;
 
-    if (!window.confirm(confirmMessage)) return;
+    showConfirm(
+      'Mark Tasks Complete',
+      confirmMessage,
+      async () => {
+        try {
+          const response = await markTasksCompleted(selectedIds);
+          if (response.isSuccess === 1) {
+            showToast(response.successMessage || 'Tasks marked complete successfully!', 'success');
+            setSelectedIds([]);
+            onPageChange(page);
+          } else {
+            showToast(response.errorMessage || 'Failed to complete selected tasks.', 'error');
+          }
+        } catch (err: any) {
+          showToast(err.message || 'An error occurred while marking tasks complete.', 'error');
+        }
+      },
+      'complete',
+      selectedIds
+    );
+  };
 
+  const handleMarkSingleComplete = (taskId: number, taskName: string) => {
+    showConfirm(
+      'Mark Task Complete',
+      `Are you sure you want to mark the task "${extractTextFromHTML(taskName)}" complete?`,
+      async () => {
+        try {
+          const response = await markTasksCompleted([taskId]);
+          if (response.isSuccess === 1) {
+            showToast(response.successMessage || 'Task marked complete successfully!', 'success');
+            setSelectedIds(prev => prev.filter(id => id !== taskId));
+            onPageChange(page);
+          } else {
+            showToast(response.errorMessage || 'Failed to complete task.', 'error');
+          }
+        } catch (err: any) {
+          showToast(err.message || 'An error occurred while marking task complete.', 'error');
+        }
+      },
+      'complete',
+      [taskId]
+    );
+  };
+
+  const handleOpenReassignModal = async (taskIds: number[]) => {
+    setReassignTaskIds(taskIds);
+    setIsReassignOpen(true);
+    setLoadingStaff(true);
+    setSelectedStaffId(null);
+    setStaffSearch('');
+    setIsDropdownOpen(false);
     try {
-      const response = await markTasksCompleted(selectedIds);
-      if (response.isSuccess === 1) {
-        showToast(response.successMessage || 'Tasks marked complete successfully!', 'success');
-        setSelectedIds([]);
-        onPageChange(page);
-      } else {
-        showToast(response.errorMessage || 'Failed to complete selected tasks.', 'error');
-      }
+      const staff = await getFacilityStaff();
+      setStaffList(staff.filter(s => s.IsInactive !== 1));
     } catch (err: any) {
-      showToast(err.message || 'An error occurred while marking tasks complete.', 'error');
+      showToast(err.message || 'Failed to fetch facility staff.', 'error');
+      setIsReassignOpen(false);
+    } finally {
+      setLoadingStaff(false);
     }
+  };
+
+  const handleReassignSubmit = async () => {
+    if (!selectedStaffId) return;
+
+    const staffName = staffList.find(s => s.Value === selectedStaffId)?.Display || 'selected staff';
+    const taskCount = reassignTaskIds.length;
+    const confirmMessage = taskCount === 1
+      ? `Are you sure you want to reassign the selected task to ${staffName}?`
+      : `Are you sure you want to reassign the ${taskCount} selected tasks to ${staffName}?`;
+
+    showConfirm(
+      'Reassign Tasks',
+      confirmMessage,
+      async () => {
+        try {
+          const response = await assignTasks(reassignTaskIds, selectedStaffId);
+          if (response.isSuccess === 1) {
+            showToast(response.successMessage || 'Tasks reassigned successfully!', 'success');
+            setIsReassignOpen(false);
+            setSelectedIds([]);
+            onPageChange(page);
+          } else {
+            showToast(response.errorMessage || 'Failed to reassign tasks.', 'error');
+          }
+        } catch (err: any) {
+          showToast(err.message || 'An error occurred while reassigning tasks.', 'error');
+        }
+      },
+      'reassign',
+      reassignTaskIds
+    );
   };
 
   const handleSort = (colIndex: number) => {
@@ -205,33 +445,29 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
           <AnimatePresence>
             {selectedIds.length > 0 && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                whileHover={{ scale: 1.02, backgroundColor: 'var(--green-dark)' }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleMarkSelectedComplete}
-                style={{
-                  background: 'var(--green)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '7px 14px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  whiteSpace: 'nowrap',
-                  boxShadow: '0 4px 10px rgba(34, 197, 94, 0.25)',
-                  transition: 'background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
-                }}
-              >
-                <CheckCircle2 size={14} strokeWidth={2.5} />
-                Mark Complete ({selectedIds.length})
-              </motion.button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  onClick={handleMarkSelectedComplete}
+                  className="btn-bulk-complete"
+                >
+                  <CheckCircle2 size={14} strokeWidth={2.5} />
+                  Bulk Mark Complete ({selectedIds.length})
+                </motion.button>
+
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  onClick={() => handleOpenReassignModal(selectedIds)}
+                  className="btn-bulk-reassign"
+                >
+                  <UserPlus size={14} strokeWidth={2.5} />
+                  Bulk Reassign ({selectedIds.length})
+                </motion.button>
+              </div>
             )}
           </AnimatePresence>
         </div>
@@ -256,10 +492,19 @@ const TaskTable: React.FC<TaskTableProps> = ({
       </div>
 
       {/* Table */}
-      <div className="table-scroll">
+      <div className="table-scroll" onClick={handleTableClick}>
         <table className="task-table">
           <thead>
             <tr>
+              <th style={{ userSelect: 'none', textAlign: 'center', width: '60px' }}>
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={handleSelectAll}
+                  style={{ cursor: 'pointer', verticalAlign: 'middle' }}
+                  title="Select All"
+                />
+              </th>
               <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort(0)}>
                 Task Name {sortColumn === 0 && (sortDir === 'asc' ? '↑' : '↓')}
               </th>
@@ -284,31 +529,35 @@ const TaskTable: React.FC<TaskTableProps> = ({
               <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center' }} onClick={() => handleSort(7)}>
                 Facility {sortColumn === 7 && (sortDir === 'asc' ? '↑' : '↓')}
               </th>
-              <th style={{ userSelect: 'none', textAlign: 'center', width: '60px' }}>
-                <input 
-                  type="checkbox" 
-                  checked={isAllSelected} 
-                  onChange={handleSelectAll} 
-                  style={{ cursor: 'pointer', verticalAlign: 'middle' }}
-                  title="Select All"
-                />
+              <th style={{ userSelect: 'none', textAlign: 'center', width: '100px' }}>
+                Actions
               </th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', padding: '32px', color: 'var(--gray-text)', fontSize: 13 }}>
+                <td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: 'var(--gray-text)', fontSize: 13 }}>
                   No tasks match your search.
                 </td>
               </tr>
             ) : (
               filtered.map(task => (
-                <tr 
-                  key={task.TaskID} 
+                <tr
+                  key={task.TaskID}
+                  data-task-id={task.TaskID}
                   className={task.Status === 'Late' ? 'row-late' : ''}
                   onClick={(e) => handleRowClick(task, e)}
                 >
+                  <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(task.TaskID)}
+                      onChange={() => handleSelectRow(task.TaskID)}
+                      disabled={task.Status === 'Completed'}
+                      style={{ cursor: task.Status === 'Completed' ? 'not-allowed' : 'pointer' }}
+                    />
+                  </td>
                   <td>
                     <div dangerouslySetInnerHTML={{ __html: task.TaskName }} />
                   </td>
@@ -336,12 +585,26 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     <span>{task.Facility}</span>
                   </td>
                   <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedIds.includes(task.TaskID)} 
-                      onChange={() => handleSelectRow(task.TaskID)}
-                      style={{ cursor: 'pointer' }}
-                    />
+                    {task.Status !== 'Completed' ? (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        <button
+                          onClick={() => handleMarkSingleComplete(task.TaskID, task.TaskName)}
+                          title="Mark Complete"
+                          className="btn-action-complete"
+                        >
+                          <Check size={14} strokeWidth={2.2} />
+                        </button>
+                        <button
+                          onClick={() => handleOpenReassignModal([task.TaskID])}
+                          title="Reassign Task"
+                          className="btn-action-reassign"
+                        >
+                          <User size={14} strokeWidth={2.2} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span style={{ color: 'var(--green)', fontWeight: 600, fontSize: '11px' }}>Completed</span>
+                    )}
                   </td>
                 </tr>
               ))
@@ -380,6 +643,319 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
       {typeof document !== 'undefined' && createPortal(
         <AnimatePresence>
+          {isReassignOpen && (() => {
+            const selectedTasks = data ? data.tasks.filter(t => reassignTaskIds.includes(t.TaskID)) : [];
+            return (
+              <div
+                className="taskboard-modal-overlay"
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(15, 23, 42, 0.45)',
+                  backdropFilter: 'blur(4px)',
+                  zIndex: 10000,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '20px'
+                }}
+              >
+                {/* Clicking outside the dropdown closes it */}
+                {isDropdownOpen && (
+                  <div
+                    onClick={() => setIsDropdownOpen(false)}
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      zIndex: 10090,
+                      backgroundColor: 'transparent'
+                    }}
+                  />
+                )}
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  transition={{ duration: 0.18 }}
+                  className="taskboard-modal-panel"
+                >
+                  {/* Modal Header */}
+                  <div className="taskboard-modal-header">
+                    <h3>
+                      Reassign {reassignTaskIds.length === 1 ? 'Task' : `${reassignTaskIds.length} Tasks`}
+                    </h3>
+                    <button
+                      onClick={() => setIsReassignOpen(false)}
+                      className="taskboard-modal-close"
+                    >
+                      <X size={18} strokeWidth={2.5} />
+                    </button>
+                  </div>
+
+                  {/* Modal Body */}
+                  <div className="taskboard-modal-body">
+                    {/* Task Display */}
+                    <div>
+                      <label className="taskboard-field-label">
+                        {reassignTaskIds.length === 1 ? 'Task to Reassign' : `Tasks to Reassign (${reassignTaskIds.length})`}
+                      </label>
+                      {selectedTasks.length === 1 ? (
+                        <div
+                          className="taskboard-task-display"
+                          dangerouslySetInnerHTML={{ __html: selectedTasks[0].TaskName }}
+                        />
+                      ) : (
+                        <div className="taskboard-task-list">
+                          {selectedTasks.map(t => (
+                            <div key={t.TaskID} className="taskboard-task-list-item">
+                              <span className="dot" style={{ backgroundColor: '#3B82F6' }} />
+                              <span dangerouslySetInnerHTML={{ __html: t.TaskName }} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Searchable Dropdown Field */}
+                    <div style={{ position: 'relative' }}>
+                      <label className="taskboard-field-label">
+                        New Assignee
+                      </label>
+                      <div
+                        onClick={() => setIsDropdownOpen(prev => !prev)}
+                        className={`taskboard-dropdown-trigger${isDropdownOpen ? ' open' : ''}`}
+                      >
+                        <span className={`trigger-text${selectedStaffId ? ' has-value' : ''}`}>
+                          {selectedStaffId
+                            ? staffList.find(s => s.Value === selectedStaffId)?.Display
+                            : 'Search and select assignee...'}
+                        </span>
+                        <span className={`trigger-icon${isDropdownOpen ? ' open' : ''}`}>
+                          <ChevronDown size={18} />
+                        </span>
+                      </div>
+
+                      {isDropdownOpen && (
+                        <div className="taskboard-dropdown-panel">
+                          {/* Search bar inside dropdown */}
+                          <div className="taskboard-dropdown-search">
+                            <span className="search-icon">
+                              <Search size={14} />
+                            </span>
+                            <input
+                              type="text"
+                              placeholder="Search staff members..."
+                              value={staffSearch}
+                              onChange={(e) => setStaffSearch(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              autoFocus
+                            />
+                          </div>
+
+                          {/* Staff List */}
+                          <div className="taskboard-dropdown-list">
+                            {loadingStaff ? (
+                              <div className="taskboard-dropdown-empty">
+                                Loading staff...
+                              </div>
+                            ) : (() => {
+                              const filteredStaff = staffList.filter(s =>
+                                s.Display.toLowerCase().includes(staffSearch.toLowerCase())
+                              );
+
+                              if (filteredStaff.length === 0) {
+                                return (
+                                  <div className="taskboard-dropdown-empty">
+                                    No staff members found.
+                                  </div>
+                                );
+                              }
+
+                              return filteredStaff.map(staff => {
+                                const isSelected = selectedStaffId === staff.Value;
+                                return (
+                                  <div
+                                    key={staff.Value}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedStaffId(staff.Value);
+                                      setIsDropdownOpen(false);
+                                    }}
+                                    className={`taskboard-dropdown-option${isSelected ? ' selected' : ''}`}
+                                  >
+                                    <span>{staff.Display}</span>
+                                    {isSelected && (
+                                      <span className="check-icon">
+                                        <Check size={14} strokeWidth={2.5} />
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="taskboard-modal-footer">
+                    <button
+                      onClick={() => setIsReassignOpen(false)}
+                      className="taskboard-btn-cancel"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleReassignSubmit}
+                      disabled={!selectedStaffId}
+                      className="taskboard-btn-primary blue"
+                    >
+                      Reassign
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            );
+          })()}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {confirmDialog && confirmDialog.isOpen && (() => {
+            const type = confirmDialog.type || 'warning';
+            const dialogTheme = {
+              complete: { Icon: Check, iconColor: '#16A34A' },
+              reassign: { Icon: User, iconColor: '#2563EB' },
+              warning: { Icon: AlertCircle, iconColor: '#D97706' }
+            }[type];
+
+            const IconComponent = dialogTheme.Icon;
+
+            return (
+              <div
+                className="taskboard-modal-overlay"
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(15, 23, 42, 0.45)',
+                  backdropFilter: 'blur(4px)',
+                  zIndex: 20000,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '20px'
+                }}
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                  transition={{ duration: 0.18 }}
+                  className="taskboard-modal-panel"
+                >
+                  {/* Modal Header */}
+                  <div className="taskboard-modal-header">
+                    <h3>{confirmDialog.title}</h3>
+                    <button
+                      onClick={() => setConfirmDialog(null)}
+                      className="taskboard-modal-close"
+                    >
+                      <X size={18} strokeWidth={2.5} />
+                    </button>
+                  </div>
+
+                  {/* Modal Body */}
+                  <div className="taskboard-modal-body">
+                    {/* Alert Banner / Message */}
+                    <div className={`taskboard-alert-banner ${type}`}>
+                      <div className={`taskboard-alert-icon ${type}`}>
+                        <IconComponent size={20} strokeWidth={2.2} />
+                      </div>
+                      <div className="taskboard-alert-content">
+                        <span className="taskboard-alert-title">
+                          Confirmation Required
+                        </span>
+                        <p className="taskboard-alert-message">
+                          {confirmDialog.message}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Task details preview */}
+                    {confirmDialog.taskIds && confirmDialog.taskIds.length > 0 && (
+                      <div>
+                        <label className="taskboard-field-label">
+                          {confirmDialog.taskIds.length === 1 ? 'Selected Task' : `Selected Tasks (${confirmDialog.taskIds.length})`}
+                        </label>
+                        {(() => {
+                          const tasksToComplete = data ? data.tasks.filter(t => confirmDialog.taskIds?.includes(t.TaskID)) : [];
+                          if (tasksToComplete.length === 1) {
+                            return (
+                              <div
+                                className="taskboard-task-display"
+                                dangerouslySetInnerHTML={{ __html: tasksToComplete[0].TaskName }}
+                              />
+                            );
+                          } else if (tasksToComplete.length > 1) {
+                            return (
+                              <div className="taskboard-task-list">
+                                {tasksToComplete.map(t => (
+                                  <div key={t.TaskID} className="taskboard-task-list-item">
+                                    <span className="dot" style={{ backgroundColor: dialogTheme.iconColor }} />
+                                    <span dangerouslySetInnerHTML={{ __html: t.TaskName }} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} />
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="taskboard-modal-footer">
+                    <button
+                      onClick={() => setConfirmDialog(null)}
+                      className="taskboard-btn-cancel"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        confirmDialog.onConfirm();
+                        setConfirmDialog(null);
+                      }}
+                      className={`taskboard-btn-primary ${type === 'complete' ? 'green' : type === 'reassign' ? 'blue' : 'amber'}`}
+                    >
+                      Confirm
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            );
+          })()}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
           {toast && (() => {
             const colors = {
               info: { bg: '#EFF6FF', border: '#BFDBFE', leftBorder: '#3B82F6', text: '#1E40AF' },
@@ -389,6 +965,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
             return (
               <motion.div
+                className="taskboard-toast"
                 initial={{ opacity: 0, y: -50, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -419,7 +996,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 <div style={{ flex: 1, minWidth: 0, fontSize: '14px', fontWeight: 500, lineHeight: 1.4 }}>
                   {toast.message}
                 </div>
-                <button 
+                <button
                   onClick={() => setToast(null)}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: colors.text, padding: '2px', display: 'flex', flexShrink: 0 }}
                   title="Dismiss"

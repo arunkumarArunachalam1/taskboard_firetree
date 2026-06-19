@@ -250,6 +250,12 @@
     border: 1px solid var(--border);
     padding: 16px;
     overflow: hidden;
+
+    /* Reset global SVG height/width styles (e.g. Bootstrap's height: auto) that shrink/distort Recharts */
+    & svg {
+      height: 100% !important;
+      width: 100% !important;
+    }
   }
 
   .chart-title {
@@ -328,6 +334,37 @@
       color: inherit;
       vertical-align: middle;
     }
+
+    tbody td a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6366F1 !important;
+      background: rgba(99, 102, 241, 0.08);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 6px;
+      text-decoration: none !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      margin: 2px;
+      white-space: nowrap;
+
+      &:hover {
+        background: #6366F1;
+        color: #ffffff !important;
+        border-color: #6366F1;
+        box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+        transform: translateY(-1px);
+        text-decoration: none !important;
+      }
+
+      &:active {
+        transform: translateY(0) scale(0.95);
+        box-shadow: 0 1px 2px rgba(99, 102, 241, 0.15);
+      }
+    }
   }
 
   /* Action circle */
@@ -342,6 +379,126 @@
   }
   .action-circle:hover {
     border-color: #9CA3AF;
+  }
+
+  /* Premium Row-Level Action Buttons — balanced size */
+  .btn-action-complete,
+  .btn-action-reassign,
+  .btn-action-view {
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .btn-action-complete {
+    background: #22C55E;
+    box-shadow: 0 1px 3px rgba(34, 197, 94, 0.25);
+
+    &:hover {
+      background: #16A34A;
+      box-shadow: 0 2px 6px rgba(34, 197, 94, 0.35);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0) scale(0.96);
+    }
+  }
+
+  .btn-action-reassign {
+    background: #3B82F6;
+    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.25);
+
+    &:hover {
+      background: #2563EB;
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0) scale(0.96);
+    }
+  }
+
+  .btn-action-view {
+    background: #8B5CF6;
+    box-shadow: 0 1px 3px rgba(139, 92, 246, 0.25);
+
+    &:hover {
+      background: #7C3AED;
+      box-shadow: 0 2px 6px rgba(139, 92, 246, 0.35);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0) scale(0.96);
+    }
+  }
+
+  /* Premium Bulk Buttons */
+  .btn-bulk-complete {
+    background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
+      background: linear-gradient(135deg, #16A34A 0%, #15803D 100%);
+    }
+
+    &:active {
+      transform: translateY(0px);
+      box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+    }
+  }
+
+  .btn-bulk-reassign {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+      background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    }
+
+    &:active {
+      transform: translateY(0px);
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+    }
   }
 
   /* Center the injected HTML but let legacy CF CSS handle the internal layout */
@@ -657,4 +814,463 @@ h1.page-title {
 
 #react-dashboard-wrapper .facility-dropdown-options::-webkit-scrollbar-thumb:hover {
   background: rgba(220, 38, 38, 0.3) !important;
+}
+
+/* ── Portalled Modal Overrides ─────────────────────────────────────────────
+   Modals rendered via createPortal() sit outside #react-dashboard-wrapper,
+   so they miss scoped styles AND are fully exposed to Tailwind v4 preflight
+   (which sets `svg { display: block }`) and legacy Bootstrap/CF CSS.
+   These rules protect the modal internals.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Scope: any modal overlay we portal */
+.taskboard-modal-overlay {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.taskboard-modal-overlay *,
+.taskboard-modal-overlay *::before,
+.taskboard-modal-overlay *::after {
+  box-sizing: border-box;
+}
+
+/* Force ALL SVGs inside our modals to inline sizing — prevents Tailwind
+   preflight `svg { display: block }` from blowing icons up to 100% width */
+.taskboard-modal-overlay svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  flex-shrink: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Modal panel */
+.taskboard-modal-panel {
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.15),
+    0 12px 24px -8px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  border: 1px solid #E2E8F0;
+  overflow: hidden;
+  position: relative;
+  z-index: 10100;
+}
+
+/* Modal header */
+.taskboard-modal-header {
+  padding: 20px 28px;
+  border-bottom: 1px solid #F1F5F9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.taskboard-modal-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.taskboard-modal-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94A3B8;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+
+.taskboard-modal-close:hover {
+  background-color: #F1F5F9;
+  color: #475569;
+}
+
+/* Modal body */
+.taskboard-modal-body {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+}
+
+/* Field labels */
+.taskboard-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Task display box */
+.taskboard-task-display {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1E293B;
+  padding: 14px 18px;
+  background-color: #F8FAFC;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  line-height: 1.5;
+}
+
+.taskboard-task-list {
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 14px 18px;
+  background-color: #F8FAFC;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.taskboard-task-list-item {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.taskboard-task-list-item .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Assignee Dropdown ─────────────────────────────────────────────────── */
+
+.taskboard-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  background-color: #fff;
+  cursor: pointer;
+  height: 48px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  transition: all 0.15s;
+}
+
+.taskboard-dropdown-trigger:hover {
+  border-color: #94A3B8;
+}
+
+.taskboard-dropdown-trigger.open {
+  border: 2px solid #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.taskboard-dropdown-trigger .trigger-text {
+  font-size: 14px;
+  font-weight: 400;
+  color: #94A3B8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taskboard-dropdown-trigger .trigger-text.has-value {
+  color: #0F172A;
+  font-weight: 500;
+}
+
+.taskboard-dropdown-trigger .trigger-icon {
+  color: #64748B;
+  transition: transform 0.2s;
+  line-height: 0;
+}
+
+.taskboard-dropdown-trigger .trigger-icon.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown panel */
+.taskboard-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  box-shadow:
+    0 12px 28px -4px rgba(0, 0, 0, 0.12),
+    0 4px 8px -2px rgba(0, 0, 0, 0.06);
+  z-index: 10100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.taskboard-dropdown-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #F1F5F9;
+  padding: 10px 14px;
+}
+
+.taskboard-dropdown-search .search-icon {
+  position: absolute;
+  left: 24px;
+  color: #94A3B8;
+  line-height: 0;
+}
+
+.taskboard-dropdown-search input {
+  width: 100%;
+  padding: 10px 12px 10px 34px;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  color: #1E293B;
+  background: #F8FAFC;
+  transition: border-color 0.15s;
+}
+
+.taskboard-dropdown-search input:focus {
+  border-color: #3B82F6;
+  background: #fff;
+}
+
+.taskboard-dropdown-search input::placeholder {
+  color: #94A3B8;
+}
+
+.taskboard-dropdown-list {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+}
+
+.taskboard-dropdown-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.taskboard-dropdown-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.taskboard-dropdown-list::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+
+.taskboard-dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+.taskboard-dropdown-option {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background-color 0.12s;
+  color: #334155;
+  font-weight: 400;
+  margin: 1px 0;
+  min-height: 40px;
+}
+
+.taskboard-dropdown-option:hover {
+  background-color: #F8FAFC;
+}
+
+.taskboard-dropdown-option.selected {
+  background-color: #EFF6FF;
+  color: #2563EB;
+  font-weight: 600;
+}
+
+.taskboard-dropdown-option .check-icon {
+  color: #2563EB;
+  line-height: 0;
+  flex-shrink: 0;
+}
+
+.taskboard-dropdown-empty {
+  padding: 20px;
+  text-align: center;
+  color: #64748B;
+  font-size: 13px;
+}
+
+/* ── Modal Footer ──────────────────────────────────────────────────────── */
+
+.taskboard-modal-footer {
+  padding: 18px 28px;
+  border-top: 1px solid #F1F5F9;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background-color: #FAFBFC;
+}
+
+.taskboard-btn-cancel {
+  padding: 10px 20px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #475569;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.taskboard-btn-cancel:hover {
+  background-color: #F1F5F9;
+  border-color: #94A3B8;
+}
+
+.taskboard-btn-primary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.taskboard-btn-primary:disabled {
+  background: #CBD5E1 !important;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+.taskboard-btn-primary.blue {
+  background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.taskboard-btn-primary.blue:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+.taskboard-btn-primary.green {
+  background: linear-gradient(135deg, #4ADE80 0%, #22C55E 100%);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+}
+
+.taskboard-btn-primary.green:hover:not(:disabled) {
+  background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+}
+
+.taskboard-btn-primary.amber {
+  background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.taskboard-btn-primary.amber:hover:not(:disabled) {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+}
+
+/* ── Confirm Dialog Alert Banner ─────────────────────────────────────── */
+
+.taskboard-alert-banner {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 18px;
+  border-radius: 12px;
+}
+
+.taskboard-alert-banner.complete {
+  background-color: #DCFCE7;
+  border: 1px solid rgba(34, 197, 94, 0.15);
+}
+
+.taskboard-alert-banner.reassign {
+  background-color: #DBEAFE;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.taskboard-alert-banner.warning {
+  background-color: #FEF3C7;
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.taskboard-alert-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.taskboard-alert-icon.complete { color: #16A34A; }
+.taskboard-alert-icon.reassign { color: #2563EB; }
+.taskboard-alert-icon.warning { color: #D97706; }
+
+.taskboard-alert-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.taskboard-alert-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.taskboard-alert-message {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── Toast Override — keep SVGs sized in toasts too ──────────────────── */
+
+.taskboard-toast svg {
+  display: inline-block !important;
+  width: auto !important;
+  height: auto !important;
+  flex-shrink: 0 !important;
 }

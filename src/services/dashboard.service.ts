@@ -3,6 +3,8 @@ import type {
   DashboardCharts,
   TaskListResponse,
   Task,
+  FacilityStaff,
+  AssignTasksResponse,
 } from '../types/dashboard.types';
 import type { AppUser } from '../context/AppContext';
 
@@ -241,6 +243,20 @@ export async function getTaskList(
       };
     });
 
+    // Trace if our test task is in the retrieved tasks
+    const testTask = tasks.find(t => t.TaskName === 'React Taskboard Redirect Test' || t.TaskDescription.includes('/ReactTaskBoard/testPage'));
+    if (testTask) {
+      fetch(`/ReactTaskBoard/logEvent?event=TaskRetrieval&taskID=${testTask.TaskID}`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': activeContext?.csrfToken || '',
+          'X-Requested-With': 'React'
+        },
+        credentials: 'include'
+      }).catch(err => console.error('[Taskboard Redirect Test] Failed to log retrieval:', err));
+    }
+
     return {
       total: json.recordsTotal || json.iTotalRecords || 0,
       page,
@@ -322,7 +338,83 @@ export async function markTasksCompleted(taskIds: number[]): Promise<MarkTasksRe
     method: 'POST',
     headers: {
       'Accept': 'application/json',
-      // 'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const rawText = await response.text();
+  try {
+    const json = JSON.parse(rawText);
+    return {
+      isSuccess: json.isSuccess !== undefined ? Number(json.isSuccess) : (json.ISSUCCESS !== undefined ? Number(json.ISSUCCESS) : 0),
+      errorMessage: json.errorMessage || json.ERRORMESSAGE || '',
+      successMessage: json.successMessage || json.SUCCESSMESSAGE || ''
+    };
+  } catch (e) {
+    throw new Error(`Failed to parse server response: ${rawText}`);
+  }
+}
+
+// ─── ColdFusion Query Parser Helper ──────────────────────────────────────────
+export function parseCFQuery<T>(json: any): T[] {
+  if (!json) return [];
+  if (Array.isArray(json)) return json as T[];
+  
+  // Standard CF serialization maps a query object to:
+  // { COLUMNS: ["COL1", "COL2"], DATA: [["Val1", "Val2"], ["Val3", "Val4"]] }
+  if (json.COLUMNS && json.DATA) {
+    const cols = json.COLUMNS.map((c: string) => c.toUpperCase());
+    return json.DATA.map((row: any[]) => {
+      const obj: any = {};
+      cols.forEach((col: string, i: number) => {
+        obj[col] = row[i];
+        // Map common properties case-sensitively or camelCase for ease of use
+        const camel = col.charAt(0) + col.slice(1).toLowerCase();
+        obj[camel] = row[i];
+      });
+      return obj as T;
+    });
+  }
+  return [];
+}
+
+// ─── Reassignment Services ──────────────────────────────────────────────────
+export async function getFacilityStaff(): Promise<FacilityStaff[]> {
+  const response = await fetch('/ReactTaskBoard/GetCurrentlySelectedFacilityStaff', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const json = await response.json();
+  return parseCFQuery<FacilityStaff>(json);
+}
+
+export async function assignTasks(taskIds: number[], assignedToId: number | string): Promise<AssignTasksResponse> {
+  const formData = new FormData();
+  formData.append('Task.listids', taskIds.join(','));
+  formData.append('Task.AssignedTo', String(assignedToId));
+
+  const response = await fetch('/ReactTaskBoard/AssignTasks', {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
       'X-Requested-With': 'React'
     },
     credentials: 'include'

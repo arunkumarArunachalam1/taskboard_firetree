@@ -4,7 +4,7 @@ import { AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Header';
 import KpiGrid from './KpiGrid';
-// import ChartsSection from './ChartsSection';
+import ChartsSection from './ChartsSection';
 import TaskTable from './TaskTable';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useAppContext } from '../../context/AppContext';
@@ -12,6 +12,7 @@ import { useAppContext } from '../../context/AppContext';
 const DashboardPage: React.FC = () => {
   const {
     summary, loadingSummary,
+    charts, loadingCharts,
     tasks, loadingTasks, page, fetchTasks,
     search, sortColumn, sortDir,
     error, setError
@@ -86,7 +87,7 @@ const DashboardPage: React.FC = () => {
               <div style={{ flex: 1, minWidth: 0, fontSize: '14px', fontWeight: 500, lineHeight: 1.4 }}>
                 {error}
               </div>
-              <button 
+              <button
                 onClick={() => setError(null)}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#991B1B', padding: '2px', display: 'flex', flexShrink: 0 }}
                 title="Dismiss"
