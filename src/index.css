@@ -302,6 +302,7 @@
       border-bottom: 1px solid #D1D5DB;
       transition: background 0.12s, color 0.12s;
       color: #333333;
+      cursor: pointer;
 
       &:hover {
         background: rgba(240, 191, 76, 0.15);
@@ -656,120 +657,4 @@ h1.page-title {
 
 #react-dashboard-wrapper .facility-dropdown-options::-webkit-scrollbar-thumb:hover {
   background: rgba(220, 38, 38, 0.3) !important;
-}
-
-/* Task Details Modal Styles */
-#react-dashboard-wrapper .modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-#react-dashboard-wrapper .modal-container {
-  background: #fff;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 600px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  font-family: 'Open Sans', 'Inter', sans-serif;
-  color: #333333;
-}
-
-#react-dashboard-wrapper .modal-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #f8fafc;
-}
-
-#react-dashboard-wrapper .modal-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #333333;
-  margin: 0;
-}
-
-#react-dashboard-wrapper .modal-close-btn {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: #9ca3af;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-
-#react-dashboard-wrapper .modal-close-btn:hover {
-  color: #4b5563;
-}
-
-#react-dashboard-wrapper .modal-body {
-  padding: 20px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-#react-dashboard-wrapper .modal-field-group {
-  margin-bottom: 16px;
-  display: grid;
-  grid-template-columns: 140px 1fr;
-  gap: 8px;
-}
-
-#react-dashboard-wrapper .modal-label {
-  font-weight: 700;
-  color: #555;
-}
-
-#react-dashboard-wrapper .modal-value {
-  color: #333;
-}
-
-#react-dashboard-wrapper .modal-footer {
-  padding: 12px 20px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  background: #f8fafc;
-}
-
-#react-dashboard-wrapper .modal-btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.15s;
-}
-
-#react-dashboard-wrapper .modal-btn-secondary {
-  background: #fff;
-  border-color: #d1d5db;
-  color: #374151;
-}
-
-#react-dashboard-wrapper .modal-btn-secondary:hover {
-  background: #f9fafb;
-}
-
-#react-dashboard-wrapper .modal-btn-primary {
-  background: #2563eb;
-  color: #fff;
-}
-
-#react-dashboard-wrapper .modal-btn-primary:hover {
-  background: #1d4ed8;
 }

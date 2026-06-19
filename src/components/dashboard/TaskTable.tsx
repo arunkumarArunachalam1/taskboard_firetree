@@ -1,24 +1,27 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { TaskListResponse, Task } from '../../types/dashboard.types';
+import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted } from '../../services/dashboard.service';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
-const getInitials = (name: string) => {
+export const getInitials = (name: string) => {
   const parts = name.split(' ').filter(Boolean);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
   return '??';
 };
 
-const getAvatarColor = (name: string) => {
+export const getAvatarColor = (name: string) => {
   const colors = ['#22C55E', '#8B5CF6', '#3B82F6', '#F59E0B', '#EC4899', '#6366F1'];
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
 };
 
-const StatusBadge: React.FC<{ status: Task['Status'] }> = ({ status }) => {
+export const StatusBadge: React.FC<{ status: Task['Status'] }> = ({ status }) => {
   const config: Record<Task['Status'], { label: string; color: string; Icon: React.FC<any> }> = {
     Late: { label: 'Overdue', color: '#DC2626', Icon: AlertCircle },
     Pending: { label: 'Pending', color: '#D97706', Icon: Clock },
@@ -79,10 +82,97 @@ const TaskTable: React.FC<TaskTableProps> = ({
   search, onSearchChange, 
   sortColumn, sortDir, onSortChange 
 }) => {
+  const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [data]);
+
+  const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
+    setToast({ message, type });
+  };
+
   if (loading || !data) return <TableSkeleton />;
 
   const totalPages = Math.ceil(data.total / data.pageSize);
   const filtered = data.tasks;
+
+  const handleRowClick = (task: Task, e: React.MouseEvent<HTMLTableRowElement>) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === 'A' || 
+      target.tagName === 'INPUT' || 
+      target.tagName === 'BUTTON' ||
+      target.closest('a') || 
+      target.closest('input') || 
+      target.closest('button')
+    ) {
+      return;
+    }
+
+    const url = extractHrefFromHTML(task.TaskDescription);
+    if (url) {
+      window.location.href = url;
+    } else {
+      showToast(`No linked page for task: "${extractTextFromHTML(task.TaskName)}"`, 'info');
+    }
+  };
+
+  const handleSelectRow = (taskId: number) => {
+    setSelectedIds(prev =>
+      prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+    );
+  };
+
+  const isAllSelected = filtered.length > 0 && filtered.every(task => selectedIds.includes(task.TaskID));
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      const pageTaskIds = filtered.map(t => t.TaskID);
+      setSelectedIds(prev => prev.filter(id => !pageTaskIds.includes(id)));
+    } else {
+      setSelectedIds(prev => {
+        const next = [...prev];
+        filtered.forEach(task => {
+          if (!next.includes(task.TaskID)) {
+            next.push(task.TaskID);
+          }
+        });
+        return next;
+      });
+    }
+  };
+
+  const handleMarkSelectedComplete = async () => {
+    if (selectedIds.length === 0) return;
+
+    const confirmMessage = selectedIds.length === 1
+      ? 'Are you sure you want to mark the selected task complete?'
+      : `Are you sure you want to mark the ${selectedIds.length} selected tasks complete?`;
+
+    if (!window.confirm(confirmMessage)) return;
+
+    try {
+      const response = await markTasksCompleted(selectedIds);
+      if (response.isSuccess === 1) {
+        showToast(response.successMessage || 'Tasks marked complete successfully!', 'success');
+        setSelectedIds([]);
+        onPageChange(page);
+      } else {
+        showToast(response.errorMessage || 'Failed to complete selected tasks.', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'An error occurred while marking tasks complete.', 'error');
+    }
+  };
 
   const handleSort = (colIndex: number) => {
     const isAsc = sortColumn === colIndex && sortDir === 'asc';
@@ -104,12 +194,46 @@ const TaskTable: React.FC<TaskTableProps> = ({
         padding: '12px 18px', borderBottom: '1px solid var(--border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Tasks</span>
-          <span style={{
-            background: 'var(--green)', color: '#fff', borderRadius: 20,
-            fontSize: 11, fontWeight: 700, padding: '2px 8px'
-          }}>{data.total}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Tasks</span>
+            <span style={{
+              background: 'var(--green)', color: '#fff', borderRadius: 20,
+              fontSize: 11, fontWeight: 700, padding: '2px 8px'
+            }}>{data.total}</span>
+          </div>
+
+          <AnimatePresence>
+            {selectedIds.length > 0 && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                whileHover={{ scale: 1.02, backgroundColor: 'var(--green-dark)' }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleMarkSelectedComplete}
+                style={{
+                  background: 'var(--green)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '7px 14px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 4px 10px rgba(34, 197, 94, 0.25)',
+                  transition: 'background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+                }}
+              >
+                <CheckCircle2 size={14} strokeWidth={2.5} />
+                Mark Complete ({selectedIds.length})
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
         <div>
           <input
@@ -160,8 +284,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
               <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center' }} onClick={() => handleSort(7)}>
                 Facility {sortColumn === 7 && (sortDir === 'asc' ? '↑' : '↓')}
               </th>
-              <th style={{ userSelect: 'none', textAlign: 'center' }}>
-                Action
+              <th style={{ userSelect: 'none', textAlign: 'center', width: '60px' }}>
+                <input 
+                  type="checkbox" 
+                  checked={isAllSelected} 
+                  onChange={handleSelectAll} 
+                  style={{ cursor: 'pointer', verticalAlign: 'middle' }}
+                  title="Select All"
+                />
               </th>
             </tr>
           </thead>
@@ -174,7 +304,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
               </tr>
             ) : (
               filtered.map(task => (
-                <tr key={task.TaskID} className={task.Status === 'Late' ? 'row-late' : ''}>
+                <tr 
+                  key={task.TaskID} 
+                  className={task.Status === 'Late' ? 'row-late' : ''}
+                  onClick={(e) => handleRowClick(task, e)}
+                >
                   <td>
                     <div dangerouslySetInnerHTML={{ __html: task.TaskName }} />
                   </td>
@@ -201,8 +335,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <td style={{ textAlign: 'center' }}>
                     <span>{task.Facility}</span>
                   </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <input type="radio" className="action-radio" name="selectedTask" value={task.TaskID} />
+                  <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.includes(task.TaskID)} 
+                      onChange={() => handleSelectRow(task.TaskID)}
+                      style={{ cursor: 'pointer' }}
+                    />
                   </td>
                 </tr>
               ))
@@ -238,6 +377,61 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </button>
         </div>
       </div>
+
+      {typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+          {toast && (() => {
+            const colors = {
+              info: { bg: '#EFF6FF', border: '#BFDBFE', leftBorder: '#3B82F6', text: '#1E40AF' },
+              success: { bg: '#ECFDF5', border: '#A7F3D0', leftBorder: '#10B981', text: '#065F46' },
+              error: { bg: '#FEF2F2', border: '#FCA5A5', leftBorder: '#EF4444', text: '#991B1B' }
+            }[toast.type] || { bg: '#EFF6FF', border: '#BFDBFE', leftBorder: '#3B82F6', text: '#1E40AF' };
+
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: -50, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  position: 'fixed',
+                  top: '24px',
+                  right: '24px',
+                  zIndex: 2147483647,
+                  width: 'auto',
+                  minWidth: '320px',
+                  maxWidth: '400px',
+                  backgroundColor: colors.bg,
+                  border: `1px solid ${colors.border}`,
+                  borderLeft: `4px solid ${colors.leftBorder}`,
+                  borderRadius: '8px',
+                  color: colors.text,
+                  padding: '16px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <div style={{ flexShrink: 0, width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px' }}>
+                  <AlertCircle size={20} strokeWidth={2.5} style={{ width: '20px', height: '20px', minWidth: '20px', minHeight: '20px' }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0, fontSize: '14px', fontWeight: 500, lineHeight: 1.4 }}>
+                  {toast.message}
+                </div>
+                <button 
+                  onClick={() => setToast(null)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: colors.text, padding: '2px', display: 'flex', flexShrink: 0 }}
+                  title="Dismiss"
+                >
+                  <X size={18} strokeWidth={2.5} style={{ width: '18px', height: '18px' }} />
+                </button>
+              </motion.div>
+            );
+          })()}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

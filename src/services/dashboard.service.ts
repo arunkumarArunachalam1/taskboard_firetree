@@ -108,7 +108,7 @@ async function getTableListingInfo(): Promise<{ id: string, listColumns: string 
     });
 
     if (!response.ok) throw new Error(`API returned ${response.status}`);
-
+    
     const data = await response.json();
     if (data.success && data.tableListingID) {
       cachedTableListingInfo = {
@@ -141,7 +141,7 @@ export async function getTaskList(
 
 
   const start = (page - 1) * pageSize;
-
+  
   // Build DataTables server-side parameters
   let dtParams = `&draw=1&start=${start}&length=${pageSize}`;
   if (options.search) {
@@ -150,12 +150,12 @@ export async function getTaskList(
   if (options.sortColumn !== undefined) {
     dtParams += `&order[0][column]=${options.sortColumn}&order[0][dir]=${options.sortDir || 'asc'}`;
   }
-
+  
   // Pass a default filter (Completed = 0) in the DataTables format.
   // This is required to force ColdFusion to re-evaluate volatile parameters
   // because CORE.cfc skips query preparation if there are no filters.
   const filterParams = `&tableFilters=tableFilter.Completed&tableFilter.Completed=[0][Completed][=][0][]`;
-
+  
   const tableListingInfo = await getTableListingInfo();
   if (tableListingInfo.listColumns) {
     dtParams += `&listColumns=${encodeURIComponent(tableListingInfo.listColumns)}`;
@@ -204,7 +204,7 @@ export async function getTaskList(
     // The legacy CF API returns `data` (array of objects) when returnResultsType is "Data" (default)
     // and `aaData` (array of arrays) in older modes. We handle both.
     const rawData = json.data || json.aaData || [];
-
+    
     console.log("Raw tasks data from API:", rawData.slice(0, 2)); // Log first 2 rows for debugging
 
     const tasks: Task[] = rawData.map((row: any, idx: number) => {
@@ -256,7 +256,7 @@ export async function getTaskList(
 }
 
 // Helper function to strip HTML tags if ColdFusion sends back fully-formed <a> tags
-function extractTextFromHTML(htmlString: string): string {
+export function extractTextFromHTML(htmlString: string): string {
   if (typeof htmlString !== 'string') return htmlString;
   try {
     const parser = new DOMParser();
@@ -265,6 +265,21 @@ function extractTextFromHTML(htmlString: string): string {
   } catch (e) {
     // Fallback regex to strip tags if DOMParser is unsupported
     return htmlString.replace(/<\/?[^>]+(>|$)/g, "").trim().replace(/\s+/g, ' ');
+  }
+}
+
+// Helper function to extract href attribute from HTML strings
+export function extractHrefFromHTML(htmlString: string): string | null {
+  if (typeof htmlString !== 'string' || !htmlString) return null;
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    const firstAnchor = doc.querySelector('a');
+    return firstAnchor ? firstAnchor.getAttribute('href') : null;
+  } catch (e) {
+    // Fallback regex if DOMParser is unavailable or fails
+    const match = htmlString.match(/<a\s+[^>]*href=["']([^"']*)["']/i);
+    return match ? match[1] : null;
   }
 }
 
@@ -292,6 +307,41 @@ export async function setCurrentFacility(facilityId: string | number): Promise<v
     }
   } catch (error) {
     console.error('Error updating facility:', error);
+  }
+}
+
+export interface MarkTasksResponse {
+  isSuccess: number;
+  errorMessage?: string;
+  successMessage?: string;
+}
+
+export async function markTasksCompleted(taskIds: number[]): Promise<MarkTasksResponse> {
+  const idsStr = taskIds.join(',');
+  const response = await fetch(`/Taskboard/MarkTasksCompleted?listids=${encodeURIComponent(idsStr)}`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      // 'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const rawText = await response.text();
+  try {
+    const json = JSON.parse(rawText);
+    return {
+      isSuccess: json.isSuccess !== undefined ? Number(json.isSuccess) : (json.ISSUCCESS !== undefined ? Number(json.ISSUCCESS) : 0),
+      errorMessage: json.errorMessage || json.ERRORMESSAGE || '',
+      successMessage: json.successMessage || json.SUCCESSMESSAGE || ''
+    };
+  } catch (e) {
+    throw new Error(`Failed to parse server response: ${rawText}`);
   }
 }
 
