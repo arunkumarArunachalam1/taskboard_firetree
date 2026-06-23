@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown, ExternalLink, Plus } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { TaskListResponse, Task, FacilityStaff } from '../../types/dashboard.types';
@@ -33,7 +33,7 @@ export const appendOrUpdateReturnTo = (urlStr: string, returnToValue: string, ta
     const isAbsolute = urlStr.startsWith('http://') || urlStr.startsWith('https://');
     const dummyBase = 'http://dummy.com';
     const parsedUrl = new URL(urlStr, isAbsolute ? undefined : dummyBase);
-    
+
     const originalReturnTo = parsedUrl.searchParams.get('returnTo');
     if (originalReturnTo) {
       let newReturnTo = originalReturnTo;
@@ -52,7 +52,7 @@ export const appendOrUpdateReturnTo = (urlStr: string, returnToValue: string, ta
     if (taskName) {
       parsedUrl.searchParams.set('taskName', taskName);
     }
-    
+
     return isAbsolute ? parsedUrl.toString() : (parsedUrl.pathname + parsedUrl.search + parsedUrl.hash);
   } catch (e) {
     let cleanUrl = urlStr;
@@ -73,7 +73,7 @@ export const appendOrUpdateReturnTo = (urlStr: string, returnToValue: string, ta
             updatedOriginal = updatedOriginal + (updatedOriginal.includes('?') ? '&' : '?') + `returnTo=${encodeURIComponent(normalizedReturnTo)}`;
           }
           cleanUrl = cleanUrl.replace(/returnTo=[^&]*/, `returnTo=${encodeURIComponent(updatedOriginal)}`);
-        } catch (err) {}
+        } catch (err) { }
       } else {
         cleanUrl = cleanUrl.replace(/returnTo=[^&]*/, `returnTo=${encodeURIComponent(normalizedReturnTo)}`);
       }
@@ -160,6 +160,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [staffSearch, setStaffSearch] = useState('');
   const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
 
   // Custom Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -208,19 +209,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const totalPages = Math.ceil(data.total / data.pageSize);
   const filtered = data.tasks;
 
-  const handleRowClick = (task: Task, e: React.MouseEvent<HTMLTableRowElement>) => {
-    const target = e.target as HTMLElement;
-    if (
-      target.tagName === 'A' ||
-      target.tagName === 'INPUT' ||
-      target.tagName === 'BUTTON' ||
-      target.closest('a') ||
-      target.closest('input') ||
-      target.closest('button')
-    ) {
-      return;
-    }
-
+  const navigateToTask = (task: Task) => {
     const rawUrl = extractHrefFromHTML(task.TaskDescription) || extractHrefFromHTML(task.TaskName) || extractHrefFromHTML(task.ClientName);
     if (rawUrl) {
       let url = rawUrl;
@@ -247,6 +236,22 @@ const TaskTable: React.FC<TaskTableProps> = ({
     }
   };
 
+  const handleRowClick = (task: Task, e: React.MouseEvent<HTMLTableRowElement>) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === 'A' ||
+      target.tagName === 'INPUT' ||
+      target.tagName === 'BUTTON' ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('button')
+    ) {
+      return;
+    }
+
+    navigateToTask(task);
+  };
+
   const handleTableClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     const anchor = target.tagName === 'A' ? target as HTMLAnchorElement : target.closest('a');
@@ -269,14 +274,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
         // Always override or append the returnTo parameter so the user redirects back to the React Taskboard
         const returnToUrl = window.location.pathname + window.location.search;
-        
+
         // Find task details from the row
         const row = target.closest('tr');
         const taskIdStr = row?.getAttribute('data-task-id');
         const taskId = taskIdStr ? parseInt(taskIdStr) : null;
         const task = taskId ? data.tasks.find(t => t.TaskID === taskId) : null;
         const cleanTaskName = task ? extractTextFromHTML(task.TaskName) : undefined;
-        
+
         url = appendOrUpdateReturnTo(url, returnToUrl, cleanTaskName);
 
         window.location.href = url;
@@ -427,13 +432,70 @@ const TaskTable: React.FC<TaskTableProps> = ({
     return [1, '…', page - 1, page, page + 1, '…', totalPages];
   };
 
+  const renderNewTaskDropdown = (alignRight: boolean) => (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={() => setIsNewTaskOpen(!isNewTaskOpen)}
+        className="btn-new-task"
+      >
+        <Plus size={14} strokeWidth={2.5} />
+        New Task
+        <ChevronDown size={14} style={{ marginLeft: '2px' }} />
+      </button>
+
+      <AnimatePresence>
+        {isNewTaskOpen && (
+          <>
+            <div
+              onClick={() => setIsNewTaskOpen(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 90 }}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 5, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 5, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              style={{
+                position: 'absolute', top: '100%', [alignRight ? 'right' : 'left']: 0, marginTop: 4,
+                backgroundColor: '#fff', borderRadius: 6,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                border: '1px solid var(--border)',
+                minWidth: 160, zIndex: 100, overflow: 'hidden'
+              }}
+            >
+              <button
+                className="taskboard-dropdown-option"
+                onClick={() => {
+                  setIsNewTaskOpen(false);
+                  window.location.href = '/Task/NewTask'; // Adjust as needed
+                }}
+              >
+                General Task
+              </button>
+              <button
+                className="taskboard-dropdown-option"
+                onClick={() => {
+                  setIsNewTaskOpen(false);
+                  window.location.href = '/Task/NewWhereabouts'; // Adjust as needed
+                }}
+              >
+                Whereabouts Task
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
   return (
     <div className="table-card">
       {/* Header bar */}
       <div style={{
         padding: '12px 18px', borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10
+        display: 'flex', alignItems: 'center', gap: 16
       }}>
+        {/* Left: Heading */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Tasks</span>
@@ -443,9 +505,49 @@ const TaskTable: React.FC<TaskTableProps> = ({
             }}>{data.total}</span>
           </div>
 
-          <AnimatePresence>
+          <AnimatePresence mode="popLayout">
+            {selectedIds.length === 0 && (
+              <motion.div
+                key="new-task-left"
+                initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {renderNewTaskDropdown(false)}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Center: Bulk Actions (flex-1 prevents right side from shifting) */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <AnimatePresence mode="popLayout">
             {selectedIds.length > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                transition={{ duration: 0.2 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                <div className="bulk-selected-badge">
+                  <span>{selectedIds.length} Selected</span>
+                  <button
+                    onClick={() => setSelectedIds([])}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      padding: 0, display: 'flex', alignItems: 'center',
+                      color: '#64748B', marginLeft: 8, transition: 'color 0.15s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = '#0F172A'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#64748B'}
+                    title="Deselect All"
+                  >
+                    <X size={14} strokeWidth={3} />
+                  </button>
+                </div>
+
                 <motion.button
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -454,7 +556,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   className="btn-bulk-complete"
                 >
                   <CheckCircle2 size={14} strokeWidth={2.5} />
-                  Bulk Mark Complete ({selectedIds.length})
+                  Bulk Complete
                 </motion.button>
 
                 <motion.button
@@ -465,13 +567,29 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   className="btn-bulk-reassign"
                 >
                   <UserPlus size={14} strokeWidth={2.5} />
-                  Bulk Reassign ({selectedIds.length})
+                  Reassign
                 </motion.button>
-              </div>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
-        <div>
+
+        {/* Right: New Task & Search */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <AnimatePresence mode="popLayout">
+            {selectedIds.length > 0 && (
+              <motion.div
+                key="new-task-right"
+                initial={{ opacity: 0, scale: 0.95, x: 10 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.95, x: 10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {renderNewTaskDropdown(true)}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <input
             type="text"
             placeholder="Search tasks, clients, assignees (Press Enter)…"
@@ -561,8 +679,19 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <td>
                     <div dangerouslySetInnerHTML={{ __html: task.TaskName }} />
                   </td>
-                  <td>
-                    <div dangerouslySetInnerHTML={{ __html: task.TaskDescription }} />
+                  <td style={{ maxWidth: '300px' }}>
+                    <div
+                      dangerouslySetInnerHTML={{ __html: task.TaskDescription }}
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 4,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        wordBreak: 'break-word'
+                      }}
+                      title={extractTextFromHTML(task.TaskDescription)}
+                    />
                   </td>
                   <td style={{ textAlign: 'center' }}>
                     <span dangerouslySetInnerHTML={{ __html: task.CreatedBy }} />
@@ -592,15 +721,27 @@ const TaskTable: React.FC<TaskTableProps> = ({
                           title="Mark Complete"
                           className="btn-action-complete"
                         >
-                          <Check size={14} strokeWidth={2.2} />
+                          <Check size={12} strokeWidth={2.5} />
                         </button>
                         <button
                           onClick={() => handleOpenReassignModal([task.TaskID])}
                           title="Reassign Task"
                           className="btn-action-reassign"
                         >
-                          <User size={14} strokeWidth={2.2} />
+                          <User size={12} strokeWidth={2.5} />
                         </button>
+                        {(extractHrefFromHTML(task.TaskDescription) || extractHrefFromHTML(task.TaskName) || extractHrefFromHTML(task.ClientName)) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigateToTask(task);
+                            }}
+                            title="Open Linked Page"
+                            className="btn-action-view"
+                          >
+                            <ExternalLink size={12} strokeWidth={2.5} />
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <span style={{ color: 'var(--green)', fontWeight: 600, fontSize: '11px' }}>Completed</span>

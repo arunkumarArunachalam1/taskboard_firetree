@@ -315,12 +315,11 @@
       }
 
       &.row-late {
-        background-color: #FFF2EF;
-        color: #DD5826;
+        background-color: #FEF2F2;
       }
 
       &.row-late:hover {
-        background-color: rgba(240, 191, 76, 0.15);
+        background-color: #FEE2E2;
       }
 
       &:last-child {
@@ -377,6 +376,7 @@
     cursor: pointer;
     transition: border-color 0.15s;
   }
+
   .action-circle:hover {
     border-color: #9CA3AF;
   }
@@ -387,70 +387,75 @@
   .btn-action-view {
     color: #ffffff;
     border: none;
-    border-radius: 6px;
-    width: 28px;
-    height: 28px;
+    border-radius: 50%;
+    /* Make them perfectly circular for a premium look */
+    width: 22px;
+    height: 22px;
     padding: 0;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
+    overflow: hidden;
   }
 
   .btn-action-complete {
-    background: #22C55E;
-    box-shadow: 0 1px 3px rgba(34, 197, 94, 0.25);
+    background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
+    box-shadow: 0 1px 3px rgba(34, 197, 94, 0.3);
 
     &:hover {
-      background: #16A34A;
-      box-shadow: 0 2px 6px rgba(34, 197, 94, 0.35);
+      background: linear-gradient(135deg, #16A34A 0%, #15803D 100%);
+      box-shadow: 0 4px 10px rgba(34, 197, 94, 0.4);
       transform: translateY(-1px);
     }
 
     &:active {
-      transform: translateY(0) scale(0.96);
+      transform: translateY(0) scale(0.95);
+      box-shadow: 0 1px 2px rgba(34, 197, 94, 0.2);
     }
   }
 
   .btn-action-reassign {
-    background: #3B82F6;
-    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.25);
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
 
     &:hover {
-      background: #2563EB;
-      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);
+      background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
       transform: translateY(-1px);
     }
 
     &:active {
-      transform: translateY(0) scale(0.96);
+      transform: translateY(0) scale(0.95);
+      box-shadow: 0 1px 2px rgba(59, 130, 246, 0.2);
     }
   }
 
   .btn-action-view {
-    background: #8B5CF6;
-    box-shadow: 0 1px 3px rgba(139, 92, 246, 0.25);
+    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+    box-shadow: 0 1px 3px rgba(139, 92, 246, 0.3);
 
     &:hover {
-      background: #7C3AED;
-      box-shadow: 0 2px 6px rgba(139, 92, 246, 0.35);
+      background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+      box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
       transform: translateY(-1px);
     }
 
     &:active {
-      transform: translateY(0) scale(0.96);
+      transform: translateY(0) scale(0.95);
+      box-shadow: 0 1px 2px rgba(139, 92, 246, 0.2);
     }
   }
 
   /* Premium Bulk Buttons */
   .btn-bulk-complete {
-    background: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
-    color: #ffffff;
-    border: none;
+    background: rgba(34, 197, 94, 0.05);
+    color: #16A34A;
+    border: 1px solid rgba(34, 197, 94, 0.3);
     border-radius: 8px;
-    padding: 8px 16px;
+    padding: 7px 15px;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
@@ -458,22 +463,66 @@
     align-items: center;
     gap: 6px;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
-      background: linear-gradient(135deg, #16A34A 0%, #15803D 100%);
+      transform: translateY(-1px);
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.5);
+      color: #15803D;
+      box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.1);
     }
 
     &:active {
       transform: translateY(0px);
-      box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+      box-shadow: none;
     }
   }
 
   .btn-bulk-reassign {
+    background: rgba(59, 130, 246, 0.05);
+    color: #2563EB;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    padding: 7px 15px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+
+    &:hover {
+      transform: translateY(-1px);
+      background: rgba(59, 130, 246, 0.1);
+      border-color: rgba(59, 130, 246, 0.5);
+      color: #1D4ED8;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.1);
+    }
+
+    &:active {
+      transform: translateY(0px);
+      box-shadow: none;
+    }
+  }
+
+  .bulk-selected-badge {
+    background: #F1F5F9;
+    color: #475569;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #E2E8F0;
+  }
+
+  .btn-new-task {
     background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
     color: #ffffff;
     border: none;
@@ -507,7 +556,8 @@
     justify-content: center;
     align-items: center;
   }
-  .client-name-wrapper > div {
+
+  .client-name-wrapper>div {
     display: inline-block !important;
     text-align: left;
   }
@@ -1104,6 +1154,10 @@ h1.page-title {
   font-weight: 400;
   margin: 1px 0;
   min-height: 40px;
+  background-color: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
 }
 
 .taskboard-dropdown-option:hover {
@@ -1243,9 +1297,17 @@ h1.page-title {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-.taskboard-alert-icon.complete { color: #16A34A; }
-.taskboard-alert-icon.reassign { color: #2563EB; }
-.taskboard-alert-icon.warning { color: #D97706; }
+.taskboard-alert-icon.complete {
+  color: #16A34A;
+}
+
+.taskboard-alert-icon.reassign {
+  color: #2563EB;
+}
+
+.taskboard-alert-icon.warning {
+  color: #D97706;
+}
 
 .taskboard-alert-content {
   display: flex;
