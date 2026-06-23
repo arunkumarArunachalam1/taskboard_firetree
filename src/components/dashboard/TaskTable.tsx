@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { TaskListResponse, Task, FacilityStaff } from '../../types/dashboard.types';
 import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted, getFacilityStaff, assignTasks } from '../../services/dashboard.service';
+import { useAppContext } from '../../context/AppContext';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -43,8 +44,6 @@ export const appendOrUpdateReturnTo = (urlStr: string, returnToValue: string, ta
         newReturnTo = newReturnTo + (newReturnTo.includes('?') ? '&' : '?') + `returnTo=${encodeURIComponent(normalizedReturnTo)}`;
       }
       parsedUrl.searchParams.set('returnTo', newReturnTo);
-      // Remove IsTask so the legacy Document page does not override the returnTo parameter
-      parsedUrl.searchParams.delete('IsTask');
     } else {
       parsedUrl.searchParams.set('returnTo', normalizedReturnTo);
     }
@@ -57,11 +56,6 @@ export const appendOrUpdateReturnTo = (urlStr: string, returnToValue: string, ta
   } catch (e) {
     let cleanUrl = urlStr;
     if (cleanUrl.includes('returnTo=')) {
-      if (cleanUrl.includes('IsTask=')) {
-        cleanUrl = cleanUrl.replace(/([&?])IsTask=[^&]*/, '');
-        // Clean up double query separators if any were created
-        cleanUrl = cleanUrl.replace(/\?&/, '?').replace(/&&/, '&');
-      }
       const match = cleanUrl.match(/returnTo=([^&]*)/);
       if (match) {
         try {
@@ -149,6 +143,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
   search, onSearchChange,
   sortColumn, sortDir, onSortChange
 }) => {
+  const userContext = useAppContext();
+  const roles = Object.keys(userContext?.roles || {}).map(r => r.toLowerCase());
+  const isAdmin = roles.includes('administrator');
+  const isHigherRole = isAdmin || roles.includes('facility director') || roles.includes('clinical supervisor');
+
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
@@ -716,13 +715,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                     {task.Status !== 'Completed' ? (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                        <button
-                          onClick={() => handleMarkSingleComplete(task.TaskID, task.TaskName)}
-                          title="Mark Complete"
-                          className="btn-action-complete"
-                        >
-                          <Check size={12} strokeWidth={2.5} />
-                        </button>
+                        {(!task.IsAutoClose || isHigherRole) && (task.TaskTypeID !== 3 || isAdmin) && (
+                          <button
+                            onClick={() => handleMarkSingleComplete(task.TaskID, task.TaskName)}
+                            title="Mark Complete"
+                            className="btn-action-complete"
+                          >
+                            <Check size={12} strokeWidth={2.5} />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleOpenReassignModal([task.TaskID])}
                           title="Reassign Task"

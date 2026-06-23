@@ -317,7 +317,15 @@ export async function setCurrentFacility(facilityId: string | number): Promise<v
     });
 
     if (response.ok) {
-      window.location.reload();
+      // If the URL has a FacilityID param (used by legacy dropdown), we must update it
+      // so the legacy dropdown reflects the new facility upon reload.
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('FacilityID')) {
+        url.searchParams.set('FacilityID', String(facilityId));
+        window.location.href = url.toString();
+      } else {
+        window.location.reload();
+      }
     } else {
       console.error('Failed to update facility', response.statusText);
     }
