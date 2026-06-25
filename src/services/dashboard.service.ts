@@ -110,7 +110,7 @@ async function getTableListingInfo(): Promise<{ id: string, listColumns: string 
     });
 
     if (!response.ok) throw new Error(`API returned ${response.status}`);
-    
+
     const data = await response.json();
     if (data.success && data.tableListingID) {
       cachedTableListingInfo = {
@@ -143,7 +143,7 @@ export async function getTaskList(
 
 
   const start = (page - 1) * pageSize;
-  
+
   // Build DataTables server-side parameters
   let dtParams = `&draw=1&start=${start}&length=${pageSize}`;
   if (options.search) {
@@ -152,12 +152,12 @@ export async function getTaskList(
   if (options.sortColumn !== undefined) {
     dtParams += `&order[0][column]=${options.sortColumn}&order[0][dir]=${options.sortDir || 'asc'}`;
   }
-  
+
   // Pass a default filter (Completed = 0) in the DataTables format.
   // This is required to force ColdFusion to re-evaluate volatile parameters
   // because CORE.cfc skips query preparation if there are no filters.
   const filterParams = `&tableFilters=tableFilter.Completed&tableFilter.Completed=[0][Completed][=][0][]`;
-  
+
   const tableListingInfo = await getTableListingInfo();
   if (tableListingInfo.listColumns) {
     dtParams += `&listColumns=${encodeURIComponent(tableListingInfo.listColumns)}`;
@@ -206,7 +206,7 @@ export async function getTaskList(
     // The legacy CF API returns `data` (array of objects) when returnResultsType is "Data" (default)
     // and `aaData` (array of arrays) in older modes. We handle both.
     const rawData = json.data || json.aaData || [];
-    
+
     console.log("Raw tasks data from API:", rawData.slice(0, 2)); // Log first 2 rows for debugging
 
     const tasks: Task[] = rawData.map((row: any, idx: number) => {
@@ -373,7 +373,7 @@ export async function markTasksCompleted(taskIds: number[]): Promise<MarkTasksRe
 export function parseCFQuery<T>(json: any): T[] {
   if (!json) return [];
   if (Array.isArray(json)) return json as T[];
-  
+
   // Standard CF serialization maps a query object to:
   // { COLUMNS: ["COL1", "COL2"], DATA: [["Val1", "Val2"], ["Val3", "Val4"]] }
   if (json.COLUMNS && json.DATA) {
@@ -410,6 +410,54 @@ export async function getFacilityStaff(): Promise<FacilityStaff[]> {
 
   const json = await response.json();
   return parseCFQuery<FacilityStaff>(json);
+}
+
+export interface ClientOption {
+  DISPLAY?: string;
+  Display?: string;
+  display?: string;
+  VALUE?: number;
+  Value?: number;
+  value?: number;
+}
+
+export async function getClientList(): Promise<ClientOption[]> {
+  const response = await fetch('/ReactTaskBoard/GetClientList', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const json = await response.json();
+  return parseCFQuery<ClientOption>(json);
+}
+
+export async function saveGeneralTask(payload: URLSearchParams): Promise<any> {
+  const response = await fetch('/ReactTaskBoard/SaveGeneralTask', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include',
+    body: payload.toString()
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
 }
 
 export async function assignTasks(taskIds: number[], assignedToId: number | string): Promise<AssignTasksResponse> {

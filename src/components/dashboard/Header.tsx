@@ -50,6 +50,7 @@ const Navbar: React.FC<NavbarProps> = () => {
     <nav className="react-navbar">
       {/* Left */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+        {context.facilities && context.facilities.length > 1 && (
         <div className="navbar-brand" style={{ padding: 0 }}>
           <div className="facility-dropdown-container" ref={containerRef}>
             <button 
@@ -103,6 +104,7 @@ const Navbar: React.FC<NavbarProps> = () => {
             )}
           </div>
         </div>
+        )}
       </div>
 
       {/* Right */}
@@ -141,7 +143,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({ onFilter, user }) => {
       </div>
       
       <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-        {context.facilities && context.facilities.length > 0 && (
+        {context.facilities && context.facilities.length > 1 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-text)' }}>Facility:</span>
             <select

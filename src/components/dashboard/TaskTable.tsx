@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { TaskListResponse, Task, FacilityStaff } from '../../types/dashboard.types';
 import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted, getFacilityStaff, assignTasks } from '../../services/dashboard.service';
-import { useAppContext } from '../../context/AppContext';
+import { NewGeneralTaskModal } from './NewGeneralTaskModal';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -143,13 +143,26 @@ const TaskTable: React.FC<TaskTableProps> = ({
   search, onSearchChange,
   sortColumn, sortDir, onSortChange
 }) => {
-  const userContext = useAppContext();
-  const roles = Object.keys(userContext?.roles || {}).map(r => r.toLowerCase());
-  const isAdmin = roles.includes('administrator');
-  const isHigherRole = isAdmin || roles.includes('facility director') || roles.includes('clinical supervisor');
-
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  
+  const [localSearch, setLocalSearch] = useState(search);
+
+  useEffect(() => {
+    // Only sync if cleared externally to prevent cursor jumping while typing
+    if (search === '') {
+      setLocalSearch('');
+    }
+  }, [search]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (localSearch !== search) {
+        onSearchChange(localSearch);
+      }
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [localSearch, search, onSearchChange]);
 
   // Reassign Modal State
   const [isReassignOpen, setIsReassignOpen] = useState(false);
@@ -160,6 +173,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
+  const [isGeneralTaskModalOpen, setIsGeneralTaskModalOpen] = useState(false);
 
   // Custom Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -203,7 +217,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     setToast({ message, type });
   };
 
-  if (loading || !data) return <TableSkeleton />;
+  if (!data) return <TableSkeleton />;
 
   const totalPages = Math.ceil(data.total / data.pageSize);
   const filtered = data.tasks;
@@ -466,7 +480,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 className="taskboard-dropdown-option"
                 onClick={() => {
                   setIsNewTaskOpen(false);
-                  window.location.href = '/Task/NewTask'; // Adjust as needed
+                  setIsGeneralTaskModalOpen(true);
                 }}
               >
                 General Task
@@ -591,13 +605,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
           <input
             type="text"
-            placeholder="Search tasks, clients, assignees (Press Enter)…"
-            defaultValue={search}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                onSearchChange(e.currentTarget.value);
-              }
-            }}
+            placeholder="Search tasks, clients, assignees…"
+            value={localSearch}
+            onChange={e => setLocalSearch(e.target.value)}
             style={{
               padding: '6px 12px', borderRadius: 6, fontSize: 12,
               border: '1px solid #D1D5DB', outline: 'none',
@@ -651,7 +661,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: 'var(--gray-text)', fontSize: 13 }}>
@@ -715,15 +725,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                     {task.Status !== 'Completed' ? (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                        {(!task.IsAutoClose || isHigherRole) && (task.TaskTypeID !== 3 || isAdmin) && (
-                          <button
-                            onClick={() => handleMarkSingleComplete(task.TaskID, task.TaskName)}
-                            title="Mark Complete"
-                            className="btn-action-complete"
-                          >
-                            <Check size={12} strokeWidth={2.5} />
-                          </button>
-                        )}
+                        <button
+                          onClick={() => handleMarkSingleComplete(task.TaskID, task.TaskName)}
+                          title="Mark Complete"
+                          className="btn-action-complete"
+                        >
+                          <Check size={12} strokeWidth={2.5} />
+                        </button>
                         <button
                           onClick={() => handleOpenReassignModal([task.TaskID])}
                           title="Reassign Task"
@@ -1084,6 +1092,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         setConfirmDialog(null);
                       }}
                       className={`taskboard-btn-primary ${type === 'complete' ? 'green' : type === 'reassign' ? 'blue' : 'amber'}`}
+                      style={{ color: '#ffffff' }}
                     >
                       Confirm
                     </button>
@@ -1151,6 +1160,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
         </AnimatePresence>,
         document.body
       )}
+
+      <NewGeneralTaskModal 
+        isOpen={isGeneralTaskModalOpen} 
+        onClose={() => setIsGeneralTaskModalOpen(false)} 
+        onTaskCreated={() => window.location.reload()} 
+      />
+
     </div>
   );
 };

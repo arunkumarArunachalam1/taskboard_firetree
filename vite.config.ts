@@ -2,7 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === 'serve' ? '/' : '/fw/taskboard-react/dist/',
   plugins: [
     react(),
     tailwindcss(),
@@ -24,6 +25,8 @@ export default defineConfig({
     proxy: {
       '/CORE': 'http://127.0.0.1:8080',
       '/Taskboard': 'http://127.0.0.1:8080',
+      '/ReactTaskBoard': 'http://127.0.0.1:8080',
+      '/Home': 'http://127.0.0.1:8080',
     }
   }
-})
+}))
