@@ -4,10 +4,19 @@ import './index.css'
 import App from './App.tsx'
 import { AppProvider } from './context/AppContext.tsx'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <AppProvider>
-      <App />
-    </AppProvider>
-  </StrictMode>,
-)
+// Embedded mount first, fall back to dev mount
+const container = 
+  document.getElementById('react-root') || 
+  document.getElementById('root');
+
+if (container) {
+  createRoot(container).render(
+    <StrictMode>
+      <AppProvider>
+        <App />
+      </AppProvider>
+    </StrictMode>,
+  )
+} else {
+  console.error('No mount point found');
+}

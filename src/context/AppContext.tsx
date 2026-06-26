@@ -43,10 +43,19 @@ function getCaseInsensitiveProp(obj: any, key: string, fallback: any = undefined
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [userContext, setUserContext] = useState<AppUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Start with injected data if available (synchronous for UAT embedded)
+  const [userContext, setUserContext] = useState<AppUser | null>(
+    window.__APP_CONTEXT__ || null
+  );
+  const [loading, setLoading] = useState(!window.__APP_CONTEXT__);
 
   useEffect(() => {
+    // If we already have the context from UAT inject, don't fetch
+    if (userContext) {
+      setServiceContext(userContext);
+      return;
+    }
+
     async function fetchSession() {
       try {
         const response = await fetch('/ReactTaskBoard/getSessionContext', {
@@ -85,9 +94,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // Redirect if session is missing or invalid (Enforce authentication even for local dev server direct access)
       alert("Your session has timed out or is invalid. You will be redirected to the login page.");
-      const loginUrl = typeof window !== 'undefined' && window.location.port === '5173'
-        ? `http://${window.location.hostname}:8080/Login`
-        : '/Login';
+      const loginUrl = import.meta.env.VITE_LOGIN_URL || '/Login';
       window.location.href = loginUrl;
     }
 
