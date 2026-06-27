@@ -4,7 +4,7 @@ import { AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Header';
 import KpiGrid from './KpiGrid';
-import ChartsSection from './ChartsSection';
+// import ChartsSection from './ChartsSection';
 import TaskTable from './TaskTable';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useAppContext } from '../../context/AppContext';
@@ -12,7 +12,7 @@ import { useAppContext } from '../../context/AppContext';
 const DashboardPage: React.FC = () => {
   const {
     summary, loadingSummary,
-    charts, loadingCharts,
+    // charts, loadingCharts,
     tasks, loadingTasks, page, fetchTasks,
     search, sortColumn, sortDir,
     error, setError

@@ -485,7 +485,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               >
                 General Task
               </button>
-              <button
+              {/* <button
                 className="taskboard-dropdown-option"
                 onClick={() => {
                   setIsNewTaskOpen(false);
@@ -493,7 +493,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 }}
               >
                 Whereabouts Task
-              </button>
+              </button> */}
             </motion.div>
           </>
         )}
