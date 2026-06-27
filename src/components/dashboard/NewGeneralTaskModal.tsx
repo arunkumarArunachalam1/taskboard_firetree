@@ -220,8 +220,8 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
           setFieldErrors(result.ERRORS || result.errors);
         }
       }
-    } catch (err) {
-      setError('A network error occurred. Please try again.');
+    } catch (err: any) {
+      setError(err.message || 'A network error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
