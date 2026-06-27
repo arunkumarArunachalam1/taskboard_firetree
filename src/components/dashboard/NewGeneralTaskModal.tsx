@@ -195,15 +195,19 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
     setFieldErrors({});
 
     try {
-      const payload = new URLSearchParams();
+      if (!formData.TaskDescription || formData.TaskDescription.trim() === '') {
+        setError('Please provide a task description.');
+        setLoading(false);
+        return;
+      }
+
+      const payload = new FormData();
       payload.append('Task.ClientCaseFileID', formData.ClientCaseFileID);
       payload.append('Task.TaskName', formData.TaskName);
       payload.append('Task.TaskDescription', formData.TaskDescription);
       payload.append('Task.ExpectedStartDate', formData.ExpectedStartDate);
       payload.append('Task.ExpectedDueDate', formData.ExpectedDueDate);
-      if (formData.AssignTo) {
-        payload.append('Task.AssignedTo', formData.AssignTo);
-      }
+      payload.append('Task.AssignedTo', formData.AssignTo || '');
 
       const result = await saveGeneralTask(payload);
 
@@ -322,11 +326,12 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Description</label>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Description *</label>
                   <textarea
                     name="TaskDescription"
                     value={formData.TaskDescription}
                     onChange={handleChange}
+                    required
                     style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box', minHeight: 80 }}
                   />
                 </div>

@@ -440,24 +440,28 @@ export async function getClientList(): Promise<ClientOption[]> {
   return parseCFQuery<ClientOption>(json);
 }
 
-export async function saveGeneralTask(payload: URLSearchParams): Promise<any> {
+export async function saveGeneralTask(payload: FormData): Promise<any> {
   const response = await fetch('/ReactTaskBoard/SaveGeneralTask', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
       'Accept': 'application/json',
       'X-CSRF-Token': activeContext?.csrfToken || '',
       'X-Requested-With': 'React'
     },
     credentials: 'include',
-    body: payload.toString()
+    body: payload
   });
 
   if (!response.ok) {
     throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
   }
 
-  return response.json();
+  const rawText = await response.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Failed to parse server response: ${rawText}`);
+  }
 }
 
 export async function assignTasks(taskIds: number[], assignedToId: number | string): Promise<AssignTasksResponse> {
