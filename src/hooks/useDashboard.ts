@@ -7,6 +7,7 @@ export function useDashboard() {
   const [charts, setCharts] = useState<DashboardCharts | null>(null);
   const [tasks, setTasks] = useState<TaskListResponse | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState('');
   const [sortColumn, setSortColumn] = useState<number | undefined>(undefined);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -21,16 +22,18 @@ export function useDashboard() {
     p: number = 1,
     s?: string,
     col?: number,
-    dir?: 'asc' | 'desc'
+    dir?: 'asc' | 'desc',
+    sz?: number
   ) => {
     setLoadingTasks(true);
     setError(null);
     const currentSearch = s !== undefined ? s : search;
     const currentCol = col !== undefined ? col : sortColumn;
     const currentDir = dir !== undefined ? dir : sortDir;
+    const currentSz = sz !== undefined ? sz : pageSize;
 
     try {
-      const data = await getTaskList(p, 15, {
+      const data = await getTaskList(p, currentSz, {
         search: currentSearch,
         sortColumn: currentCol,
         sortDir: currentDir
@@ -40,12 +43,13 @@ export function useDashboard() {
       if (s !== undefined) setSearch(s);
       if (col !== undefined) setSortColumn(col);
       if (dir !== undefined) setSortDir(dir);
+      if (sz !== undefined) setPageSize(sz);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch tasks');
     } finally {
       setLoadingTasks(false);
     }
-  }, [search, sortColumn, sortDir]);
+  }, [search, sortColumn, sortDir, pageSize]);
 
   useEffect(() => {
     getDashboardSummary()
@@ -66,7 +70,7 @@ export function useDashboard() {
     summary, loadingSummary,
     charts, loadingCharts,
     tasks, loadingTasks,
-    page, fetchTasks,
+    page, pageSize, fetchTasks,
     search, sortColumn, sortDir,
     error, setError
   };

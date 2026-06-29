@@ -497,3 +497,43 @@ export async function assignTasks(taskIds: number[], assignedToId: number | stri
   }
 }
 
+// ─── Whereabouts Task Mock Services ──────────────────────────────────────────────────
+
+export async function getClientEventDestinations(_clientId: string | number): Promise<{ value: string; label: string }[]> {
+  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+  await delay(300);
+  return [
+    { value: '101', label: 'Working at ACME Corp from 05/29/2026 08:00 to 05/29/2026 17:00' },
+    { value: '102', label: 'On Furlough from 05/29/2026 09:00 to 05/30/2026 18:00' }
+  ];
+}
+
+export async function getClientContacts(_clientId: string | number): Promise<{ value: string; label: string; phone: string }[]> {
+  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+  await delay(300);
+  return [
+    { value: '201', label: 'John Smith (Employer)', phone: '555-123-4567' },
+    { value: '202', label: 'Jane Doe (Sponsor)', phone: '555-987-6543' }
+  ];
+}
+
+export async function getContactMethods(): Promise<{ value: string; label: string }[]> {
+  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+  await delay(100);
+  return [
+    { value: '1', label: 'Phone Call' },
+    { value: '2', label: 'In Person' },
+    { value: '3', label: 'Email' },
+    { value: '4', label: 'Text Message' }
+  ];
+}
+
+export async function saveWhereaboutsTask(_taskData: any): Promise<{ isSuccess: number; successMessage: string; errorMessage: string }> {
+  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+  await delay(600);
+  return {
+    isSuccess: 1,
+    successMessage: 'Whereabouts Task successfully saved.',
+    errorMessage: ''
+  };
+}
