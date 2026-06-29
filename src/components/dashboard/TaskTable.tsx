@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown, ExternalLink, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown, ExternalLink, Plus, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { TaskListResponse, Task, FacilityStaff } from '../../types/dashboard.types';
 import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted, getFacilityStaff, assignTasks } from '../../services/dashboard.service';
 import { NewGeneralTaskModal } from './NewGeneralTaskModal';
+import { NewWhereaboutsTaskModal } from './NewWhereaboutsTaskModal';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -128,7 +129,9 @@ interface TaskTableProps {
   data: TaskListResponse | null;
   loading: boolean;
   page: number;
+  pageSize?: number;
   onPageChange: (p: number) => void;
+  onPageSizeChange?: (sz: number) => void;
   search: string;
   onSearchChange: (s: string) => void;
   sortColumn?: number;
@@ -139,13 +142,13 @@ interface TaskTableProps {
 // ── Component ─────────────────────────────────────────────────────────────
 
 const TaskTable: React.FC<TaskTableProps> = ({
-  data, loading, page, onPageChange,
+  data, loading, page, pageSize = 25, onPageChange, onPageSizeChange,
   search, onSearchChange,
   sortColumn, sortDir, onSortChange
 }) => {
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  
+
   const [localSearch, setLocalSearch] = useState(search);
 
   useEffect(() => {
@@ -174,6 +177,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isGeneralTaskModalOpen, setIsGeneralTaskModalOpen] = useState(false);
+  const [isWhereaboutsTaskModalOpen, setIsWhereaboutsTaskModalOpen] = useState(false);
 
   // Custom Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -485,21 +489,30 @@ const TaskTable: React.FC<TaskTableProps> = ({
               >
                 General Task
               </button>
-              {/* <button
+              <button
                 className="taskboard-dropdown-option"
                 onClick={() => {
                   setIsNewTaskOpen(false);
-                  window.location.href = '/Task/NewWhereabouts'; // Adjust as needed
+                  setIsWhereaboutsTaskModalOpen(true);
                 }}
               >
                 Whereabouts Task
-              </button> */}
+              </button>
             </motion.div>
           </>
         )}
       </AnimatePresence>
     </div>
   );
+
+  const renderSortIcon = (columnId: number) => {
+    if (sortColumn === columnId) {
+      return sortDir === 'asc' 
+        ? <ArrowUp size={14} style={{ display: 'inline-block', flexShrink: 0, color: '#2563EB', width: 14, height: 14 }} /> 
+        : <ArrowDown size={14} style={{ display: 'inline-block', flexShrink: 0, color: '#2563EB', width: 14, height: 14 }} />;
+    }
+    return <ArrowUpDown size={14} style={{ display: 'inline-block', flexShrink: 0, opacity: 0.3, color: '#4B5563', width: 14, height: 14 }} />;
+  };
 
   return (
     <div className="table-card">
@@ -632,29 +645,29 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   title="Select All"
                 />
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort(0)}>
-                Task Name {sortColumn === 0 && (sortDir === 'asc' ? '↑' : '↓')}
+              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleSort(0)}>
+                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Task Name <span style={{ marginLeft: 6 }}>{renderSortIcon(0)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort(1)}>
-                Description {sortColumn === 1 && (sortDir === 'asc' ? '↑' : '↓')}
+              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleSort(1)}>
+                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Description <span style={{ marginLeft: 6 }}>{renderSortIcon(1)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center' }} onClick={() => handleSort(2)}>
-                Created By {sortColumn === 2 && (sortDir === 'asc' ? '↑' : '↓')}
+              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={() => handleSort(2)}>
+                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Created By <span style={{ marginLeft: 6 }}>{renderSortIcon(2)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center' }} onClick={() => handleSort(3)}>
-                Client {sortColumn === 3 && (sortDir === 'asc' ? '↑' : '↓')}
+              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={() => handleSort(3)}>
+                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Client <span style={{ marginLeft: 6 }}>{renderSortIcon(3)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort(4)}>
-                Exp Start {sortColumn === 4 && (sortDir === 'asc' ? '↑' : '↓')}
+              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleSort(4)}>
+                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Exp Start <span style={{ marginLeft: 6 }}>{renderSortIcon(4)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort(5)}>
-                Due {sortColumn === 5 && (sortDir === 'asc' ? '↑' : '↓')}
+              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleSort(5)}>
+                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Due <span style={{ marginLeft: 6 }}>{renderSortIcon(5)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => handleSort(6)}>
-                Assigned To {sortColumn === 6 && (sortDir === 'asc' ? '↑' : '↓')}
+              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleSort(6)}>
+                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Assigned To <span style={{ marginLeft: 6 }}>{renderSortIcon(6)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center' }} onClick={() => handleSort(7)}>
-                Facility {sortColumn === 7 && (sortDir === 'asc' ? '↑' : '↓')}
+              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={() => handleSort(7)}>
+                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Facility <span style={{ marginLeft: 6 }}>{renderSortIcon(7)}</span></div>
               </th>
               <th style={{ userSelect: 'none', textAlign: 'center', width: '100px' }}>
                 Actions
@@ -765,9 +778,39 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
       {/* Pagination */}
       <div className="pagination">
-        <span className="page-info">
-          Showing <strong>{Math.min((page - 1) * data.pageSize + 1, data.total)}</strong>–<strong>{Math.min(page * data.pageSize, data.total)}</strong> of <strong>{data.total}</strong>
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--gray-text)', fontWeight: 600 }}>
+            <span>Show</span>
+            <select
+              value={pageSize}
+              onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+              style={{
+                padding: '4px 28px 4px 12px',
+                borderRadius: '4px',
+                border: '1px solid var(--border)',
+                fontSize: '13px',
+                background: '#fff',
+                cursor: 'pointer',
+                color: 'var(--text)',
+                outline: 'none',
+                appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 8px center',
+              }}
+            >
+              <option value={15}>15</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={75}>75</option>
+              <option value={100}>100</option>
+            </select>
+            <span>entries</span>
+          </div>
+          <span className="page-info" style={{ fontWeight: 500 }}>
+            Showing <strong>{Math.min((page - 1) * data.pageSize + 1, data.total)}</strong>–<strong>{Math.min(page * data.pageSize, data.total)}</strong> of <strong>{data.total}</strong>
+          </span>
+        </div>
         <div className="page-btns">
           <button className="page-btn" disabled={page <= 1} onClick={() => onPageChange(page - 1)} title="Previous">
             <ChevronLeft size={14} />
@@ -1161,10 +1204,22 @@ const TaskTable: React.FC<TaskTableProps> = ({
         document.body
       )}
 
-      <NewGeneralTaskModal 
-        isOpen={isGeneralTaskModalOpen} 
-        onClose={() => setIsGeneralTaskModalOpen(false)} 
-        onTaskCreated={() => window.location.reload()} 
+      <NewGeneralTaskModal
+        isOpen={isGeneralTaskModalOpen}
+        onClose={() => setIsGeneralTaskModalOpen(false)}
+        onTaskCreated={() => {
+          showToast('Task created successfully.', 'success');
+          // In a real app, trigger a re-fetch of the tasks here.
+        }}
+      />
+
+      <NewWhereaboutsTaskModal
+        isOpen={isWhereaboutsTaskModalOpen}
+        onClose={() => setIsWhereaboutsTaskModalOpen(false)}
+        onTaskCreated={() => {
+          showToast('Whereabouts Task created successfully.', 'success');
+          // In a real app, trigger a re-fetch of the tasks here.
+        }}
       />
 
     </div>
@@ -1172,3 +1227,4 @@ const TaskTable: React.FC<TaskTableProps> = ({
 };
 
 export default TaskTable;
+// Force sync
