@@ -21,10 +21,24 @@ const DashboardPage: React.FC = () => {
 
   const isIntegrated = typeof window !== 'undefined' && (window.location.port !== '5173' || !!(window as any).__IS_INTEGRATED__);
 
+  let primaryRole = Object.keys(context.roles)[0] || 'Staff';
+  for (const roleName in context.roles) {
+    const roleDetails = context.roles[roleName] as any;
+    if (roleDetails && typeof roleDetails === 'object') {
+      const isPrimary = Object.keys(roleDetails).some(
+        k => k.toLowerCase() === 'primary' && (roleDetails[k] === 1 || roleDetails[k] === '1' || roleDetails[k] === true || String(roleDetails[k]).toLowerCase() === 'true')
+      );
+      if (isPrimary) {
+        primaryRole = roleName;
+        break;
+      }
+    }
+  }
+
   const displayUser = {
     firstName: context.firstName,
     lastName: context.lastName,
-    role: Object.keys(context.roles)[0] || 'Staff'
+    role: primaryRole
   };
 
   return (
@@ -52,6 +66,7 @@ const DashboardPage: React.FC = () => {
           sortColumn={sortColumn}
           sortDir={sortDir}
           onSortChange={(col, dir) => fetchTasks(1, undefined, col, dir)}
+          onRefresh={() => fetchTasks(page)}
         />
       </div>
 

@@ -528,12 +528,45 @@ export async function getContactMethods(): Promise<{ value: string; label: strin
   ];
 }
 
-export async function saveWhereaboutsTask(_taskData: any): Promise<{ isSuccess: number; successMessage: string; errorMessage: string }> {
-  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-  await delay(600);
-  return {
-    isSuccess: 1,
-    successMessage: 'Whereabouts Task successfully saved.',
-    errorMessage: ''
-  };
+export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: number; successMessage?: string; errorMessage?: string }> {
+  const formData = new FormData();
+  formData.append('ClientEmploymentContactSchedule.ClientID', String(payload.clientId));
+  formData.append('ClientEmploymentContactSchedule.EmploymentScheduleContactTypeID', String(payload.methodId));
+  formData.append('ClientEmploymentContactSchedule.ExpectedStartDate', payload.expectedStartDate);
+  formData.append('ClientEmploymentContactSchedule.ContactTimeStart', payload.expectedStartTime);
+  formData.append('ClientEmploymentContactSchedule.ExpectedEndDate', payload.expectedEndDate);
+  formData.append('ClientEmploymentContactSchedule.ContactTimeEnd', payload.expectedEndTime);
+  formData.append('ClientEmploymentContactSchedule.CalendarClientWorkEventDestinationID', String(payload.destinationId));
+  formData.append('ClientEmploymentContactSchedule.ContactID', String(payload.contactId));
+  
+  if (payload.assignedTo) {
+    formData.append('ClientEmploymentContactSchedule.AssignTo', String(payload.assignedTo));
+  }
+
+  const response = await fetch('/ReactTaskBoard/SaveWhereaboutsTask', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include',
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const rawText = await response.text();
+  try {
+    const json = JSON.parse(rawText);
+    return {
+      isSuccess: json.isSuccess !== undefined ? Number(json.isSuccess) : (json.ISSUCCESS !== undefined ? Number(json.ISSUCCESS) : 0),
+      errorMessage: json.errorMessage || json.ERRORMESSAGE || '',
+      successMessage: json.successMessage || json.SUCCESSMESSAGE || ''
+    };
+  } catch (e) {
+    throw new Error(`Failed to parse server response: ${rawText}`);
+  }
 }

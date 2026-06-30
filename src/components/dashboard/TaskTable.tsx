@@ -137,6 +137,7 @@ interface TaskTableProps {
   sortColumn?: number;
   sortDir: 'asc' | 'desc';
   onSortChange: (col: number, dir: 'asc' | 'desc') => void;
+  onRefresh?: () => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────
@@ -144,7 +145,7 @@ interface TaskTableProps {
 const TaskTable: React.FC<TaskTableProps> = ({
   data, loading, page, pageSize = 25, onPageChange, onPageSizeChange,
   search, onSearchChange,
-  sortColumn, sortDir, onSortChange
+  sortColumn, sortDir, onSortChange, onRefresh
 }) => {
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -1209,7 +1210,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         onClose={() => setIsGeneralTaskModalOpen(false)}
         onTaskCreated={() => {
           showToast('Task created successfully.', 'success');
-          // In a real app, trigger a re-fetch of the tasks here.
+          if (onRefresh) onRefresh();
         }}
       />
 
@@ -1218,7 +1219,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         onClose={() => setIsWhereaboutsTaskModalOpen(false)}
         onTaskCreated={() => {
           showToast('Whereabouts Task created successfully.', 'success');
-          // In a real app, trigger a re-fetch of the tasks here.
+          if (onRefresh) onRefresh();
         }}
       />
 
