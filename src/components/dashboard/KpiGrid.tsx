@@ -36,7 +36,7 @@ const KpiGrid: React.FC<KpiGridProps> = ({ data, loading }) => (
       <>
         <KpiCard title="Due Today" value={data.dueToday || 0} icon={<IconWrapper icon={<AlarmClock size={18} strokeWidth={2.5} />} color="#F59E0B" bg="#FEF3C7" />} accentColor="#F59E0B" valueColor="#111827" />
         <KpiCard title="Overdue" value={data.overdue || 0} icon={<IconWrapper icon={<CircleAlert size={18} strokeWidth={2.5} />} color="#EF4444" bg="#FEE2E2" />} accentColor="#EF4444" valueColor="#EF4444" />
-        <KpiCard title="Pending" value={data.pending || 0} icon={<IconWrapper icon={<FileEdit size={18} strokeWidth={2.5} />} color="#991B1B" bg="#FEE2E2" />} accentColor="#991B1B" valueColor="#991B1B" />
+        <KpiCard title="Due in Future" value={data.pending || 0} icon={<IconWrapper icon={<FileEdit size={18} strokeWidth={2.5} />} color="#991B1B" bg="#FEE2E2" />} accentColor="#991B1B" valueColor="#991B1B" />
         <KpiCard title="Completed" value={data.completed || 0} icon={<IconWrapper icon={<CheckCircle2 size={18} strokeWidth={2.5} />} color="#22C55E" bg="#DCFCE7" />} accentColor="#22C55E" valueColor="#22C55E" />
         <KpiCard title="Total Assigned" value={data.totalAssigned || 0} icon={<IconWrapper icon={<ClipboardList size={18} strokeWidth={2.5} />} color="#6B7280" bg="#F3F4F6" />} accentColor="#9CA3AF" valueColor="#111827" />
       </>

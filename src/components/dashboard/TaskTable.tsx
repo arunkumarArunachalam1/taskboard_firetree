@@ -351,7 +351,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
           if (response.isSuccess === 1) {
             showToast(response.successMessage || 'Tasks marked complete successfully!', 'success');
             setSelectedIds([]);
-            onPageChange(page);
+            if (onRefresh) onRefresh();
+            else onPageChange(page);
           } else {
             showToast(response.errorMessage || 'Failed to complete selected tasks.', 'error');
           }
@@ -374,7 +375,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
           if (response.isSuccess === 1) {
             showToast(response.successMessage || 'Task marked complete successfully!', 'success');
             setSelectedIds(prev => prev.filter(id => id !== taskId));
-            onPageChange(page);
+            if (onRefresh) onRefresh();
+            else onPageChange(page);
           } else {
             showToast(response.errorMessage || 'Failed to complete task.', 'error');
           }
@@ -424,7 +426,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
             showToast(response.successMessage || 'Tasks reassigned successfully!', 'success');
             setIsReassignOpen(false);
             setSelectedIds([]);
-            onPageChange(page);
+            if (onRefresh) onRefresh();
+            else onPageChange(page);
           } else {
             showToast(response.errorMessage || 'Failed to reassign tasks.', 'error');
           }

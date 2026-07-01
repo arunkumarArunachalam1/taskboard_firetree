@@ -13,7 +13,7 @@ const DashboardPage: React.FC = () => {
   const {
     summary, loadingSummary,
     // charts, loadingCharts,
-    tasks, loadingTasks, page, pageSize, fetchTasks,
+    tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary,
     search, sortColumn, sortDir,
     error, setError
   } = useDashboard();
@@ -66,7 +66,10 @@ const DashboardPage: React.FC = () => {
           sortColumn={sortColumn}
           sortDir={sortDir}
           onSortChange={(col, dir) => fetchTasks(1, undefined, col, dir)}
-          onRefresh={() => fetchTasks(page)}
+          onRefresh={() => {
+            fetchTasks(page);
+            fetchSummary();
+          }}
         />
       </div>
 

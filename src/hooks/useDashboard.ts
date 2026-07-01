@@ -1,13 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { DashboardSummary, DashboardCharts, TaskListResponse } from '../types/dashboard.types';
-import { getDashboardSummary, getDashboardCharts, getTaskList } from '../services/dashboard.service';
+import { getDashboardKPIs, getDashboardCharts, getTaskList } from '../services/dashboard.service';
 
 export function useDashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [charts, setCharts] = useState<DashboardCharts | null>(null);
   const [tasks, setTasks] = useState<TaskListResponse | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState('');
   const [sortColumn, setSortColumn] = useState<number | undefined>(undefined);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -22,18 +21,16 @@ export function useDashboard() {
     p: number = 1,
     s?: string,
     col?: number,
-    dir?: 'asc' | 'desc',
-    sz?: number
+    dir?: 'asc' | 'desc'
   ) => {
     setLoadingTasks(true);
     setError(null);
     const currentSearch = s !== undefined ? s : search;
     const currentCol = col !== undefined ? col : sortColumn;
     const currentDir = dir !== undefined ? dir : sortDir;
-    const currentSz = sz !== undefined ? sz : pageSize;
 
     try {
-      const data = await getTaskList(p, currentSz, {
+      const data = await getTaskList(p, 15, {
         search: currentSearch,
         sortColumn: currentCol,
         sortDir: currentDir
@@ -43,19 +40,23 @@ export function useDashboard() {
       if (s !== undefined) setSearch(s);
       if (col !== undefined) setSortColumn(col);
       if (dir !== undefined) setSortDir(dir);
-      if (sz !== undefined) setPageSize(sz);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch tasks');
     } finally {
       setLoadingTasks(false);
     }
-  }, [search, sortColumn, sortDir, pageSize]);
+  }, [search, sortColumn, sortDir]);
 
-  useEffect(() => {
-    getDashboardSummary()
+  const fetchSummary = useCallback(() => {
+    setLoadingSummary(true);
+    getDashboardKPIs()
       .then(setSummary)
       .catch((err) => setError(err.message))
       .finally(() => setLoadingSummary(false));
+  }, []);
+
+  useEffect(() => {
+    fetchSummary();
 
     getDashboardCharts()
       .then(setCharts)
@@ -70,7 +71,7 @@ export function useDashboard() {
     summary, loadingSummary,
     charts, loadingCharts,
     tasks, loadingTasks,
-    page, pageSize, fetchTasks,
+    page, fetchTasks, fetchSummary,
     search, sortColumn, sortDir,
     error, setError
   };

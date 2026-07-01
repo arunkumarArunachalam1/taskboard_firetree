@@ -86,6 +86,45 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   };
 }
 
+export async function getDashboardKPIs(): Promise<DashboardSummary> {
+  const context = activeContext;
+  
+  const response = await fetch(`/ReactTaskBoard/getDashboardKPIs?_=${Date.now()}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const json = await response.json();
+  if (json.error) {
+    throw new Error(json.message || 'Error fetching KPI data');
+  }
+  
+  return {
+    dueToday: json.dueToday || 0,
+    overdue: json.overdue || 0,
+    pending: json.dueInFuture || 0,
+    completed: json.completed || 0,
+    totalAssigned: json.totalAssigned || 0,
+    user: context ? {
+      firstName: context.firstName || 'User',
+      lastName: context.lastName || '',
+      role: Object.keys(context.roles || {})[0] || 'Unknown Role'
+    } : {
+      firstName: 'Local',
+      lastName: 'Dev',
+      role: 'Developer'
+    }
+  };
+}
 export async function getDashboardCharts(): Promise<DashboardCharts> {
   await delay(900);
   // Future: return fetch('/api/dashboard/charts').then(r => r.json());
