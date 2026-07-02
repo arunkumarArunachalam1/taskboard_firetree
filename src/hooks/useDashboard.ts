@@ -7,6 +7,7 @@ export function useDashboard() {
   const [charts, setCharts] = useState<DashboardCharts | null>(null);
   const [tasks, setTasks] = useState<TaskListResponse | null>(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
   const [search, setSearch] = useState('');
   const [sortColumn, setSortColumn] = useState<number | undefined>(undefined);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -21,22 +22,25 @@ export function useDashboard() {
     p: number = 1,
     s?: string,
     col?: number,
-    dir?: 'asc' | 'desc'
+    dir?: 'asc' | 'desc',
+    sz?: number
   ) => {
     setLoadingTasks(true);
     setError(null);
     const currentSearch = s !== undefined ? s : search;
     const currentCol = col !== undefined ? col : sortColumn;
     const currentDir = dir !== undefined ? dir : sortDir;
+    const currentSize = sz !== undefined ? sz : pageSize;
 
     try {
-      const data = await getTaskList(p, 15, {
+      const data = await getTaskList(p, currentSize, {
         search: currentSearch,
         sortColumn: currentCol,
         sortDir: currentDir
       });
       setTasks(data);
       setPage(p);
+      if (sz !== undefined) setPageSize(sz);
       if (s !== undefined) setSearch(s);
       if (col !== undefined) setSortColumn(col);
       if (dir !== undefined) setSortDir(dir);
@@ -45,7 +49,7 @@ export function useDashboard() {
     } finally {
       setLoadingTasks(false);
     }
-  }, [search, sortColumn, sortDir]);
+  }, [search, sortColumn, sortDir, pageSize]);
 
   const fetchSummary = useCallback(() => {
     setLoadingSummary(true);
@@ -71,7 +75,7 @@ export function useDashboard() {
     summary, loadingSummary,
     charts, loadingCharts,
     tasks, loadingTasks,
-    page, fetchTasks, fetchSummary,
+    page, pageSize, fetchTasks, fetchSummary,
     search, sortColumn, sortDir,
     error, setError
   };

@@ -79,17 +79,19 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       lastName: context.lastName || '',
       role: Object.keys(context.roles || {})[0] || 'Unknown Role'
     } : {
-      firstName: 'Local',
-      lastName: 'Dev',
-      role: 'Developer'
+      firstName: '',
+      lastName: '',
+      role: ''
     }
   };
 }
 
 export async function getDashboardKPIs(): Promise<DashboardSummary> {
   const context = activeContext;
-  
-  const response = await fetch(`/ReactTaskBoard/getDashboardKPIs?_=${Date.now()}`, {
+  const url = `/ReactTaskBoard/getDashboardKPIs?_=${Date.now()}`;
+  console.log(`[getDashboardKPIs] Fetching KPIs from: ${url}`);
+
+  const response = await fetch(url, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -99,16 +101,23 @@ export async function getDashboardKPIs(): Promise<DashboardSummary> {
     credentials: 'include'
   });
 
+  console.log(`[getDashboardKPIs] Response status: ${response.status} ${response.statusText}`);
+
   if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+    const errorMsg = `Request failed with status ${response.status}: ${response.statusText}`;
+    console.error(`[getDashboardKPIs] HTTP Error:`, errorMsg);
+    throw new Error(errorMsg);
   }
 
   const json = await response.json();
+  console.log(`[getDashboardKPIs] Raw JSON response:`, json);
+
   if (json.error) {
+    console.error(`[getDashboardKPIs] API Error returned in JSON:`, json.message || 'Error fetching KPI data', json);
     throw new Error(json.message || 'Error fetching KPI data');
   }
-  
-  return {
+
+  const kpiData = {
     dueToday: json.dueToday || 0,
     overdue: json.overdue || 0,
     pending: json.dueInFuture || 0,
@@ -119,12 +128,16 @@ export async function getDashboardKPIs(): Promise<DashboardSummary> {
       lastName: context.lastName || '',
       role: Object.keys(context.roles || {})[0] || 'Unknown Role'
     } : {
-      firstName: 'Local',
-      lastName: 'Dev',
-      role: 'Developer'
+      firstName: '',
+      lastName: '',
+      role: ''
     }
   };
+  
+  console.log(`[getDashboardKPIs] Parsed KPI Data returning to UI:`, kpiData);
+  return kpiData;
 }
+
 export async function getDashboardCharts(): Promise<DashboardCharts> {
   await delay(900);
   // Future: return fetch('/api/dashboard/charts').then(r => r.json());
