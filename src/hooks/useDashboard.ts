@@ -4,11 +4,11 @@ import { getDashboardCharts, getTaskList } from '../services/dashboard.service';
 
 export function useDashboard() {
   const [summary] = useState<DashboardSummary | null>({
-    dueToday: 0,
-    overdue: 0,
-    pending: 0,
-    completed: 0,
-    totalAssigned: 0
+    dueToday: 1,
+    overdue: 76,
+    pending: 21,
+    completed: 22,
+    totalAssigned: 120
   });
   const [charts, setCharts] = useState<DashboardCharts | null>(null);
   const [tasks, setTasks] = useState<TaskListResponse | null>(null);
