@@ -4,7 +4,7 @@ import { AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Header';
 import KpiGrid from './KpiGrid';
-// import ChartsSection from './ChartsSection';
+import ChartsSection from './ChartsSection';
 import TaskTable from './TaskTable';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useAppContext } from '../../context/AppContext';
@@ -12,8 +12,8 @@ import { useAppContext } from '../../context/AppContext';
 const DashboardPage: React.FC = () => {
   const {
     summary, loadingSummary,
-    // charts, loadingCharts,
-    tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary,
+    charts, loadingCharts,
+    tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary, fetchCharts,
     search, sortColumn, sortDir,
     error, setError
   } = useDashboard();
@@ -53,7 +53,7 @@ const DashboardPage: React.FC = () => {
 
         <KpiGrid data={summary} loading={loadingSummary} />
 
-        {/* <ChartsSection data={charts} loading={loadingCharts} /> */}
+        <ChartsSection data={charts} loading={loadingCharts} />
         <TaskTable
           data={tasks}
           loading={loadingTasks}
@@ -69,6 +69,7 @@ const DashboardPage: React.FC = () => {
           onRefresh={() => {
             fetchTasks(page);
             fetchSummary();
+            fetchCharts();
           }}
         />
       </div>

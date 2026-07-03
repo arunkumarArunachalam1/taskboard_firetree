@@ -1,29 +1,64 @@
 import React from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
+  Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 import type { DailyCompletionPoint } from '../../types/dashboard.types';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 interface Props { data: DailyCompletionPoint[] }
 
-const DailyCompletion7DaysChart: React.FC<Props> = ({ data }) => (
-  <div style={{ width: '100%', height: 120, minHeight: 120 }}>
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-        <XAxis
-          dataKey="date" tick={{ fontSize: 10, fill: '#9CA3AF' }}
-          axisLine={false} tickLine={false}
-        />
-        <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
-        <Tooltip
-          contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: 12 }}
-          cursor={{ fill: '#F3F4F6' }}
-        />
-        <Bar dataKey="completed" name="Completed" fill="#6366F1" radius={[3, 3, 0, 0]} barSize={18} />
-      </BarChart>
-    </ResponsiveContainer>
-  </div>
-);
+const DailyCompletion7DaysChart: React.FC<Props> = ({ data }) => {
+  const chartData = React.useMemo(() => ({
+    labels: data.map(d => d.date),
+    datasets: [
+      {
+        label: 'Completed',
+        data: data.map(d => d.completed),
+        backgroundColor: '#6366F1',
+        borderRadius: 3,
+        barThickness: 18,
+      },
+    ],
+  }), [data]);
+
+  const options = React.useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#fff',
+        titleColor: '#374151',
+        bodyColor: '#374151',
+        borderColor: '#E5E7EB',
+        borderWidth: 1,
+        padding: 10,
+        boxPadding: 4,
+        displayColors: false,
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { font: { size: 10 }, color: '#9CA3AF' },
+        border: { display: false }
+      },
+      y: {
+        grid: { color: '#F3F4F6', drawBorder: false },
+        ticks: { font: { size: 10 }, color: '#9CA3AF' },
+        border: { display: false }
+      }
+    }
+  }), []);
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: 160 }}>
+      <Bar data={chartData} options={options as any} />
+    </div>
+  );
+};
 
 export default DailyCompletion7DaysChart;

@@ -10,7 +10,7 @@ import TaskStatusChart from '../charts/TaskStatusChart';
 const ChartSkeleton: React.FC = () => (
   <div className="chart-card">
     <div className="skeleton" style={{ height: 16, width: '55%', marginBottom: 20 }} />
-    <div className="skeleton" style={{ height: 120 }} />
+    <div className="skeleton" style={{ height: 240 }} />
   </div>
 );
 

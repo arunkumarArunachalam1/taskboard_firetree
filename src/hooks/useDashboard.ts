@@ -59,14 +59,17 @@ export function useDashboard() {
       .finally(() => setLoadingSummary(false));
   }, []);
 
-  useEffect(() => {
-    fetchSummary();
-
+  const fetchCharts = useCallback(() => {
+    setLoadingCharts(true);
     getDashboardCharts()
       .then(setCharts)
       .catch((err) => setError(err.message))
       .finally(() => setLoadingCharts(false));
+  }, []);
 
+  useEffect(() => {
+    fetchSummary();
+    fetchCharts();
     fetchTasks(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount, let fetchTasks be called manually for updates
@@ -75,7 +78,7 @@ export function useDashboard() {
     summary, loadingSummary,
     charts, loadingCharts,
     tasks, loadingTasks,
-    page, pageSize, fetchTasks, fetchSummary,
+    page, pageSize, fetchTasks, fetchSummary, fetchCharts,
     search, sortColumn, sortDir,
     error, setError
   };

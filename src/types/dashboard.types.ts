@@ -27,7 +27,8 @@ export interface TrendPoint {
 export interface StatusDistribution {
   name: string;
   value: number;
-  color: string;
+  color?: string;
+  percentage?: number;
 }
 
 export interface DashboardCharts {

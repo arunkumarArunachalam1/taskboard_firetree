@@ -56,16 +56,14 @@ const mockCharts: DashboardCharts = {
   }),
   statusDistribution: [
     { name: 'Completed', value: 22, color: '#10B981' },
-    { name: 'Pending', value: 21, color: '#F59E0B' },
+    { name: 'Due in Future', value: 21, color: '#F59E0B' },
     { name: 'Overdue', value: 76, color: '#EF4444' },
     { name: 'Due Today', value: 1, color: '#3B82F6' },
   ],
 };
 
 
-// ─── Simulated delay ────────────────────────────────────────────────────
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-
+// ─── Helpers ─────────────────────────────────────────────────────────────
 // ─── Service Functions ─────────────────────────────────────────────────
 // These will eventually call /api/dashboard/* ColdFusion endpoints
 
@@ -138,6 +136,56 @@ export async function getDashboardKPIs(): Promise<DashboardSummary> {
   return kpiData;
 }
 
+export async function getDashboardCharts(): Promise<DashboardCharts> {
+  const url = `/ReactTaskBoard/getDashboardCharts?_=${Date.now()}`;
+  console.log(`[getDashboardCharts] Fetching Charts from: ${url}`);
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-Token': activeContext?.csrfToken || '',
+        'X-Requested-With': 'React'
+      },
+      credentials: 'include'
+    });
+
+    console.log(`[getDashboardCharts] Response status: ${response.status} ${response.statusText}`);
+
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+    }
+
+    const json = await response.json();
+    console.log(`[getDashboardCharts] Raw JSON response:`, json);
+
+    if (json.error) {
+      console.error(`[getDashboardCharts] API Error:`, json.message || 'Error fetching chart data');
+      throw new Error(json.message || 'Error fetching chart data');
+    }
+
+    // Map the ColdFusion response to our TypeScript types
+    const chartsData: DashboardCharts = {
+      last7Days: Array.isArray(json.last7Days) ? json.last7Days : [],
+      last30Days: Array.isArray(json.last30Days) ? json.last30Days : [],
+      trend: Array.isArray(json.trend) ? json.trend : [],
+      statusDistribution: Array.isArray(json.statusDistribution) ? json.statusDistribution : [],
+    };
+
+    console.log(`[getDashboardCharts] Parsed chart data:`, {
+      last7Days: chartsData.last7Days.length,
+      last30Days: chartsData.last30Days.length,
+      trend: chartsData.trend.length,
+      statusDistribution: chartsData.statusDistribution.length,
+    });
+
+    return chartsData;
+  } catch (err: any) {
+    console.error(`[getDashboardCharts] Failed:`, err.message);
+    throw err;
+  }
+}
 
 // ─── Constants & Dynamic ID Fetching ──────────────────────────────────────
 let cachedTableListingInfo: { id: string, listColumns: string } | null = null;
@@ -573,45 +621,6 @@ export async function getContactMethods(): Promise<{ value: string; label: strin
     { value: '3', label: 'Email' },
     { value: '4', label: 'Text Message' }
   ];
-}
-
-
-export async function getDashboardCharts(): Promise<DashboardCharts> {
-  const url = `/ReactTaskBoard/getDashboardCharts?_=${Date.now()}`;
-  console.log(`[getDashboardCharts] Fetching Charts from: ${url}`);
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'X-CSRF-Token': activeContext?.csrfToken || '',
-      'X-Requested-With': 'React'
-    },
-    credentials: 'include'
-  });
-
-  console.log(`[getDashboardCharts] Response status: ${response.status} ${response.statusText}`);
-
-  if (!response.ok) {
-    const errorMsg = `Request failed with status ${response.status}: ${response.statusText}`;
-    console.error(`[getDashboardCharts] HTTP Error:`, errorMsg);
-    throw new Error(errorMsg);
-  }
-
-  const json = await response.json();
-  console.log(`[getDashboardCharts] Raw JSON response:`, json);
-
-  if (json.error) {
-    console.error(`[getDashboardCharts] API Error returned in JSON:`, json.message || 'Error fetching Chart data', json);
-    throw new Error(json.message || 'Error fetching Chart data');
-  }
-
-  return {
-    last7Days: json.last7Days || [],
-    last30Days: json.last30Days || [],
-    trend: json.trend || [],
-    statusDistribution: json.statusDistribution || []
-  };
 }
 
 export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: number; successMessage?: string; errorMessage?: string }> {
