@@ -68,7 +68,6 @@ const DashboardPage: React.FC = () => {
           onSortChange={(col, dir) => fetchTasks(1, undefined, col, dir)}
           onRefresh={() => {
             fetchTasks(page);
-            fetchSummary();
           }}
         />
       </div>

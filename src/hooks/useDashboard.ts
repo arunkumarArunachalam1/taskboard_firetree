@@ -3,7 +3,13 @@ import type { DashboardSummary, DashboardCharts, TaskListResponse } from '../typ
 import { getDashboardKPIs, getDashboardCharts, getTaskList } from '../services/dashboard.service';
 
 export function useDashboard() {
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [summary, setSummary] = useState<DashboardSummary | null>({
+    dueToday: 0,
+    overdue: 0,
+    pending: 0,
+    completed: 0,
+    totalAssigned: 0
+  });
   const [charts, setCharts] = useState<DashboardCharts | null>(null);
   const [tasks, setTasks] = useState<TaskListResponse | null>(null);
   const [page, setPage] = useState(1);
@@ -12,7 +18,7 @@ export function useDashboard() {
   const [sortColumn, setSortColumn] = useState<number | undefined>(undefined);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
-  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [loadingSummary, setLoadingSummary] = useState(false);
   const [loadingCharts, setLoadingCharts] = useState(true);
   const [loadingTasks, setLoadingTasks] = useState(true);
 
@@ -52,15 +58,12 @@ export function useDashboard() {
   }, [search, sortColumn, sortDir, pageSize]);
 
   const fetchSummary = useCallback(() => {
-    setLoadingSummary(true);
-    getDashboardKPIs()
-      .then(setSummary)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoadingSummary(false));
+    // Hidden API call for KPI cards
+    setLoadingSummary(false);
   }, []);
 
   useEffect(() => {
-    fetchSummary();
+    // fetchSummary(); // Hidden API call for KPI cards
 
     getDashboardCharts()
       .then(setCharts)
