@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { DashboardSummary, DashboardCharts, TaskListResponse } from '../types/dashboard.types';
-import { getDashboardKPIs, getDashboardCharts, getTaskList } from '../services/dashboard.service';
+import { getDashboardCharts, getTaskList } from '../services/dashboard.service';
 
 export function useDashboard() {
-  const [summary, setSummary] = useState<DashboardSummary | null>({
+  const [summary] = useState<DashboardSummary | null>({
     dueToday: 0,
     overdue: 0,
     pending: 0,

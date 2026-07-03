@@ -13,7 +13,7 @@ const DashboardPage: React.FC = () => {
   const {
     summary, loadingSummary,
     // charts, loadingCharts,
-    tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary,
+    tasks, loadingTasks, page, pageSize, fetchTasks,
     search, sortColumn, sortDir,
     error, setError
   } = useDashboard();
