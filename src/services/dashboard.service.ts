@@ -138,11 +138,6 @@ export async function getDashboardKPIs(): Promise<DashboardSummary> {
   return kpiData;
 }
 
-export async function getDashboardCharts(): Promise<DashboardCharts> {
-  await delay(900);
-  // Future: return fetch('/api/dashboard/charts').then(r => r.json());
-  return mockCharts;
-}
 
 // ─── Constants & Dynamic ID Fetching ──────────────────────────────────────
 let cachedTableListingInfo: { id: string, listColumns: string } | null = null;
@@ -578,6 +573,45 @@ export async function getContactMethods(): Promise<{ value: string; label: strin
     { value: '3', label: 'Email' },
     { value: '4', label: 'Text Message' }
   ];
+}
+
+
+export async function getDashboardCharts(): Promise<DashboardCharts> {
+  const url = `/ReactTaskBoard/getDashboardCharts?_=${Date.now()}`;
+  console.log(`[getDashboardCharts] Fetching Charts from: ${url}`);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+
+  console.log(`[getDashboardCharts] Response status: ${response.status} ${response.statusText}`);
+
+  if (!response.ok) {
+    const errorMsg = `Request failed with status ${response.status}: ${response.statusText}`;
+    console.error(`[getDashboardCharts] HTTP Error:`, errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  const json = await response.json();
+  console.log(`[getDashboardCharts] Raw JSON response:`, json);
+
+  if (json.error) {
+    console.error(`[getDashboardCharts] API Error returned in JSON:`, json.message || 'Error fetching Chart data', json);
+    throw new Error(json.message || 'Error fetching Chart data');
+  }
+
+  return {
+    last7Days: json.last7Days || [],
+    last30Days: json.last30Days || [],
+    trend: json.trend || [],
+    statusDistribution: json.statusDistribution || []
+  };
 }
 
 export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: number; successMessage?: string; errorMessage?: string }> {
