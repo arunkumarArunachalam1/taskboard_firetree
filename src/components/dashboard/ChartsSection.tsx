@@ -52,7 +52,7 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({ data, loading }) => {
       <ChartCard title="Daily Completions — Last 30 Days" icon={<LineChart size={16} strokeWidth={2.5} />}>
         <DailyCompletion30DaysChart data={data.last30Days} />
       </ChartCard>
-      <ChartCard title="Cumulative Completion Trend" icon={<TrendingUp size={16} strokeWidth={2.5} />}>
+      <ChartCard title="Cumulative Completion Trend - 90 Days" icon={<TrendingUp size={16} strokeWidth={2.5} />}>
         <CompletionTrendChart data={data.trend} />
       </ChartCard>
       <ChartCard title="Task Status Distribution" icon={<PieChart size={16} strokeWidth={2.5} />}>

@@ -79,3 +79,17 @@ export interface ApiState<T> {
   error: string | null;
 }
 
+export interface OptionItem {
+  value: string | number;
+  label: string;
+}
+
+export interface DashboardFilters {
+  assignedTo: string;
+  role: string;
+  status: string; // 'all', '0', '1'
+  taskType: string;
+  startDate: string;
+  endDate: string;
+}
+

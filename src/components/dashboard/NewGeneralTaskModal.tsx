@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFacilityStaff, getClientList, saveGeneralTask } from '../../services/dashboard.service';
 import type { FacilityStaff } from '../../types/dashboard.types';
@@ -84,8 +84,13 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
           setSearch('');
         }}
         placeholder={placeholder}
-        style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box', backgroundColor: '#fff' }}
+        style={{ width: '100%', padding: '8px 30px 8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box', backgroundColor: '#fff', cursor: 'pointer' }}
       />
+      <div 
+        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6B7280' }}
+      >
+        <ChevronDown size={16} />
+      </div>
       {/* Hidden input to ensure required validation fires natively if empty */}
       {required && !value && <input type="text" style={{ opacity: 0, position: 'absolute', height: 0, width: 0, pointerEvents: 'none' }} required />}
 
@@ -157,6 +162,18 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
     if (isOpen) {
       const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
+
+      // Reset form data when opening
+      setFormData({
+        ClientCaseFileID: '',
+        TaskName: '',
+        TaskDescription: '',
+        ExpectedStartDate: new Date().toISOString().split('T')[0],
+        ExpectedDueDate: new Date().toISOString().split('T')[0],
+        AssignTo: ''
+      });
+      setError(null);
+      setFieldErrors({});
 
       // Load clients
       getClientList()

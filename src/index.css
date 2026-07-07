@@ -39,7 +39,7 @@
     justify-content: space-between;
     padding: 0 28px;
     position: relative;
-    z-index: 100;
+    z-index: 1000;
   }
 
   .navbar-brand {
@@ -175,7 +175,7 @@
   /* ── KPI Cards ───────────────────────────────── */
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 14px;
     margin-bottom: 20px;
 
@@ -539,16 +539,30 @@
     }
   }
 
-  /* Center the injected HTML but let legacy CF CSS handle the internal layout */
   .client-name-wrapper {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .client-name-wrapper > * {
+    display: inline-block !important;
+    text-align: left !important;
+  }
+
+  /* Override legacy absolute positioning for client icons so they align left */
+  .client-name-wrapper span.client-icon {
+    margin-right: 0 !important;
+    display: flex !important;
     align-items: center;
   }
 
-  .client-name-wrapper>div {
-    display: inline-block !important;
-    text-align: left;
+  .client-name-wrapper span.client-icon i {
+    position: static !important;
+    margin-right: 4px;
+    border: none !important;
+    font-size: 16px !important;
   }
 
   /* Client avatar */

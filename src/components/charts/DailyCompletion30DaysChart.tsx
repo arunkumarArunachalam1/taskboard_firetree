@@ -30,6 +30,10 @@ const DailyCompletion30DaysChart: React.FC<Props> = ({ data }) => {
     responsive: true,
     maintainAspectRatio: false,
     animation: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
     plugins: {
       legend: { display: false },
       tooltip: {

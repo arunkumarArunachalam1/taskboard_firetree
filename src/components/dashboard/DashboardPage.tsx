@@ -1,23 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, X } from 'lucide-react';
+import { AlertCircle, X, SlidersHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Header';
 import KpiGrid from './KpiGrid';
 import ChartsSection from './ChartsSection';
 import TaskTable from './TaskTable';
+import { FilterPanel } from './FilterPanel';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useAppContext } from '../../context/AppContext';
+import type { DashboardFilters } from '../../types/dashboard.types';
 
 const DashboardPage: React.FC = () => {
   const {
     summary, loadingSummary,
     charts, loadingCharts,
     tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary, fetchCharts,
-    search, sortColumn, sortDir,
+    search, sortColumn, sortDir, filters, setFilters,
     error, setError
   } = useDashboard();
   const context = useAppContext();
+
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const isIntegrated = typeof window !== 'undefined' && (window.location.port !== '5173' || !!(window as any).__IS_INTEGRATED__);
 
@@ -41,15 +45,46 @@ const DashboardPage: React.FC = () => {
     role: primaryRole
   };
 
+  const handleApplyFilters = (newFilters: DashboardFilters) => {
+    setFilters(newFilters);
+    setIsFilterOpen(false);
+    fetchTasks(1, undefined, undefined, undefined, undefined, newFilters);
+  };
+
+  const handleClearFilters = () => {
+    const defaultFilters: DashboardFilters = {
+      assignedTo: '',
+      role: '',
+      status: 'all',
+      taskType: '',
+      startDate: '',
+      endDate: ''
+    };
+    setFilters(defaultFilters);
+    setIsFilterOpen(false);
+    fetchTasks(1, undefined, undefined, undefined, undefined, defaultFilters);
+  };
+
   return (
     <div className={`min-h-screen ${isIntegrated ? 'bg-transparent' : 'bg-gray-100'}`}>
       <Navbar />
       <div className="page-content">
-        <div style={{ marginBottom: '20px', padding: '0' }}>
+        <div style={{ marginBottom: '20px', padding: '0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '14px', color: 'var(--gray-text)', fontWeight: 500 }}>
             Welcome, {displayUser.firstName} {displayUser.lastName} ({displayUser.role})
           </span>
+          <button className="btn-filters" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+            <SlidersHorizontal size={15} />
+            Filters
+          </button>
         </div>
+
+        <FilterPanel
+          isOpen={isFilterOpen}
+          filters={filters}
+          onApply={handleApplyFilters}
+          onClear={handleClearFilters}
+        />
 
         <KpiGrid data={summary} loading={loadingSummary} />
 

@@ -5,6 +5,7 @@ import type {
   Task,
   FacilityStaff,
   AssignTasksResponse,
+  DashboardFilters
 } from '../types/dashboard.types';
 import type { AppUser } from '../context/AppContext';
 
@@ -64,6 +65,18 @@ const mockCharts: DashboardCharts = {
 
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
+export async function safeJsonParse(response: Response) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    // Log the actual text that failed to parse so we can see what ColdFusion sent back
+    console.error("JSON Parse Error. Server responded with:", text.substring(0, 1000) + (text.length > 1000 ? "..." : ""));
+    
+    // Return an error object instead of throwing to prevent aggressive UI popups
+    return { error: true, message: 'Invalid JSON response from server or session expired.' };
+  }
+}
 // ─── Service Functions ─────────────────────────────────────────────────
 // These will eventually call /api/dashboard/* ColdFusion endpoints
 
@@ -107,12 +120,19 @@ export async function getDashboardKPIs(): Promise<DashboardSummary> {
     throw new Error(errorMsg);
   }
 
-  const json = await response.json();
-  console.log(`[getDashboardKPIs] Raw JSON response:`, json);
+  let json;
+  try {
+    json = await safeJsonParse(response);
+    console.log(`[getDashboardKPIs] Raw JSON response:`, json);
 
-  if (json.error) {
-    console.error(`[getDashboardKPIs] API Error returned in JSON:`, json.message || 'Error fetching KPI data', json);
-    throw new Error(json.message || 'Error fetching KPI data');
+    if (json.error) {
+      console.error(`[getDashboardKPIs] API Error returned in JSON:`, json.message || 'Error fetching KPI data', json);
+      // Don't throw, just use fallback data to prevent UI error message
+      json = {}; 
+    }
+  } catch (e) {
+    console.error(`[getDashboardKPIs] Failed to parse response`, e);
+    json = {};
   }
 
   const kpiData = {
@@ -131,7 +151,7 @@ export async function getDashboardKPIs(): Promise<DashboardSummary> {
       role: ''
     }
   };
-  
+
   console.log(`[getDashboardKPIs] Parsed KPI Data returning to UI:`, kpiData);
   return kpiData;
 }
@@ -157,12 +177,18 @@ export async function getDashboardCharts(): Promise<DashboardCharts> {
       throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
     }
 
-    const json = await response.json();
+    const json = await safeJsonParse(response);
     console.log(`[getDashboardCharts] Raw JSON response:`, json);
 
     if (json.error) {
       console.error(`[getDashboardCharts] API Error:`, json.message || 'Error fetching chart data');
-      throw new Error(json.message || 'Error fetching chart data');
+      // Return empty data instead of throwing to prevent UI error popups
+      return {
+        last7Days: [],
+        last30Days: [],
+        trend: [],
+        statusDistribution: []
+      };
     }
 
     // Map the ColdFusion response to our TypeScript types
@@ -183,7 +209,13 @@ export async function getDashboardCharts(): Promise<DashboardCharts> {
     return chartsData;
   } catch (err: any) {
     console.error(`[getDashboardCharts] Failed:`, err.message);
-    throw err;
+    // Return empty data instead of throwing error to screen
+    return {
+      last7Days: [],
+      last30Days: [],
+      trend: [],
+      statusDistribution: []
+    };
   }
 }
 
@@ -206,7 +238,7 @@ async function getTableListingInfo(): Promise<{ id: string, listColumns: string 
 
     if (!response.ok) throw new Error(`API returned ${response.status}`);
 
-    const data = await response.json();
+    const data = await safeJsonParse(response);
     if (data.success && data.tableListingID) {
       cachedTableListingInfo = {
         id: data.tableListingID,
@@ -232,7 +264,7 @@ export async function getTaskList(
     search?: string;
     sortColumn?: number;
     sortDir?: 'asc' | 'desc';
-    filters?: Record<string, string>;
+    filters?: DashboardFilters;
   } = {}
 ): Promise<TaskListResponse> {
 
@@ -248,10 +280,64 @@ export async function getTaskList(
     dtParams += `&order[0][column]=${options.sortColumn}&order[0][dir]=${options.sortDir || 'asc'}`;
   }
 
-  // Pass a default filter (Completed = 0) in the DataTables format.
-  // This is required to force ColdFusion to re-evaluate volatile parameters
-  // because CORE.cfc skips query preparation if there are no filters.
-  const filterParams = `&tableFilters=tableFilter.Completed&tableFilter.Completed=[0][Completed][=][0][]`;
+  let filterParams = '';
+  const filterKeys: string[] = [];
+  const filterValues: string[] = [];
+
+  const filters = options.filters;
+
+  if (filters) {
+    if (filters.status === '0' || filters.status === '1') {
+      filterKeys.push('Completed');
+      filterValues.push(`tableFilter.Completed=${encodeURIComponent(`[0][Completed][=][${filters.status}][]`)}`);
+    } else if (filters.status === 'all') {
+      // Dummy filter to force query prepare if 'all' is selected
+      filterKeys.push('TaskID');
+      filterValues.push(`tableFilter.TaskID=${encodeURIComponent(`[0][TaskID][>][0][]`)}`);
+    }
+
+    if (filters.assignedTo) {
+      filterKeys.push('AssignedTo');
+      filterValues.push(`tableFilter.AssignedTo=${encodeURIComponent(`[0][AssignedTo][=][${filters.assignedTo}][]`)}`);
+    }
+
+    if (filters.role) {
+      filterKeys.push('RoleID');
+      filterValues.push(`tableFilter.RoleID=${encodeURIComponent(`[0][RoleID][=][${filters.role}][]`)}`);
+    }
+
+    if (filters.taskType) {
+      filterKeys.push('TaskTypeID');
+      filterValues.push(`tableFilter.TaskTypeID=${encodeURIComponent(`[0][TaskTypeID][=][${filters.taskType}][]`)}`);
+    }
+
+    const formatToCFDate = (dateStr: string) => {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[1]}/${parts[2]}/${parts[0]}`;
+      }
+      return dateStr;
+    };
+
+    if (filters.startDate) {
+      filterKeys.push('StartDate');
+      filterValues.push(`tableFilter.StartDate=${encodeURIComponent(`[5][Start Date][=][${formatToCFDate(filters.startDate)}][${formatToCFDate(filters.startDate)}]`)}`);
+    }
+
+    if (filters.endDate) {
+      filterKeys.push('EndDate');
+      filterValues.push(`tableFilter.EndDate=${encodeURIComponent(`[6][End Date][=][${formatToCFDate(filters.endDate)}][${formatToCFDate(filters.endDate)}]`)}`);
+    }
+  } else {
+    // Default filter for backwards compatibility
+    filterKeys.push('Completed');
+    filterValues.push(`tableFilter.Completed=${encodeURIComponent(`[0][Completed][=][0][]`)}`);
+  }
+
+  if (filterKeys.length > 0) {
+    filterParams = `&tableFilters=${filterKeys.map(k => `tableFilter.${k}`).join(',')}&${filterValues.join('&')}`;
+  }
 
   const tableListingInfo = await getTableListingInfo();
   if (tableListingInfo.listColumns) {
@@ -437,7 +523,7 @@ export interface MarkTasksResponse {
 
 export async function markTasksCompleted(taskIds: number[]): Promise<MarkTasksResponse> {
   const idsStr = taskIds.join(',');
-  const response = await fetch(`/Taskboard/MarkTasksCompleted?listids=${encodeURIComponent(idsStr)}`, {
+  const response = await fetch(`/ReactTaskBoard/MarkTasksCompleted?listids=${encodeURIComponent(idsStr)}`, {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -467,6 +553,14 @@ export async function markTasksCompleted(taskIds: number[]): Promise<MarkTasksRe
 // ─── ColdFusion Query Parser Helper ──────────────────────────────────────────
 export function parseCFQuery<T>(json: any): T[] {
   if (!json) return [];
+  if (typeof json === 'string') {
+    try {
+      json = JSON.parse(json);
+    } catch (e) {
+      console.warn("Failed to parse string in parseCFQuery:", e);
+      return [];
+    }
+  }
   if (Array.isArray(json)) return json as T[];
 
   // Standard CF serialization maps a query object to:
@@ -480,6 +574,7 @@ export function parseCFQuery<T>(json: any): T[] {
         // Map common properties case-sensitively or camelCase for ease of use
         const camel = col.charAt(0) + col.slice(1).toLowerCase();
         obj[camel] = row[i];
+        obj[col.toLowerCase()] = row[i];
       });
       return obj as T;
     });
@@ -503,17 +598,52 @@ export async function getFacilityStaff(): Promise<FacilityStaff[]> {
     throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
   }
 
-  const json = await response.json();
+  const json = await safeJsonParse(response);
   return parseCFQuery<FacilityStaff>(json);
 }
 
+export async function getTaskTypes(): Promise<{ value: string | number; label: string }[]> {
+  const response = await fetch('/ReactTaskBoard/GetTaskTypes', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const json = await safeJsonParse(response);
+  return parseCFQuery<{ value: string | number; label: string }>(json);
+}
+
+export async function getRoles(): Promise<{ value: string | number; label: string }[]> {
+  const response = await fetch('/ReactTaskBoard/GetRoles', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const json = await safeJsonParse(response);
+  return parseCFQuery<{ value: string | number; label: string }>(json);
+}
+
 export interface ClientOption {
-  DISPLAY?: string;
-  Display?: string;
-  display?: string;
-  VALUE?: number;
-  Value?: number;
-  value?: number;
+  value: string | number; // ClientCaseFileID
+  label: string;
+  clientId?: string | number; // Actual ClientID
 }
 
 export async function getClientList(): Promise<ClientOption[]> {
@@ -531,7 +661,7 @@ export async function getClientList(): Promise<ClientOption[]> {
     throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
   }
 
-  const json = await response.json();
+  const json = await safeJsonParse(response);
   return parseCFQuery<ClientOption>(json);
 }
 
@@ -592,35 +722,114 @@ export async function assignTasks(taskIds: number[], assignedToId: number | stri
   }
 }
 
-// ─── Whereabouts Task Mock Services ──────────────────────────────────────────────────
+// ─── Whereabouts Task Services ──────────────────────────────────────────────────
 
-export async function getClientEventDestinations(_clientId: string | number): Promise<{ value: string; label: string }[]> {
-  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-  await delay(300);
-  return [
-    { value: '101', label: 'Working at ACME Corp from 05/29/2026 08:00 to 05/29/2026 17:00' },
-    { value: '102', label: 'On Furlough from 05/29/2026 09:00 to 05/30/2026 18:00' }
-  ];
+let formBindingUUIDs: { destinationsUUID: string; staffUUID: string } | null = null;
+
+export async function getFormBindingUUIDs(): Promise<{ destinationsUUID: string; staffUUID: string }> {
+  if (formBindingUUIDs) return formBindingUUIDs;
+
+  const response = await fetch('/ReactTaskBoard/GetFormBindingUUIDs', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch form binding UUIDs: ${response.statusText}`);
+  }
+
+  const json = await safeJsonParse(response);
+  formBindingUUIDs = json;
+  return formBindingUUIDs!;
 }
 
-export async function getClientContacts(_clientId: string | number): Promise<{ value: string; label: string; phone: string }[]> {
-  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-  await delay(300);
-  return [
-    { value: '201', label: 'John Smith (Employer)', phone: '555-123-4567' },
-    { value: '202', label: 'Jane Doe (Sponsor)', phone: '555-987-6543' }
-  ];
+export async function getCurrentlySelectedFacilityStaff(): Promise<{ Value: string; Display: string }[]> {
+  const uuids = await getFormBindingUUIDs();
+  const response = await fetch(`/CORE/getFormBindingData?formDetailID=${uuids.staffUUID}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error('Failed to fetch staff');
+  const json = await safeJsonParse(response);
+  return Array.isArray(json) ? json : parseCFQuery(json);
+}
+
+export async function getClientEventDestinations(clientId: string | number): Promise<{ value: string; label: string }[]> {
+  const uuids = await getFormBindingUUIDs();
+  const response = await fetch(`/CORE/getFormBindingData?formDetailID=${uuids.destinationsUUID}&boundValue=${clientId}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error(`Failed to fetch destinations`);
+  const json = await safeJsonParse(response);
+  const parsed = Array.isArray(json) ? json : parseCFQuery(json);
+
+  // Map 'str_descriptor' or 'display' to 'label' for the React component
+  return parsed.map((item: any) => ({
+    value: item.value ?? item.VALUE ?? item.Value ?? 0,
+    label: item.display ?? item.DISPLAY ?? item.Display ?? item.label ?? item.str_descriptor ?? 'Unknown Destination',
+    clientId: item.CLIENTID ?? item.ClientID ?? item.clientId ?? 0
+  }));
+}
+
+export async function getClientContacts(clientId: string | number): Promise<{ value: string; label: string; phone: string }[]> {
+  const response = await fetch(`/ReactTaskBoard/GetClientContacts?clientID=${clientId}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error(`Failed to fetch contacts`);
+  const json = await safeJsonParse(response);
+  return Array.isArray(json) ? json : parseCFQuery(json);
+}
+
+export async function getContactPhoneNumbers(destinationId: string | number): Promise<{ value: string; label: string }[]> {
+  const response = await fetch(`/ReactTaskBoard/GetContactPhoneNumbers?calendarClientWorkEventDestinationID=${destinationId}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error(`Failed to fetch contact phone numbers`);
+  const json = await safeJsonParse(response);
+  return Array.isArray(json) ? json : parseCFQuery(json);
 }
 
 export async function getContactMethods(): Promise<{ value: string; label: string }[]> {
-  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-  await delay(100);
-  return [
-    { value: '1', label: 'Phone Call' },
-    { value: '2', label: 'In Person' },
-    { value: '3', label: 'Email' },
-    { value: '4', label: 'Text Message' }
-  ];
+  const response = await fetch(`/ReactTaskBoard/GetContactMethods`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error(`Failed to fetch contact methods`);
+  const json = await safeJsonParse(response);
+  return Array.isArray(json) ? json : parseCFQuery(json);
 }
 
 export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: number; successMessage?: string; errorMessage?: string }> {
@@ -633,7 +842,11 @@ export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: nu
   formData.append('ClientEmploymentContactSchedule.ContactTimeEnd', payload.expectedEndTime);
   formData.append('ClientEmploymentContactSchedule.CalendarClientWorkEventDestinationID', String(payload.destinationId));
   formData.append('ClientEmploymentContactSchedule.ContactID', String(payload.contactId));
-  
+
+  if (payload.contactPhoneNumberId) {
+    formData.append('ClientEmploymentContactSchedule.ContactPhoneNumberID', String(payload.contactPhoneNumberId));
+  }
+
   if (payload.assignedTo) {
     formData.append('ClientEmploymentContactSchedule.AssignTo', String(payload.assignedTo));
   }

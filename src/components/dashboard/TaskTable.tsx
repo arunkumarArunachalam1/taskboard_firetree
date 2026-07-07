@@ -535,19 +535,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
             }}>{data.total}</span>
           </div>
 
-          <AnimatePresence mode="popLayout">
-            {selectedIds.length === 0 && (
-              <motion.div
-                key="new-task-left"
-                initial={{ opacity: 0, scale: 0.95, x: -10 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.95, x: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                {renderNewTaskDropdown(false)}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div>
+            {renderNewTaskDropdown(false)}
+          </div>
         </div>
 
         {/* Center: Bulk Actions (flex-1 prevents right side from shifting) */}
@@ -606,19 +596,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
         {/* Right: New Task & Search */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <AnimatePresence mode="popLayout">
-            {selectedIds.length > 0 && (
-              <motion.div
-                key="new-task-right"
-                initial={{ opacity: 0, scale: 0.95, x: 10 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.95, x: 10 }}
-                transition={{ duration: 0.2 }}
-              >
-                {renderNewTaskDropdown(true)}
-              </motion.div>
-            )}
-          </AnimatePresence>
+
 
           <input
             type="text"
@@ -640,7 +618,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         <table className="task-table">
           <thead>
             <tr>
-              <th style={{ userSelect: 'none', textAlign: 'center', width: '60px' }}>
+              <th style={{ userSelect: 'none', textAlign: 'center', width: '40px' }}>
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -649,31 +627,31 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   title="Select All"
                 />
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleSort(0)}>
-                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Task Name <span style={{ marginLeft: 6 }}>{renderSortIcon(0)}</span></div>
+              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '22%' }} onClick={() => handleSort(0)}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Task Name <span style={{ marginLeft: 6 }}>{renderSortIcon(0)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleSort(1)}>
-                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Description <span style={{ marginLeft: 6 }}>{renderSortIcon(1)}</span></div>
+              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '24%' }} onClick={() => handleSort(1)}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Description <span style={{ marginLeft: 6 }}>{renderSortIcon(1)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={() => handleSort(2)}>
+              {/* <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={() => handleSort(2)}>
                 <div style={{ display: 'inline-flex', alignItems: 'center' }}>Created By <span style={{ marginLeft: 6 }}>{renderSortIcon(2)}</span></div>
+              </th> */}
+              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'left', whiteSpace: 'nowrap', width: '20%' }} onClick={() => handleSort(3)}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Client <span style={{ marginLeft: 6 }}>{renderSortIcon(3)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={() => handleSort(3)}>
-                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Client <span style={{ marginLeft: 6 }}>{renderSortIcon(3)}</span></div>
+              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '10%' }} onClick={() => handleSort(4)}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Exp Start <span style={{ marginLeft: 6 }}>{renderSortIcon(4)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleSort(4)}>
-                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Exp Start <span style={{ marginLeft: 6 }}>{renderSortIcon(4)}</span></div>
+              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '10%' }} onClick={() => handleSort(5)}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Due <span style={{ marginLeft: 6 }}>{renderSortIcon(5)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleSort(5)}>
-                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Due <span style={{ marginLeft: 6 }}>{renderSortIcon(5)}</span></div>
+              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '10%' }} onClick={() => handleSort(6)}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Assigned To <span style={{ marginLeft: 6 }}>{renderSortIcon(6)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }} onClick={() => handleSort(6)}>
-                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Assigned To <span style={{ marginLeft: 6 }}>{renderSortIcon(6)}</span></div>
-              </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={() => handleSort(7)}>
+              {/* <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={() => handleSort(7)}>
                 <div style={{ display: 'inline-flex', alignItems: 'center' }}>Facility <span style={{ marginLeft: 6 }}>{renderSortIcon(7)}</span></div>
-              </th>
-              <th style={{ userSelect: 'none', textAlign: 'center', width: '100px' }}>
+              </th> */}
+              <th style={{ userSelect: 'none', textAlign: 'center', width: '90px', paddingRight: '16px' }}>
                 Actions
               </th>
             </tr>
@@ -705,7 +683,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <td>
                     <div dangerouslySetInnerHTML={{ __html: task.TaskName }} />
                   </td>
-                  <td style={{ maxWidth: '300px' }}>
+                  <td>
                     <div
                       dangerouslySetInnerHTML={{ __html: task.TaskDescription }}
                       style={{
@@ -719,10 +697,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
                       title={extractTextFromHTML(task.TaskDescription)}
                     />
                   </td>
-                  <td style={{ textAlign: 'center' }}>
+                  {/* <td style={{ textAlign: 'center' }}>
                     <span dangerouslySetInnerHTML={{ __html: task.CreatedBy }} />
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
+                  </td> */}
+                  <td style={{ textAlign: 'left' }}>
                     <div dangerouslySetInnerHTML={{ __html: task.ClientName }} className="client-name-wrapper" />
                   </td>
                   <td>
@@ -736,10 +714,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <td>
                     <span>{task.AssignedTo}</span>
                   </td>
-                  <td style={{ textAlign: 'center' }}>
+                  {/* <td style={{ textAlign: 'center' }}>
                     <span>{task.Facility}</span>
-                  </td>
-                  <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                  </td> */}
+                  <td style={{ textAlign: 'center', paddingRight: '16px' }} onClick={(e) => e.stopPropagation()}>
                     {task.Status !== 'Completed' ? (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                         <button

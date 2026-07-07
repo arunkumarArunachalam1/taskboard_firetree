@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getFacilityStaff, getClientList, getClientEventDestinations, getClientContacts, getContactMethods, saveWhereaboutsTask } from '../../services/dashboard.service';
+import { getFacilityStaff, getClientList, getClientEventDestinations, getClientContacts, getContactMethods, saveWhereaboutsTask, getContactPhoneNumbers } from '../../services/dashboard.service';
 
 interface NewWhereaboutsTaskModalProps {
   isOpen: boolean;
@@ -13,7 +13,8 @@ interface NewWhereaboutsTaskModalProps {
 // Reusable Combobox component
 interface ComboboxOption {
   label: string;
-  value: string | number;
+  value: string | number; // ClientCaseFileID
+  clientId?: string | number; // Actual ClientID
   secondary?: string;
 }
 
@@ -60,8 +61,13 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
         }}
         onFocus={() => { setIsOpen(true); setSearch(''); }}
         placeholder={placeholder}
-        style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box', backgroundColor: '#fff' }}
+        style={{ width: '100%', padding: '8px 30px 8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box', backgroundColor: '#fff', cursor: 'pointer' }}
       />
+      <div 
+        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6B7280' }}
+      >
+        <ChevronDown size={16} />
+      </div>
       {required && !value && <input type="text" style={{ opacity: 0, position: 'absolute', height: 0, width: 0, pointerEvents: 'none' }} required />}
 
       {isOpen && (
@@ -112,24 +118,53 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
   const [methods, setMethods] = useState<ComboboxOption[]>([]);
   const [destinations, setDestinations] = useState<ComboboxOption[]>([]);
   const [contacts, setContacts] = useState<{ value: string; label: string; phone: string }[]>([]);
+  const [contactPhoneNumbers, setContactPhoneNumbers] = useState<ComboboxOption[]>([]);
   const [staff, setStaff] = useState<ComboboxOption[]>([]);
 
   // Load initial data
   useEffect(() => {
     if (isOpen) {
+      console.log("[NewWhereaboutsTaskModal] Fetching initial data...");
+      
+      // Reset form fields
+      setClientId('');
+      setMethodId('');
+      setExpectedStartTime('');
+      setExpectedEndTime('');
+      setDestinationId('');
+      setContactId('');
+      setPhoneNumber('');
+      setAssignedTo('');
+      setError(null);
+
       Promise.all([
-        getClientList(),
-        getContactMethods(),
-        getFacilityStaff()
+        getClientList().catch(e => { console.error("getClientList failed:", e); return []; }),
+        getContactMethods().catch(e => { console.error("getContactMethods failed:", e); return []; }),
+        getFacilityStaff().catch(e => { console.error("getFacilityStaff failed:", e); return []; })
       ]).then(([clientList, methodList, staffList]) => {
-        setClients(clientList.map((c: any) => ({ value: c.value || c.VALUE || 0, label: c.display || c.DISPLAY || 'Unknown Client' })));
-        setMethods(methodList);
-        setStaff(staffList.map((s: any) => ({ value: s.Value || 0, label: s.Display || '' })));
-        
+        console.log("[NewWhereaboutsTaskModal] Raw API responses:", { clientList, methodList, staffList });
+
+        try {
+          setClients((clientList || []).map((c: any) => ({
+            value: c.value ?? c.VALUE ?? 0,
+            label: c.display ?? c.DISPLAY ?? 'Unknown Client',
+            clientId: c.clientId ?? c.CLIENTID ?? 0
+          })));
+          setMethods((methodList || []).map((m: any) => ({
+            value: m.value ?? m.VALUE ?? m.Value ?? 0,
+            label: String(m.label ?? m.LABEL ?? m.Label ?? 'Unknown Method')
+          })));
+          setStaff((staffList || []).map((s: any) => ({ value: s.Value ?? s.VALUE ?? s.value ?? 0, label: s.Display ?? s.DISPLAY ?? s.display ?? '' })));
+        } catch (mappingError) {
+          console.error("Error mapping dropdown options:", mappingError);
+        }
+
         // Defaults
         const today = new Date().toISOString().split('T')[0];
         setExpectedStartDate(today);
         setExpectedEndDate(today);
+      }).catch(err => {
+        console.error("[NewWhereaboutsTaskModal] Promise.all completely failed:", err);
       });
     }
   }, [isOpen]);
@@ -137,12 +172,22 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
   // Load destinations and contacts when client changes
   useEffect(() => {
     if (clientId) {
+      const selectedClient = clients.find(c => String(c.value) === String(clientId));
+      const actualClientId = selectedClient?.clientId || clientId;
+
       Promise.all([
-        getClientEventDestinations(clientId),
-        getClientContacts(clientId)
+        getClientEventDestinations(actualClientId),
+        getClientContacts(actualClientId)
       ]).then(([dests, contactList]) => {
-        setDestinations(dests);
-        setContacts(contactList);
+        setDestinations(dests.map((d: any) => ({
+          value: d.value ?? d.VALUE ?? d.Value ?? 0,
+          label: d.label ?? d.LABEL ?? d.Label ?? 'Unknown Destination'
+        })));
+        setContacts(contactList.map((c: any) => ({
+          value: c.value ?? c.VALUE ?? c.Value ?? 0,
+          label: c.label ?? c.LABEL ?? c.Label ?? 'Unknown Contact',
+          phone: c.phone ?? c.PHONE ?? c.Phone ?? ''
+        })));
         setDestinationId('');
         setContactId('');
         setPhoneNumber('');
@@ -156,15 +201,41 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
     }
   }, [clientId]);
 
+  // Load phone numbers when destination changes
+  useEffect(() => {
+    if (destinationId) {
+      getContactPhoneNumbers(destinationId).then(phones => {
+        setContactPhoneNumbers(phones.map((p: any) => ({
+          value: p.value ?? p.VALUE ?? p.Value ?? '',
+          label: p.label ?? p.LABEL ?? p.Label ?? 'Unknown Phone'
+        })));
+        setPhoneNumber(''); // clear selected phone
+      }).catch(err => {
+        console.error("Failed to fetch contact phone numbers:", err);
+        setContactPhoneNumbers([]);
+      });
+    } else {
+      setContactPhoneNumbers([]);
+      setPhoneNumber('');
+    }
+  }, [destinationId]);
+
   // Auto-fill phone number when contact changes
   useEffect(() => {
     if (contactId) {
       const selected = contacts.find(c => String(c.value) === String(contactId));
-      if (selected && selected.phone) {
-        setPhoneNumber(selected.phone);
+      // Only auto-fill if it's a plain phone string, otherwise we use the dropdown ID
+      if (selected && selected.phone && !selected.phone.includes('_')) {
+        // Find if this phone matches any in the dropdown
+        const matchingPhone = contactPhoneNumbers.find(p => p.label.includes(selected.phone));
+        if (matchingPhone) {
+          setPhoneNumber(String(matchingPhone.value));
+        } else {
+          setPhoneNumber(selected.phone);
+        }
       }
     }
-  }, [contactId, contacts]);
+  }, [contactId, contacts, contactPhoneNumbers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,10 +243,13 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
     setIsSubmitting(true);
 
     try {
+      const selectedClient = clients.find(c => String(c.value) === String(clientId));
+      const actualClientId = selectedClient?.clientId || clientId;
+
       const payload = {
-        clientId, methodId, expectedStartDate, expectedStartTime, 
-        expectedEndDate, expectedEndTime, destinationId, contactId, 
-        phoneNumber, assignedTo
+        clientId: actualClientId, methodId, expectedStartDate, expectedStartTime,
+        expectedEndDate, expectedEndTime, destinationId, contactId,
+        contactPhoneNumberId: phoneNumber, assignedTo
       };
 
       const result = await saveWhereaboutsTask(payload);
@@ -310,7 +384,7 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                 </div>
 
                 <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Event Destination *</label>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Today's Destinations *</label>
                   <SearchableCombobox options={destinations} value={destinationId} onChange={setDestinationId} placeholder="Select an event destination..." required />
                   {!clientId && <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Select a client first to see destinations.</div>}
                 </div>
@@ -318,17 +392,11 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                 <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
                   <div style={{ flex: 1 }}>
                     <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Contact Name *</label>
-                    <SearchableCombobox options={contacts.map(c => ({value: c.value, label: c.label}))} value={contactId} onChange={setContactId} placeholder="Select a contact..." required />
+                    <SearchableCombobox options={contacts.map(c => ({ value: c.value, label: c.label }))} value={contactId} onChange={setContactId} placeholder="Select a contact..." required />
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Phone Number</label>
-                    <input
-                      type="text"
-                      value={phoneNumber}
-                      onChange={e => setPhoneNumber(e.target.value)}
-                      placeholder="e.g. 555-123-4567"
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
-                    />
+                    <SearchableCombobox options={contactPhoneNumbers} value={phoneNumber} onChange={(val) => setPhoneNumber(String(val))} placeholder="Select a phone number..." />
                   </div>
                 </div>
 

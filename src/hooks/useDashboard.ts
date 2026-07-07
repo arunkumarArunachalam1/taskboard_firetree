@@ -1,6 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { DashboardSummary, DashboardCharts, TaskListResponse } from '../types/dashboard.types';
+import type { DashboardSummary, DashboardCharts, TaskListResponse, DashboardFilters } from '../types/dashboard.types';
 import { getDashboardKPIs, getDashboardCharts, getTaskList } from '../services/dashboard.service';
+
+const today = new Date();
+const past30 = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+const formatDate = (date: Date) => {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const initialFilters: DashboardFilters = {
+  assignedTo: '',
+  role: '',
+  status: '0', // Default to Completed: No
+  taskType: '',
+  startDate: formatDate(past30),
+  endDate: formatDate(today)
+};
 
 export function useDashboard() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -11,6 +30,7 @@ export function useDashboard() {
   const [search, setSearch] = useState('');
   const [sortColumn, setSortColumn] = useState<number | undefined>(undefined);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [filters, setFilters] = useState<DashboardFilters>(initialFilters);
 
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingCharts, setLoadingCharts] = useState(true);
@@ -23,7 +43,8 @@ export function useDashboard() {
     s?: string,
     col?: number,
     dir?: 'asc' | 'desc',
-    sz?: number
+    sz?: number,
+    newFilters?: DashboardFilters
   ) => {
     setLoadingTasks(true);
     setError(null);
@@ -31,12 +52,14 @@ export function useDashboard() {
     const currentCol = col !== undefined ? col : sortColumn;
     const currentDir = dir !== undefined ? dir : sortDir;
     const currentSize = sz !== undefined ? sz : pageSize;
+    const currentFilters = newFilters !== undefined ? newFilters : filters;
 
     try {
       const data = await getTaskList(p, currentSize, {
         search: currentSearch,
         sortColumn: currentCol,
-        sortDir: currentDir
+        sortDir: currentDir,
+        filters: currentFilters
       });
       setTasks(data);
       setPage(p);
@@ -44,12 +67,13 @@ export function useDashboard() {
       if (s !== undefined) setSearch(s);
       if (col !== undefined) setSortColumn(col);
       if (dir !== undefined) setSortDir(dir);
+      if (newFilters !== undefined) setFilters(newFilters);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch tasks');
     } finally {
       setLoadingTasks(false);
     }
-  }, [search, sortColumn, sortDir, pageSize]);
+  }, [search, sortColumn, sortDir, pageSize, filters]);
 
   const fetchSummary = useCallback(() => {
     setLoadingSummary(true);
@@ -79,7 +103,8 @@ export function useDashboard() {
     charts, loadingCharts,
     tasks, loadingTasks,
     page, pageSize, fetchTasks, fetchSummary, fetchCharts,
-    search, sortColumn, sortDir,
+    search, sortColumn, sortDir, filters, setFilters,
     error, setError
   };
 }
+
