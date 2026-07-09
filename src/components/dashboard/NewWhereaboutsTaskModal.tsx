@@ -344,6 +344,7 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                       type="date"
                       value={expectedStartDate}
                       onChange={e => setExpectedStartDate(e.target.value)}
+                      onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
                       style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
                     />
@@ -354,6 +355,7 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                       type="time"
                       value={expectedStartTime}
                       onChange={e => setExpectedStartTime(e.target.value)}
+                      onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
                       style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
                     />
@@ -367,6 +369,7 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                       type="date"
                       value={expectedEndDate}
                       onChange={e => setExpectedEndDate(e.target.value)}
+                      onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
                       style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
                     />
@@ -377,6 +380,7 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                       type="time"
                       value={expectedEndTime}
                       onChange={e => setExpectedEndTime(e.target.value)}
+                      onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
                       style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
                     />

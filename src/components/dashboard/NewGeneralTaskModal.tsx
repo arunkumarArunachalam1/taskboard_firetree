@@ -361,6 +361,7 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                       name="ExpectedStartDate"
                       value={formData.ExpectedStartDate}
                       onChange={handleChange}
+                      onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
                       style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
                     />
@@ -372,6 +373,7 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                       name="ExpectedDueDate"
                       value={formData.ExpectedDueDate}
                       onChange={handleChange}
+                      onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
                       style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
                     />

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { DashboardSummary, DashboardCharts, TaskListResponse, DashboardFilters } from '../types/dashboard.types';
-import { getDashboardKPIs, getDashboardCharts, getTaskList } from '../services/dashboard.service';
+import { getDashboardKPIs, getDashboardCharts, getTaskList, triggerHardRefresh } from '../services/dashboard.service';
 
 const today = new Date();
 const past30 = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -91,6 +91,32 @@ export function useDashboard() {
       .finally(() => setLoadingCharts(false));
   }, []);
 
+  const handleHardRefresh = useCallback(async () => {
+    try {
+      setLoadingTasks(true);
+      setLoadingSummary(true);
+      setLoadingCharts(true);
+      
+      await triggerHardRefresh();
+      
+      // After hitting the backend hard refresh endpoint, refetch data
+      fetchSummary();
+      fetchCharts();
+      fetchTasks(page);
+    } catch (err: any) {
+      setError(err.message || 'Failed to perform hard refresh');
+      setLoadingTasks(false);
+      setLoadingSummary(false);
+      setLoadingCharts(false);
+    }
+  }, [fetchSummary, fetchCharts, fetchTasks, page]);
+
+  const handleRefresh = useCallback(() => {
+    fetchSummary();
+    fetchCharts();
+    fetchTasks(page);
+  }, [fetchSummary, fetchCharts, fetchTasks, page]);
+
   useEffect(() => {
     fetchSummary();
     fetchCharts();
@@ -102,7 +128,7 @@ export function useDashboard() {
     summary, loadingSummary,
     charts, loadingCharts,
     tasks, loadingTasks,
-    page, pageSize, fetchTasks, fetchSummary, fetchCharts,
+    page, pageSize, fetchTasks, fetchSummary, fetchCharts, handleHardRefresh, handleRefresh,
     search, sortColumn, sortDir, filters, setFilters,
     error, setError
   };

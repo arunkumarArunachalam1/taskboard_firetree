@@ -498,16 +498,16 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '5px',
-                  height: '32px',
-                  padding: '0 14px',
+                  gap: '3px',
+                  height: '24px',
+                  padding: '0 8px',
                   borderRadius: BORDER_RADIUS,
                   border: 'none',
                   backgroundColor: '#2563EB',
                   color: '#ffffff',
                   cursor: 'pointer',
                   fontWeight: 600,
-                  fontSize: '12px',
+                  fontSize: '10px',
                   whiteSpace: 'nowrap',
                   transition: 'background-color 0.12s, transform 0.1s',
                   userSelect: 'none',
@@ -529,7 +529,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
                   onApply(localFilters);
                 }}
               >
-                <Filter size={12} strokeWidth={2} />
+                <Filter size={10} strokeWidth={2} />
                 Apply Filters
               </button>
 

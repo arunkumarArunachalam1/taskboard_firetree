@@ -219,6 +219,29 @@ export async function getDashboardCharts(): Promise<DashboardCharts> {
   }
 }
 
+export async function triggerHardRefresh(): Promise<boolean> {
+  const url = `/ReactTaskBoard/HardRefresh?_=${Date.now()}`;
+  console.log(`[triggerHardRefresh] Hitting endpoint: ${url}`);
+  
+  const response = await fetch(url, {
+    method: 'POST', // using POST for a mutative action like cache clearing
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to hard refresh: ${response.statusText}`);
+  }
+
+  // The backend might return JSON or just 200 OK.
+  // We'll just return true if no error thrown.
+  return true;
+}
+
 // ─── Constants & Dynamic ID Fetching ──────────────────────────────────────
 let cachedTableListingInfo: { id: string, listColumns: string } | null = null;
 

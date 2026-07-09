@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, X, SlidersHorizontal } from 'lucide-react';
+import { AlertCircle, X, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Header';
 import KpiGrid from './KpiGrid';
@@ -15,7 +15,7 @@ const DashboardPage: React.FC = () => {
   const {
     summary, loadingSummary,
     charts, loadingCharts,
-    tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary, fetchCharts,
+    tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary, fetchCharts, handleHardRefresh, handleRefresh,
     search, sortColumn, sortDir, filters, setFilters,
     error, setError
   } = useDashboard();
@@ -45,6 +45,10 @@ const DashboardPage: React.FC = () => {
     role: primaryRole
   };
 
+  const hasAdminPrivileges = Object.keys(context.roles).some(
+    role => role.toLowerCase() === 'admin' || role.toLowerCase() === 'administrator' || role.toLowerCase() === 'facility director'
+  );
+
   const handleApplyFilters = (newFilters: DashboardFilters) => {
     setFilters(newFilters);
     setIsFilterOpen(false);
@@ -61,7 +65,6 @@ const DashboardPage: React.FC = () => {
       endDate: ''
     };
     setFilters(defaultFilters);
-    setIsFilterOpen(false);
     fetchTasks(1, undefined, undefined, undefined, undefined, defaultFilters);
   };
 
@@ -73,10 +76,22 @@ const DashboardPage: React.FC = () => {
           <span style={{ fontSize: '14px', color: 'var(--gray-text)', fontWeight: 500 }}>
             Welcome, {displayUser.firstName} {displayUser.lastName} ({displayUser.role})
           </span>
-          <button className="btn-filters" onClick={() => setIsFilterOpen(!isFilterOpen)}>
-            <SlidersHorizontal size={15} />
-            Filters
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {hasAdminPrivileges && (
+              <button
+                className="btn-filters"
+                onClick={handleHardRefresh}
+                title="Refresh KPI and Charts"
+              >
+                <RefreshCw size={15} />
+                Refresh
+              </button>
+            )}
+            <button className="btn-filters" onClick={() => setIsFilterOpen(!isFilterOpen)}>
+              <SlidersHorizontal size={15} />
+              Filters
+            </button>
+          </div>
         </div>
 
         <FilterPanel
@@ -101,11 +116,7 @@ const DashboardPage: React.FC = () => {
           sortColumn={sortColumn}
           sortDir={sortDir}
           onSortChange={(col, dir) => fetchTasks(1, undefined, col, dir)}
-          onRefresh={() => {
-            fetchTasks(page);
-            fetchSummary();
-            fetchCharts();
-          }}
+          onRefresh={handleRefresh}
         />
       </div>
 
