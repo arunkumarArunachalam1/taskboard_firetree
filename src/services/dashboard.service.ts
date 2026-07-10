@@ -606,8 +606,9 @@ export function parseCFQuery<T>(json: any): T[] {
 }
 
 // ─── Reassignment Services ──────────────────────────────────────────────────
-export async function getFacilityStaff(): Promise<FacilityStaff[]> {
-  const response = await fetch('/ReactTaskBoard/GetCurrentlySelectedFacilityStaff', {
+export async function getFacilityStaff(facilityId?: string | number): Promise<FacilityStaff[]> {
+  const url = facilityId ? `/ReactTaskBoard/GetCurrentlySelectedFacilityStaff?facilityID=${facilityId}` : '/ReactTaskBoard/GetCurrentlySelectedFacilityStaff';
+  const response = await fetch(url, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',
@@ -669,8 +670,9 @@ export interface ClientOption {
   clientId?: string | number; // Actual ClientID
 }
 
-export async function getClientList(): Promise<ClientOption[]> {
-  const response = await fetch('/ReactTaskBoard/GetClientList', {
+export async function getClientList(facilityId?: string | number): Promise<ClientOption[]> {
+  const url = facilityId ? `/ReactTaskBoard/GetClientList?facilityID=${facilityId}` : '/ReactTaskBoard/GetClientList';
+  const response = await fetch(url, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, RotateCcw, Search, ChevronDown, X } from 'lucide-react';
 import type { DashboardFilters, OptionItem, FacilityStaff } from '../../types/dashboard.types';
 import { getFacilityStaff, getTaskTypes, getRoles } from '../../services/dashboard.service';
+import { useAppContext } from '../../context/AppContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface FilterPanelProps {
@@ -293,13 +294,24 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
   const [taskTypes,    setTaskTypes]    = useState<OptionItem[]>([]);
   const [roles,        setRoles]        = useState<OptionItem[]>([]);
 
+  const { currentFacilityID } = useAppContext();
+
   useEffect(() => {
-    if (isOpen) {
-      if (staffList.length === 0) getFacilityStaff().then(setStaffList).catch(console.error);
-      if (taskTypes.length === 0) getTaskTypes().then(setTaskTypes).catch(console.error);
-      if (roles.length     === 0) getRoles().then(setRoles).catch(console.error);
-    }
-  }, [isOpen]);
+    const loadData = async () => {
+      if (isOpen) {
+        if (staffList.length === 0) {
+          try { setStaffList(await getFacilityStaff(currentFacilityID)); } catch(e) { console.error(e); }
+        }
+        if (taskTypes.length === 0) {
+          try { setTaskTypes(await getTaskTypes()); } catch(e) { console.error(e); }
+        }
+        if (roles.length === 0) {
+          try { setRoles(await getRoles()); } catch(e) { console.error(e); }
+        }
+      }
+    };
+    loadData();
+  }, [isOpen, currentFacilityID]);
 
   useEffect(() => { setLocalFilters(filters); }, [filters]);
 
@@ -498,16 +510,16 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '3px',
-                  height: '24px',
-                  padding: '0 8px',
+                  gap: '5px',
+                  height: '32px',
+                  padding: '0 14px',
                   borderRadius: BORDER_RADIUS,
                   border: 'none',
                   backgroundColor: '#2563EB',
                   color: '#ffffff',
                   cursor: 'pointer',
                   fontWeight: 600,
-                  fontSize: '10px',
+                  fontSize: '12px',
                   whiteSpace: 'nowrap',
                   transition: 'background-color 0.12s, transform 0.1s',
                   userSelect: 'none',
@@ -529,7 +541,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
                   onApply(localFilters);
                 }}
               >
-                <Filter size={10} strokeWidth={2} />
+                <Filter size={12} strokeWidth={2} />
                 Apply Filters
               </button>
 

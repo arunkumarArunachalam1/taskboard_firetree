@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFacilityStaff, getClientList, getClientEventDestinations, getClientContacts, getContactMethods, saveWhereaboutsTask, getContactPhoneNumbers } from '../../services/dashboard.service';
+import { useAppContext } from '../../context/AppContext';
 
 interface NewWhereaboutsTaskModalProps {
   isOpen: boolean;
@@ -121,6 +122,8 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
   const [contactPhoneNumbers, setContactPhoneNumbers] = useState<ComboboxOption[]>([]);
   const [staff, setStaff] = useState<ComboboxOption[]>([]);
 
+  const { currentFacilityID } = useAppContext();
+
   // Load initial data
   useEffect(() => {
     if (isOpen) {
@@ -137,27 +140,30 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
       setAssignedTo('');
       setError(null);
 
-      Promise.all([
-        getClientList().catch(e => { console.error("getClientList failed:", e); return []; }),
-        getContactMethods().catch(e => { console.error("getContactMethods failed:", e); return []; }),
-        getFacilityStaff().catch(e => { console.error("getFacilityStaff failed:", e); return []; })
-      ]).then(([clientList, methodList, staffList]) => {
-        console.log("[NewWhereaboutsTaskModal] Raw API responses:", { clientList, methodList, staffList });
-
+      const loadData = async () => {
         try {
+          const clientList = await getClientList(currentFacilityID).catch(e => { console.error("getClientList failed:", e); return []; });
           setClients((clientList || []).map((c: any) => ({
             value: c.value ?? c.VALUE ?? 0,
             label: c.display ?? c.DISPLAY ?? 'Unknown Client',
             clientId: c.clientId ?? c.CLIENTID ?? 0
           })));
+
+          const methodList = await getContactMethods().catch(e => { console.error("getContactMethods failed:", e); return []; });
           setMethods((methodList || []).map((m: any) => ({
             value: m.value ?? m.VALUE ?? m.Value ?? 0,
             label: String(m.label ?? m.LABEL ?? m.Label ?? 'Unknown Method')
           })));
+
+          const staffList = await getFacilityStaff(currentFacilityID).catch(e => { console.error("getFacilityStaff failed:", e); return []; });
           setStaff((staffList || []).map((s: any) => ({ value: s.Value ?? s.VALUE ?? s.value ?? 0, label: s.Display ?? s.DISPLAY ?? s.display ?? '' })));
+
         } catch (mappingError) {
           console.error("Error mapping dropdown options:", mappingError);
         }
+      };
+      
+      loadData().then(() => {
 
         // Defaults
         const today = new Date().toISOString().split('T')[0];

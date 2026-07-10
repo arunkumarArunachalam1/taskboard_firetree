@@ -75,17 +75,17 @@ export function useDashboard() {
     }
   }, [search, sortColumn, sortDir, pageSize, filters]);
 
-  const fetchSummary = useCallback(() => {
+  const fetchSummary = useCallback(async () => {
     setLoadingSummary(true);
-    getDashboardKPIs()
+    return getDashboardKPIs()
       .then(setSummary)
       .catch((err) => setError(err.message))
       .finally(() => setLoadingSummary(false));
   }, []);
 
-  const fetchCharts = useCallback(() => {
+  const fetchCharts = useCallback(async () => {
     setLoadingCharts(true);
-    getDashboardCharts()
+    return getDashboardCharts()
       .then(setCharts)
       .catch((err) => setError(err.message))
       .finally(() => setLoadingCharts(false));
@@ -99,10 +99,10 @@ export function useDashboard() {
       
       await triggerHardRefresh();
       
-      // After hitting the backend hard refresh endpoint, refetch data
-      fetchSummary();
-      fetchCharts();
-      fetchTasks(page);
+      // Call sequentially to avoid backend session.NextEvent race condition
+      await fetchSummary();
+      await fetchCharts();
+      await fetchTasks(page);
     } catch (err: any) {
       setError(err.message || 'Failed to perform hard refresh');
       setLoadingTasks(false);
@@ -111,16 +111,21 @@ export function useDashboard() {
     }
   }, [fetchSummary, fetchCharts, fetchTasks, page]);
 
-  const handleRefresh = useCallback(() => {
-    fetchSummary();
-    fetchCharts();
-    fetchTasks(page);
+  const handleRefresh = useCallback(async () => {
+    // Call sequentially to avoid backend session.NextEvent race condition
+    await fetchSummary();
+    await fetchCharts();
+    await fetchTasks(page);
   }, [fetchSummary, fetchCharts, fetchTasks, page]);
 
   useEffect(() => {
-    fetchSummary();
-    fetchCharts();
-    fetchTasks(1);
+    const initFetch = async () => {
+      // Call sequentially to avoid backend session.NextEvent race condition
+      await fetchSummary();
+      await fetchCharts();
+      await fetchTasks(1);
+    };
+    initFetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount, let fetchTasks be called manually for updates
 

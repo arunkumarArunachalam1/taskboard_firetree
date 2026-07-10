@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getFacilityStaff, getClientList, saveGeneralTask } from '../../services/dashboard.service';
 import type { FacilityStaff } from '../../types/dashboard.types';
 import type { ClientOption } from '../../services/dashboard.service';
+import { useAppContext } from '../../context/AppContext';
 
 interface NewGeneralTaskModalProps {
   isOpen: boolean;
@@ -156,6 +157,8 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
 
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [staff, setStaff] = useState<FacilityStaff[]>([]);
+  
+  const { currentFacilityID } = useAppContext();
 
   // Prevent background scroll when modal is open and load dropdown data
   useEffect(() => {
@@ -175,15 +178,24 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
       setError(null);
       setFieldErrors({});
 
-      // Load clients
-      getClientList()
-        .then(data => setClients(data))
-        .catch(err => console.error('Failed to load clients:', err));
+      // Load data sequentially to prevent backend session race conditions
+      const loadData = async () => {
+        try {
+          const clientsData = await getClientList(currentFacilityID);
+          setClients(clientsData);
+        } catch (err) {
+          console.error('Failed to load clients:', err);
+        }
 
-      // Load staff
-      getFacilityStaff()
-        .then(data => setStaff(data))
-        .catch(err => console.error('Failed to load staff:', err));
+        try {
+          const staffData = await getFacilityStaff(currentFacilityID);
+          setStaff(staffData);
+        } catch (err) {
+          console.error('Failed to load staff:', err);
+        }
+      };
+      
+      loadData();
 
       return () => {
         document.body.style.overflow = originalOverflow;

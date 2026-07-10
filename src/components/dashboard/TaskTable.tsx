@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef, KeyboardEvent } from 'react';
+import { useAppContext } from '../../context/AppContext';
 import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown, ExternalLink, Plus, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -171,6 +172,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // Reassign Modal State
   const [isReassignOpen, setIsReassignOpen] = useState(false);
   const [reassignTaskIds, setReassignTaskIds] = useState<number[]>([]);
+
+  const { currentFacilityID } = useAppContext();
+
   const [staffList, setStaffList] = useState<FacilityStaff[]>([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [staffSearch, setStaffSearch] = useState('');
@@ -397,7 +401,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     setStaffSearch('');
     setIsDropdownOpen(false);
     try {
-      const staff = await getFacilityStaff();
+      const staff = await getFacilityStaff(currentFacilityID);
       setStaffList(staff.filter(s => s.IsInactive !== 1));
     } catch (err: any) {
       showToast(err.message || 'Failed to fetch facility staff.', 'error');
