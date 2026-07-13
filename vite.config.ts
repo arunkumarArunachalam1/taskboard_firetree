@@ -9,6 +9,7 @@ export default defineConfig(({ command }) => ({
     tailwindcss(),
   ],
   build: {
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         entryFileNames: 'assets/[name].js',

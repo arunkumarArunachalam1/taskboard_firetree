@@ -10,7 +10,7 @@ const SkeletonCard: React.FC = () => (
   </div>
 );
 
-import { AlarmClock, CircleAlert, FileEdit, CheckCircle2, ClipboardList } from 'lucide-react';
+import { AlarmClock, CircleAlert, FileEdit, CheckCircle2 } from 'lucide-react';
 
 const IconWrapper: React.FC<{ icon: React.ReactNode; color: string; bg: string }> = ({ icon, color, bg }) => (
   <div style={{

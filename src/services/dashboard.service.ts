@@ -24,44 +24,7 @@ const mockSummary: DashboardSummary = {
   totalAssigned: 120,
 };
 
-const last7Days = Array.from({ length: 7 }, (_, i) => {
-  const d = new Date();
-  d.setDate(d.getDate() - (6 - i));
-  return {
-    date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    completed: Math.floor(Math.random() * 18) + 2,
-    created: Math.floor(Math.random() * 12) + 4,
-  };
-});
 
-const last30Days = Array.from({ length: 30 }, (_, i) => {
-  const d = new Date();
-  d.setDate(d.getDate() - (29 - i));
-  return {
-    date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    completed: Math.floor(Math.random() * 18) + 2,
-    created: Math.floor(Math.random() * 14) + 3,
-  };
-});
-
-const mockCharts: DashboardCharts = {
-  last7Days,
-  last30Days,
-  trend: Array.from({ length: 30 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (29 - i));
-    return {
-      date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      cumulative: (i + 1) * Math.floor(Math.random() * 5 + 3),
-    };
-  }),
-  statusDistribution: [
-    { name: 'Completed', value: 22, color: '#10B981' },
-    { name: 'Due in Future', value: 21, color: '#F59E0B' },
-    { name: 'Overdue', value: 76, color: '#EF4444' },
-    { name: 'Due Today', value: 1, color: '#3B82F6' },
-  ],
-};
 
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
