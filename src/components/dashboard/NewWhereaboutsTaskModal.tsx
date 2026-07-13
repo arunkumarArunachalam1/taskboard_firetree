@@ -27,6 +27,30 @@ interface SearchableComboboxProps {
   required?: boolean;
 }
 
+interface StaffResponse {
+  Value?: number;
+  VALUE?: number;
+  value?: number;
+  Display?: string;
+  DISPLAY?: string;
+  display?: string;
+}
+
+interface DestinationDto {
+  value?: number;
+  VALUE?: number;
+  Value?: number;
+  label?: string;
+  LABEL?: string;
+  Label?: string;
+}
+
+interface ContactDto extends DestinationDto {
+  phone?: string;
+  PHONE?: string;
+  Phone?: string;
+}
+
 const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value, onChange, placeholder, required }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -51,7 +75,7 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
   );
 
   return (
-    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+    <div ref={wrapperRef} className="combobox-container">
       <input
         type="text"
         value={displayValue}
@@ -62,35 +86,28 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
         }}
         onFocus={() => { setIsOpen(true); setSearch(''); }}
         placeholder={placeholder}
-        style={{ width: '100%', padding: '8px 30px 8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box', backgroundColor: '#fff', cursor: 'pointer' }}
+        className="combobox-input"
       />
-      <div 
-        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6B7280' }}
-      >
+      <div className="combobox-chevron">
         <ChevronDown size={16} />
       </div>
-      {required && !value && <input type="text" style={{ opacity: 0, position: 'absolute', height: 0, width: 0, pointerEvents: 'none' }} required />}
+      {required && !value && <input type="text" className="combobox-hidden-input" required />}
 
       {isOpen && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, maxHeight: 200, overflowY: 'auto',
-          backgroundColor: '#fff', border: '1px solid #D1D5DB', borderRadius: 6, marginTop: 4, zIndex: 100, boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-        }}>
+        <div className="combobox-panel">
           {filteredOptions.length > 0 ? (
             filteredOptions.map(option => (
               <div
                 key={option.value}
                 onClick={() => { onChange(option.value); setIsOpen(false); setSearch(''); }}
-                style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #F3F4F6' }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F3F4F6')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                className="combobox-option"
               >
-                <div>{option.label}</div>
-                {option.secondary && <div style={{ fontSize: '0.8rem', color: '#6B7280' }}>{option.secondary}</div>}
+                <div className="combobox-option-label">{option.label}</div>
+                {option.secondary && <div className="combobox-option-secondary">{option.secondary}</div>}
               </div>
             ))
           ) : (
-            <div style={{ padding: '8px 12px', color: '#6B7280', fontStyle: 'italic' }}>No matches found</div>
+            <div className="combobox-empty">No matches found</div>
           )}
         </div>
       )}
@@ -156,7 +173,7 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
           })));
 
           const staffList = await getFacilityStaff(currentFacilityID).catch(e => { console.error("getFacilityStaff failed:", e); return []; });
-          setStaff((staffList || []).map((s: any) => ({ value: s.Value ?? s.VALUE ?? s.value ?? 0, label: s.Display ?? s.DISPLAY ?? s.display ?? '' })));
+          setStaff((staffList || []).map((s: StaffResponse) => ({ value: s.Value ?? s.VALUE ?? s.value ?? 0, label: s.Display ?? s.DISPLAY ?? s.display ?? '' })));
 
         } catch (mappingError) {
           console.error("Error mapping dropdown options:", mappingError);
@@ -185,11 +202,11 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
         getClientEventDestinations(actualClientId),
         getClientContacts(actualClientId)
       ]).then(([dests, contactList]) => {
-        setDestinations(dests.map((d: any) => ({
+        setDestinations(dests.map((d: DestinationDto) => ({
           value: d.value ?? d.VALUE ?? d.Value ?? 0,
           label: d.label ?? d.LABEL ?? d.Label ?? 'Unknown Destination'
         })));
-        setContacts(contactList.map((c: any) => ({
+        setContacts(contactList.map((c: ContactDto) => ({
           value: c.value ?? c.VALUE ?? c.Value ?? 0,
           label: c.label ?? c.LABEL ?? c.Label ?? 'Unknown Contact',
           phone: c.phone ?? c.PHONE ?? c.Phone ?? ''
@@ -277,21 +294,14 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="task-modal-wrapper">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="modal-backdrop"
-            style={{
-              position: 'absolute',
-              top: 0, left: 0, right: 0, bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              backdropFilter: 'blur(4px)',
-              zIndex: 1000
-            }}
+            className="task-modal-backdrop"
           />
 
           {/* Modal Content */}
@@ -299,136 +309,123 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.95 }}
-            className="modal-content"
-            style={{
-              position: 'relative',
-              backgroundColor: '#fff',
-              borderRadius: 12,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              width: '100%',
-              maxWidth: 650,
-              maxHeight: '90vh',
-              display: 'flex',
-              flexDirection: 'column',
-              margin: '20px',
-              zIndex: 1001
-            }}
+            className="task-modal-content"
           >
             {/* Header (Fixed) */}
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#111827' }}>Create Whereabouts Task</h2>
-              <button onClick={onClose} type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280' }}>
+            <div className="task-modal-header">
+              <h2 className="task-modal-title">Create Whereabouts Task</h2>
+              <button onClick={onClose} type="button" className="task-modal-close">
                 <X size={20} />
               </button>
             </div>
 
             {/* Form Wrapper */}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 }}>
+            <form onSubmit={handleSubmit} className="task-modal-form">
 
               {/* Scrollable Form Body */}
-              <div style={{ padding: 24, overflowY: 'auto', flex: 1, overflowX: 'hidden' }}>
+              <div className="task-modal-body">
                 {error && (
-                  <div style={{ padding: 12, backgroundColor: '#FEF2F2', color: '#DC2626', borderRadius: 6, marginBottom: 16, fontSize: 14 }}>
+                  <div className="task-modal-error">
                     {error}
                   </div>
                 )}
 
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Client *</label>
+                <div className="task-form-group">
+                  <label className="task-form-label">Client *</label>
                   <SearchableCombobox options={clients} value={clientId} onChange={setClientId} placeholder="Search for a client..." required />
                 </div>
 
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Method *</label>
+                <div className="task-form-group">
+                  <label className="task-form-label">Method *</label>
                   <SearchableCombobox options={methods} value={methodId} onChange={setMethodId} placeholder="Select a method..." required />
                 </div>
 
-                <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Expected Start Date *</label>
+                <div className="task-form-row">
+                  <div className="task-form-col">
+                    <label className="task-form-label">Expected Start Date *</label>
                     <input
                       type="date"
                       value={expectedStartDate}
                       onChange={e => setExpectedStartDate(e.target.value)}
                       onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
+                      className="task-form-input"
                     />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Time *</label>
+                  <div className="task-form-col">
+                    <label className="task-form-label">Time *</label>
                     <input
                       type="time"
                       value={expectedStartTime}
                       onChange={e => setExpectedStartTime(e.target.value)}
                       onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
+                      className="task-form-input"
                     />
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Expected End Date *</label>
+                <div className="task-form-row">
+                  <div className="task-form-col">
+                    <label className="task-form-label">Expected End Date *</label>
                     <input
                       type="date"
                       value={expectedEndDate}
                       onChange={e => setExpectedEndDate(e.target.value)}
                       onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
+                      className="task-form-input"
                     />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Time *</label>
+                  <div className="task-form-col">
+                    <label className="task-form-label">Time *</label>
                     <input
                       type="time"
                       value={expectedEndTime}
                       onChange={e => setExpectedEndTime(e.target.value)}
                       onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
+                      className="task-form-input"
                     />
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Today's Destinations *</label>
+                <div className="task-form-group">
+                  <label className="task-form-label">Today's Destinations *</label>
                   <SearchableCombobox options={destinations} value={destinationId} onChange={setDestinationId} placeholder="Select an event destination..." required />
-                  {!clientId && <div style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Select a client first to see destinations.</div>}
+                  {!clientId && <div className="task-field-error">Select a client first to see destinations.</div>}
                 </div>
 
-                <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Contact Name *</label>
+                <div className="task-form-row">
+                  <div className="task-form-col">
+                    <label className="task-form-label">Contact Name *</label>
                     <SearchableCombobox options={contacts.map(c => ({ value: c.value, label: c.label }))} value={contactId} onChange={setContactId} placeholder="Select a contact..." required />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Phone Number</label>
+                  <div className="task-form-col">
+                    <label className="task-form-label">Phone Number</label>
                     <SearchableCombobox options={contactPhoneNumbers} value={phoneNumber} onChange={(val) => setPhoneNumber(String(val))} placeholder="Select a phone number..." />
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 8 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Assign To</label>
+                <div className="task-form-group-sm">
+                  <label className="task-form-label">Assign To</label>
                   <SearchableCombobox options={staff} value={assignedTo} onChange={setAssignedTo} placeholder="Search staff members..." />
                 </div>
               </div>
 
               {/* Footer (Fixed) */}
-              <div style={{ padding: '16px 24px', borderTop: '1px solid #E5E7EB', display: 'flex', justifyContent: 'flex-end', gap: 12, flexShrink: 0, backgroundColor: '#fff', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
+              <div className="task-modal-footer">
                 <button
                   type="button"
                   onClick={onClose}
-                  style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #D1D5DB', backgroundColor: '#fff', color: '#374151', cursor: 'pointer', fontWeight: 500 }}
+                  className="task-btn-cancel"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  style={{ padding: '8px 16px', borderRadius: 6, border: 'none', backgroundColor: '#2563EB', color: '#fff', cursor: isSubmitting ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+                  className="task-btn-submit"
                 >
                   {isSubmitting ? 'Saving...' : 'Save Task'}
                 </button>

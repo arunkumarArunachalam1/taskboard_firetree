@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef, KeyboardEvent } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown, ExternalLink, Plus, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -93,11 +93,7 @@ export const StatusBadge: React.FC<{ status: Task['Status'] }> = ({ status }) =>
   };
   const { label, color, Icon } = config[status] ?? config.Active;
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 3,
-      fontSize: 11, fontWeight: 600, color,
-      whiteSpace: 'nowrap',
-    }}>
+    <span className="status-badge" style={{ color }}>
       <Icon size={10} strokeWidth={2.5} />
       {label}
     </span>
@@ -108,17 +104,17 @@ export const StatusBadge: React.FC<{ status: Task['Status'] }> = ({ status }) =>
 
 const TableSkeleton: React.FC = () => (
   <div className="table-card">
-    <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8 }}>
-      <div className="skeleton" style={{ height: 32, width: 220, borderRadius: 6 }} />
+    <div className="skeleton-header">
+      <div className="skeleton skeleton-header-inner" />
     </div>
     {Array.from({ length: 6 }).map((_, i) => (
-      <div key={i} style={{ padding: '14px 18px', borderBottom: '1px solid #F3F4F6', display: 'flex', gap: 16, alignItems: 'center' }}>
-        <div className="skeleton" style={{ height: 14, width: '20%', borderRadius: 4 }} />
-        <div className="skeleton" style={{ height: 14, width: '15%', borderRadius: 4 }} />
-        <div className="skeleton" style={{ height: 14, width: '15%', borderRadius: 4 }} />
-        <div className="skeleton" style={{ height: 14, width: '10%', borderRadius: 4 }} />
-        <div className="skeleton" style={{ height: 14, width: '10%', borderRadius: 4 }} />
-        <div className="skeleton" style={{ height: 22, width: 70, borderRadius: 20 }} />
+      <div key={i} className="skeleton-row">
+        <div className="skeleton skeleton-cell-20" />
+        <div className="skeleton skeleton-cell-15" />
+        <div className="skeleton skeleton-cell-15" />
+        <div className="skeleton skeleton-cell-10" />
+        <div className="skeleton skeleton-cell-10" />
+        <div className="skeleton skeleton-cell-action" />
       </div>
     ))}
   </div>
@@ -458,85 +454,68 @@ const TaskTable: React.FC<TaskTableProps> = ({
   };
 
   const renderNewTaskDropdown = (alignRight: boolean) => (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', zIndex: 9999, overflow: 'visible' }}>
       <button
-        onClick={() => setIsNewTaskOpen(!isNewTaskOpen)}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsNewTaskOpen(!isNewTaskOpen);
+        }}
         className="btn-new-task"
       >
         <Plus size={14} strokeWidth={2.5} />
         New Task
-        <ChevronDown size={14} style={{ marginLeft: '2px' }} />
+        <ChevronDown size={14} className="ml-2px" />
       </button>
 
-      <AnimatePresence>
-        {isNewTaskOpen && (
-          <>
-            <div
-              onClick={() => setIsNewTaskOpen(false)}
-              style={{ position: 'fixed', inset: 0, zIndex: 90 }}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: 5, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 5, scale: 0.95 }}
-              transition={{ duration: 0.15 }}
-              style={{
-                position: 'absolute', top: '100%', [alignRight ? 'right' : 'left']: 0, marginTop: 4,
-                backgroundColor: '#fff', borderRadius: 6,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                border: '1px solid var(--border)',
-                minWidth: 160, zIndex: 100, overflow: 'hidden'
-              }}
-            >
-              <button
-                className="taskboard-dropdown-option"
-                onClick={() => {
-                  setIsNewTaskOpen(false);
-                  setIsGeneralTaskModalOpen(true);
-                }}
-              >
-                General Task
-              </button>
-              <button
-                className="taskboard-dropdown-option"
-                onClick={() => {
-                  setIsNewTaskOpen(false);
-                  setIsWhereaboutsTaskModalOpen(true);
-                }}
-              >
-                Whereabouts Task
-              </button>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {isNewTaskOpen && (
+        <div className={`new-task-dropdown-menu ${alignRight ? 'align-right' : 'align-left'}`}>
+          <button
+            type="button"
+            className="new-task-dropdown-option"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsNewTaskOpen(false);
+              setIsGeneralTaskModalOpen(true);
+            }}
+          >
+            General Task
+          </button>
+          <button
+            type="button"
+            className="new-task-dropdown-option"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsNewTaskOpen(false);
+              setIsWhereaboutsTaskModalOpen(true);
+            }}
+          >
+            Whereabouts Task
+          </button>
+        </div>
+      )}
     </div>
   );
 
   const renderSortIcon = (columnId: number) => {
     if (sortColumn === columnId) {
       return sortDir === 'asc' 
-        ? <ArrowUp size={14} style={{ display: 'inline-block', flexShrink: 0, color: '#2563EB', width: 14, height: 14 }} /> 
-        : <ArrowDown size={14} style={{ display: 'inline-block', flexShrink: 0, color: '#2563EB', width: 14, height: 14 }} />;
+        ? <ArrowUp size={14} className="sort-icon active" /> 
+        : <ArrowDown size={14} className="sort-icon active" />;
     }
-    return <ArrowUpDown size={14} style={{ display: 'inline-block', flexShrink: 0, opacity: 0.3, color: '#4B5563', width: 14, height: 14 }} />;
+    return <ArrowUpDown size={14} className="sort-icon inactive" />;
   };
 
   return (
     <div className="table-card">
       {/* Header bar */}
-      <div style={{
-        padding: '12px 18px', borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', gap: 16
-      }}>
+      <div className="table-header-bar">
         {/* Left: Heading */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>Tasks</span>
-            <span style={{
-              background: 'var(--green)', color: '#fff', borderRadius: 20,
-              fontSize: 11, fontWeight: 700, padding: '2px 8px'
-            }}>{data.total}</span>
+        <div className="table-header-left">
+          <div className="table-header-title-container">
+            <span className="table-header-title">Tasks</span>
+            <span className="table-header-count">{data.total}</span>
           </div>
 
           <div>
@@ -545,7 +524,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         </div>
 
         {/* Center: Bulk Actions (flex-1 prevents right side from shifting) */}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="table-header-center">
           <AnimatePresence mode="popLayout">
             {selectedIds.length > 0 && (
               <motion.div
@@ -553,17 +532,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.95, x: -10 }}
                 transition={{ duration: 0.2 }}
-                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
+                className="bulk-actions-container"
               >
                 <div className="bulk-selected-badge">
                   <span>{selectedIds.length} Selected</span>
                   <button
                     onClick={() => setSelectedIds([])}
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      padding: 0, display: 'flex', alignItems: 'center',
-                      color: '#64748B', marginLeft: 8, transition: 'color 0.15s'
-                    }}
+                    className="btn-clear-selection"
                     onMouseEnter={(e) => e.currentTarget.style.color = '#0F172A'}
                     onMouseLeave={(e) => e.currentTarget.style.color = '#64748B'}
                     title="Deselect All"
@@ -598,21 +573,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </AnimatePresence>
         </div>
 
-        {/* Right: New Task & Search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-
+        {/* Right: Search */}
+        <div className="table-header-right">
 
           <input
             type="text"
             placeholder="Search tasks, clients, assignees…"
             value={localSearch}
             onChange={e => setLocalSearch(e.target.value)}
-            style={{
-              padding: '6px 12px', borderRadius: 6, fontSize: 12,
-              border: '1px solid #D1D5DB', outline: 'none',
-              background: '#fff', color: 'var(--text)', width: 240,
-              boxSizing: 'border-box',
-            }}
+            className="search-input"
           />
         </div>
       </div>
@@ -622,48 +591,48 @@ const TaskTable: React.FC<TaskTableProps> = ({
         <table className="task-table">
           <thead>
             <tr>
-              <th style={{ userSelect: 'none', textAlign: 'center', width: '40px' }}>
+              <th className="th-checkbox">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
                   onChange={handleSelectAll}
-                  style={{ cursor: 'pointer', verticalAlign: 'middle' }}
+                  className="checkbox-input"
                   title="Select All"
                 />
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '22%' }} onClick={() => handleSort(0)}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Task Name <span style={{ marginLeft: 6 }}>{renderSortIcon(0)}</span></div>
+              <th className="th-sortable w-22" onClick={() => handleSort(0)}>
+                <div className="th-content">Task Name <span className="ml-6px">{renderSortIcon(0)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '24%' }} onClick={() => handleSort(1)}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Description <span style={{ marginLeft: 6 }}>{renderSortIcon(1)}</span></div>
+              <th className="th-sortable w-24" onClick={() => handleSort(1)}>
+                <div className="th-content">Description <span className="ml-6px">{renderSortIcon(1)}</span></div>
               </th>
-              {/* <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={() => handleSort(2)}>
-                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Created By <span style={{ marginLeft: 6 }}>{renderSortIcon(2)}</span></div>
+              {/* <th className="th-sortable text-center" onClick={() => handleSort(2)}>
+                <div className="th-content-inline">Created By <span className="ml-6px">{renderSortIcon(2)}</span></div>
               </th> */}
-              <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'left', whiteSpace: 'nowrap', width: '20%' }} onClick={() => handleSort(3)}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Client <span style={{ marginLeft: 6 }}>{renderSortIcon(3)}</span></div>
+              <th className="th-sortable text-left w-20" onClick={() => handleSort(3)}>
+                <div className="th-content">Client <span className="ml-6px">{renderSortIcon(3)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '10%' }} onClick={() => handleSort(4)}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Exp Start <span style={{ marginLeft: 6 }}>{renderSortIcon(4)}</span></div>
+              <th className="th-sortable w-10" onClick={() => handleSort(4)}>
+                <div className="th-content">Exp Start <span className="ml-6px">{renderSortIcon(4)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '10%' }} onClick={() => handleSort(5)}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Due <span style={{ marginLeft: 6 }}>{renderSortIcon(5)}</span></div>
+              <th className="th-sortable w-10" onClick={() => handleSort(5)}>
+                <div className="th-content">Due <span className="ml-6px">{renderSortIcon(5)}</span></div>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap', width: '10%' }} onClick={() => handleSort(6)}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', width: '100%' }}>Assigned To <span style={{ marginLeft: 6 }}>{renderSortIcon(6)}</span></div>
+              <th className="th-sortable w-10" onClick={() => handleSort(6)}>
+                <div className="th-content">Assigned To <span className="ml-6px">{renderSortIcon(6)}</span></div>
               </th>
-              {/* <th style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'center', whiteSpace: 'nowrap' }} onClick={() => handleSort(7)}>
-                <div style={{ display: 'inline-flex', alignItems: 'center' }}>Facility <span style={{ marginLeft: 6 }}>{renderSortIcon(7)}</span></div>
+              {/* <th className="th-sortable text-center" onClick={() => handleSort(7)}>
+                <div className="th-content-inline">Facility <span className="ml-6px">{renderSortIcon(7)}</span></div>
               </th> */}
-              <th style={{ userSelect: 'none', textAlign: 'center', width: '90px', paddingRight: '16px' }}>
+              <th className="th-actions">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+          <tbody className={loading ? 'tbody-loading' : 'tbody-loaded'}>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: 'var(--gray-text)', fontSize: 13 }}>
+                <td colSpan={10} className="td-empty">
                   No tasks match your search.
                 </td>
               </tr>
@@ -675,13 +644,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   className={task.Status === 'Late' ? 'row-late' : ''}
                   onClick={(e) => handleRowClick(task, e)}
                 >
-                  <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                  <td className="td-center" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(task.TaskID)}
                       onChange={() => handleSelectRow(task.TaskID)}
                       disabled={task.Status === 'Completed'}
-                      style={{ cursor: task.Status === 'Completed' ? 'not-allowed' : 'pointer' }}
+                      className={task.Status === 'Completed' ? 'cursor-not-allowed' : 'cursor-pointer'}
                     />
                   </td>
                   <td>
@@ -690,28 +659,21 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <td>
                     <div
                       dangerouslySetInnerHTML={{ __html: task.TaskDescription }}
-                      style={{
-                        display: '-webkit-box',
-                        WebkitLineClamp: 4,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        wordBreak: 'break-word'
-                      }}
+                      className="task-description-cell"
                       title={extractTextFromHTML(task.TaskDescription)}
                     />
                   </td>
                   {/* <td style={{ textAlign: 'center' }}>
                     <span dangerouslySetInnerHTML={{ __html: task.CreatedBy }} />
                   </td> */}
-                  <td style={{ textAlign: 'left' }}>
+                  <td className="td-left">
                     <div dangerouslySetInnerHTML={{ __html: task.ClientName }} className="client-name-wrapper" />
                   </td>
                   <td>
                     <span>{task.ExpectedStartDate}</span>
                   </td>
                   <td>
-                    <span style={{ fontWeight: task.Status === 'Late' ? 700 : 'normal' }}>
+                    <span className={task.Status === 'Late' ? 'font-bold' : 'font-normal'}>
                       {task.ExpectedDueDate}
                     </span>
                   </td>
@@ -721,9 +683,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   {/* <td style={{ textAlign: 'center' }}>
                     <span>{task.Facility}</span>
                   </td> */}
-                  <td style={{ textAlign: 'center', paddingRight: '16px' }} onClick={(e) => e.stopPropagation()}>
+                  <td className="td-actions" onClick={(e) => e.stopPropagation()}>
                     {task.Status !== 'Completed' ? (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      <div className="action-buttons-container">
                         <button
                           onClick={() => handleMarkSingleComplete(task.TaskID, task.TaskName)}
                           title="Mark Complete"
@@ -752,7 +714,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         )}
                       </div>
                     ) : (
-                      <span style={{ color: 'var(--green)', fontWeight: 600, fontSize: '11px' }}>Completed</span>
+                      <span className="status-completed-text">Completed</span>
                     )}
                   </td>
                 </tr>
@@ -764,26 +726,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
       {/* Pagination */}
       <div className="pagination">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--gray-text)', fontWeight: 600 }}>
+        <div className="pagination-left">
+          <div className="page-size-selector">
             <span>Show</span>
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
-              style={{
-                padding: '4px 28px 4px 12px',
-                borderRadius: '4px',
-                border: '1px solid var(--border)',
-                fontSize: '13px',
-                background: '#fff',
-                cursor: 'pointer',
-                color: 'var(--text)',
-                outline: 'none',
-                appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 8px center',
-              }}
+              className="page-size-select"
             >
               <option value={15}>15</option>
               <option value={25}>25</option>
@@ -793,7 +742,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             </select>
             <span>entries</span>
           </div>
-          <span className="page-info" style={{ fontWeight: 500 }}>
+          <span className="page-info font-medium">
             Showing <strong>{Math.min((page - 1) * data.pageSize + 1, data.total)}</strong>–<strong>{Math.min(page * data.pageSize, data.total)}</strong> of <strong>{data.total}</strong>
           </span>
         </div>
@@ -803,7 +752,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           </button>
           {getPageNumbers().map((p, i) =>
             p === '…' ? (
-              <span key={`ellipsis-${i}`} style={{ display: 'flex', alignItems: 'center', padding: '0 4px', color: 'var(--gray-text)', fontSize: 13 }}>…</span>
+              <span key={`ellipsis-${i}`} className="pagination-ellipsis">…</span>
             ) : (
               <button
                 key={p}
@@ -825,38 +774,21 @@ const TaskTable: React.FC<TaskTableProps> = ({
           {isReassignOpen && (() => {
             const selectedTasks = data ? data.tasks.filter(t => reassignTaskIds.includes(t.TaskID)) : [];
             return (
-              <div
+              <motion.div
+                key="reassign-modal-overlay"
                 className="taskboard-modal-overlay"
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(15, 23, 42, 0.45)',
-                  backdropFilter: 'blur(4px)',
-                  zIndex: 10000,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '20px'
-                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
               >
                 {/* Clicking outside the dropdown closes it */}
-                {isDropdownOpen && (
-                  <div
-                    onClick={() => setIsDropdownOpen(false)}
-                    style={{
-                      position: 'fixed',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      zIndex: 10090,
-                      backgroundColor: 'transparent'
-                    }}
-                  />
-                )}
+                <div
+                  key="reassign-dropdown-backdrop"
+                  onClick={() => setIsDropdownOpen(false)}
+                  className="dropdown-backdrop"
+                  style={{ display: isDropdownOpen ? 'block' : 'none' }}
+                />
 
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -894,8 +826,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         <div className="taskboard-task-list">
                           {selectedTasks.map(t => (
                             <div key={t.TaskID} className="taskboard-task-list-item">
-                              <span className="dot" style={{ backgroundColor: '#3B82F6' }} />
-                              <span dangerouslySetInnerHTML={{ __html: t.TaskName }} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} />
+                              <span className="dot bg-blue" />
+                              <span dangerouslySetInnerHTML={{ __html: t.TaskName }} className="text-truncate" />
                             </div>
                           ))}
                         </div>
@@ -903,7 +835,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     </div>
 
                     {/* Searchable Dropdown Field */}
-                    <div style={{ position: 'relative' }}>
+                    <div className="relative-container">
                       <label className="taskboard-field-label">
                         New Assignee
                       </label>
@@ -921,10 +853,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         </span>
                       </div>
 
-                      {isDropdownOpen && (
-                        <div className="taskboard-dropdown-panel">
-                          {/* Search bar inside dropdown */}
-                          <div className="taskboard-dropdown-search">
+                      <div key="reassign-dropdown-panel" className="taskboard-dropdown-panel" style={{ display: isDropdownOpen ? 'flex' : 'none' }}>
+                        <div className="taskboard-dropdown-search">
                             <span className="search-icon">
                               <Search size={14} />
                             </span>
@@ -979,9 +909,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
                                 );
                               });
                             })()}
-                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
 
@@ -1002,7 +931,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     </button>
                   </div>
                 </motion.div>
-              </div>
+              </motion.div>
             );
           })()}
         </AnimatePresence>,
@@ -1022,22 +951,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
             const IconComponent = dialogTheme.Icon;
 
             return (
-              <div
-                className="taskboard-modal-overlay"
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: 'rgba(15, 23, 42, 0.45)',
-                  backdropFilter: 'blur(4px)',
-                  zIndex: 20000,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '20px'
-                }}
+              <motion.div
+                key="confirm-modal-overlay"
+                className="taskboard-modal-overlay overlay-z-20000"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
               >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -1095,7 +1015,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                                 {tasksToComplete.map(t => (
                                   <div key={t.TaskID} className="taskboard-task-list-item">
                                     <span className="dot" style={{ backgroundColor: dialogTheme.iconColor }} />
-                                    <span dangerouslySetInnerHTML={{ __html: t.TaskName }} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} />
+                                    <span dangerouslySetInnerHTML={{ __html: t.TaskName }} className="text-truncate" />
                                   </div>
                                 ))}
                               </div>
@@ -1120,14 +1040,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         confirmDialog.onConfirm();
                         setConfirmDialog(null);
                       }}
-                      className={`taskboard-btn-primary ${type === 'complete' ? 'green' : type === 'reassign' ? 'blue' : 'amber'}`}
-                      style={{ color: '#ffffff' }}
+                      className={`taskboard-btn-primary ${type === 'complete' ? 'green' : type === 'reassign' ? 'blue' : 'amber'} text-white`}
                     >
                       Confirm
                     </button>
                   </div>
                 </motion.div>
-              </div>
+              </motion.div>
             );
           })()}
         </AnimatePresence>,
@@ -1145,43 +1064,27 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
             return (
               <motion.div
+                key="toast-notification"
                 className="taskboard-toast"
                 initial={{ opacity: 0, y: -50, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                style={{
-                  position: 'fixed',
-                  top: '24px',
-                  right: '24px',
-                  zIndex: 2147483647,
-                  width: 'auto',
-                  minWidth: '320px',
-                  maxWidth: '400px',
-                  backgroundColor: colors.bg,
-                  border: `1px solid ${colors.border}`,
-                  borderLeft: `4px solid ${colors.leftBorder}`,
-                  borderRadius: '8px',
-                  color: colors.text,
-                  padding: '16px',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '12px',
-                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1)'
-                }}
+                style={{ backgroundColor: colors.bg, borderColor: colors.border, borderLeftColor: colors.leftBorder, color: colors.text }}
               >
-                <div style={{ flexShrink: 0, width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px' }}>
-                  <AlertCircle size={20} strokeWidth={2.5} style={{ width: '20px', height: '20px', minWidth: '20px', minHeight: '20px' }} />
+                <div className="toast-icon-container">
+                  <AlertCircle size={20} strokeWidth={2.5} className="toast-icon" />
                 </div>
-                <div style={{ flex: 1, minWidth: 0, fontSize: '14px', fontWeight: 500, lineHeight: 1.4 }}>
+                <div className="toast-content">
                   {toast.message}
                 </div>
                 <button
                   onClick={() => setToast(null)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: colors.text, padding: '2px', display: 'flex', flexShrink: 0 }}
+                  style={{ color: colors.text }}
+                  className="toast-close"
                   title="Dismiss"
                 >
-                  <X size={18} strokeWidth={2.5} style={{ width: '18px', height: '18px' }} />
+                  <X size={18} strokeWidth={2.5} className="toast-close-icon" />
                 </button>
               </motion.div>
             );

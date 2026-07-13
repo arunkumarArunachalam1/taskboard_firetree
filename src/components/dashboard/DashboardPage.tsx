@@ -15,7 +15,7 @@ const DashboardPage: React.FC = () => {
   const {
     summary, loadingSummary,
     charts, loadingCharts,
-    tasks, loadingTasks, page, pageSize, fetchTasks, handleHardRefresh, handleRefresh,
+    tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary, fetchCharts, handleHardRefresh, handleRefresh,
     search, sortColumn, sortDir, filters, setFilters,
     error, setError
   } = useDashboard();
@@ -45,8 +45,14 @@ const DashboardPage: React.FC = () => {
     role: primaryRole
   };
 
-  const hasAdminPrivileges = Object.keys(context.roles).some(
-    role => role.toLowerCase() === 'admin' || role.toLowerCase() === 'administrator' || role.toLowerCase() === 'facility director'
+  const adminRoles = new Set([
+    'admin',
+    'administrator',
+    'facility director',
+  ]);
+
+  const hasAdminPrivileges = Object.keys(context.roles ?? {}).some(role =>
+    adminRoles.has(role.toLowerCase())
   );
 
   const handleApplyFilters = (newFilters: DashboardFilters) => {

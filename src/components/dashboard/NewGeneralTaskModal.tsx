@@ -60,7 +60,7 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
       <>
         {parts.map((part, i) =>
           part.toLowerCase() === query.toLowerCase()
-            ? <strong key={i} style={{ color: '#2563EB', backgroundColor: '#EFF6FF', padding: '0 2px', borderRadius: 2 }}>{part}</strong>
+            ? <strong key={i} className="combobox-highlight">{part}</strong>
             : part
         )}
       </>
@@ -68,7 +68,7 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
   };
 
   return (
-    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
+    <div ref={wrapperRef} className="combobox-container">
       <input
         type="text"
         value={displayValue}
@@ -85,31 +85,16 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
           setSearch('');
         }}
         placeholder={placeholder}
-        style={{ width: '100%', padding: '8px 30px 8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box', backgroundColor: '#fff', cursor: 'pointer' }}
+        className="combobox-input"
       />
-      <div 
-        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6B7280' }}
-      >
+      <div className="combobox-chevron">
         <ChevronDown size={16} />
       </div>
       {/* Hidden input to ensure required validation fires natively if empty */}
-      {required && !value && <input type="text" style={{ opacity: 0, position: 'absolute', height: 0, width: 0, pointerEvents: 'none' }} required />}
+      {required && !value && <input type="text" className="combobox-hidden-input" required />}
 
       {isOpen && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
-          maxHeight: 260,
-          overflowY: 'auto',
-          backgroundColor: '#fff',
-          border: '1px solid #D1D5DB',
-          borderRadius: 6,
-          marginTop: 4,
-          zIndex: 100000,
-          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-        }}>
+        <div className="combobox-panel">
           {filteredOptions.length > 0 ? filteredOptions.map(option => (
             <div
               key={option.value}
@@ -118,15 +103,13 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
                 setIsOpen(false);
                 setSearch('');
               }}
-              style={{ padding: '10px 12px', cursor: 'pointer', borderBottom: '1px solid #F3F4F6' }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F9FAFB')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+              className="combobox-option"
             >
-              <div style={{ fontWeight: 500, color: '#111827', fontSize: 14 }}>{highlightMatch(option.label, search)}</div>
-              {option.secondary && <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Case File ID: {highlightMatch(option.secondary, search)}</div>}
+              <div className="combobox-option-label">{highlightMatch(option.label, search)}</div>
+              {option.secondary && <div className="combobox-option-secondary">Case File ID: {highlightMatch(option.secondary, search)}</div>}
             </div>
           )) : (
-            <div style={{ padding: '12px', color: '#6B7280', fontSize: 14, textAlign: 'center' }}>
+            <div className="combobox-empty">
               No results found for "{search}"
             </div>
           )}
@@ -286,21 +269,14 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="task-modal-wrapper">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="modal-backdrop"
-            style={{
-              position: 'absolute',
-              top: 0, left: 0, right: 0, bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              backdropFilter: 'blur(4px)',
-              zIndex: 1000
-            }}
+            className="task-modal-backdrop"
           />
 
           {/* Modal Content */}
@@ -308,66 +284,53 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.95 }}
-            className="modal-content"
-            style={{
-              position: 'relative',
-              backgroundColor: '#fff',
-              borderRadius: 12,
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              width: '100%',
-              maxWidth: 650,
-              maxHeight: '90vh',
-              display: 'flex',
-              flexDirection: 'column',
-              margin: '20px',
-              zIndex: 1001
-            }}
+            className="task-modal-content"
           >
             {/* Header (Fixed) */}
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: '#111827' }}>Create General Task</h2>
-              <button onClick={onClose} type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280' }}>
+            <div className="task-modal-header">
+              <h2 className="task-modal-title">Create General Task</h2>
+              <button onClick={onClose} type="button" className="task-modal-close">
                 <X size={20} />
               </button>
             </div>
 
             {/* Form Wrapper */}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 }}>
+            <form onSubmit={handleSubmit} className="task-modal-form">
 
               {/* Scrollable Form Body */}
-              <div style={{ padding: 24, overflowY: 'auto', flex: 1, overflowX: 'hidden' }}>
+              <div className="task-modal-body">
                 {error && (
-                  <div style={{ padding: 12, backgroundColor: '#FEF2F2', color: '#DC2626', borderRadius: 6, marginBottom: 16, fontSize: 14 }}>
+                  <div className="task-modal-error">
                     {error}
                   </div>
                 )}
 
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Task Name *</label>
+                <div className="task-form-group">
+                  <label className="task-form-label">Task Name *</label>
                   <input
                     type="text"
                     name="TaskName"
                     value={formData.TaskName}
                     onChange={handleChange}
                     required
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
+                    className="task-form-input"
                   />
                 </div>
 
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Description *</label>
+                <div className="task-form-group">
+                  <label className="task-form-label">Description *</label>
                   <textarea
                     name="TaskDescription"
                     value={formData.TaskDescription}
                     onChange={handleChange}
                     required
-                    style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box', minHeight: 80 }}
+                    className="task-form-textarea"
                   />
                 </div>
 
-                <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Start Date *</label>
+                <div className="task-form-row">
+                  <div className="task-form-col">
+                    <label className="task-form-label">Start Date *</label>
                     <input
                       type="date"
                       name="ExpectedStartDate"
@@ -375,11 +338,11 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                       onChange={handleChange}
                       onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
+                      className="task-form-input"
                     />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Due Date *</label>
+                  <div className="task-form-col">
+                    <label className="task-form-label">Due Date *</label>
                     <input
                       type="date"
                       name="ExpectedDueDate"
@@ -387,13 +350,13 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                       onChange={handleChange}
                       onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                       required
-                      style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid #D1D5DB', boxSizing: 'border-box' }}
+                      className="task-form-input"
                     />
                   </div>
                 </div>
 
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Client *</label>
+                <div className="task-form-group">
+                  <label className="task-form-label">Client *</label>
                   <SearchableCombobox
                     options={clientOptions}
                     value={formData.ClientCaseFileID}
@@ -401,11 +364,11 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                     placeholder="Search for a client..."
                     required
                   />
-                  {fieldErrors['Task.ClientCaseFileID'] && <span style={{ color: '#DC2626', fontSize: 12, marginTop: 4, display: 'block' }}>{fieldErrors['Task.ClientCaseFileID'].MESSAGE}</span>}
+                  {fieldErrors['Task.ClientCaseFileID'] && <span className="task-field-error">{fieldErrors['Task.ClientCaseFileID'].MESSAGE}</span>}
                 </div>
 
-                <div style={{ marginBottom: 8 }}>
-                  <label style={{ display: 'block', fontSize: 14, fontWeight: 500, color: '#374151', marginBottom: 4 }}>Assign To</label>
+                <div className="task-form-group-sm">
+                  <label className="task-form-label">Assign To</label>
                   <SearchableCombobox
                     options={staffOptions}
                     value={formData.AssignTo}
@@ -416,18 +379,18 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
               </div>
 
               {/* Footer (Fixed) */}
-              <div style={{ padding: '16px 24px', borderTop: '1px solid #E5E7EB', display: 'flex', justifyContent: 'flex-end', gap: 12, flexShrink: 0, backgroundColor: '#fff', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
+              <div className="task-modal-footer">
                 <button
                   type="button"
                   onClick={onClose}
-                  style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid #D1D5DB', backgroundColor: '#fff', color: '#374151', cursor: 'pointer', fontWeight: 500 }}
+                  className="task-btn-cancel"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{ padding: '8px 16px', borderRadius: 6, border: 'none', backgroundColor: '#2563EB', color: '#fff', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+                  className="task-btn-submit"
                 >
                   {loading ? 'Saving...' : 'Save Task'}
                 </button>

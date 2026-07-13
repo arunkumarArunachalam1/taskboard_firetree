@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, ChevronDown, X } from 'lucide-react';
+import { Filter, RotateCcw, Search, ChevronDown, X } from 'lucide-react';
 import type { DashboardFilters, OptionItem, FacilityStaff } from '../../types/dashboard.types';
 import { getFacilityStaff, getTaskTypes, getRoles } from '../../services/dashboard.service';
 import { useAppContext } from '../../context/AppContext';
@@ -66,7 +66,9 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   /* focus search when panel opens */
   useEffect(() => {
     if (open && searchable) {
-      setTimeout(() => searchRef.current?.focus(), 40);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => searchRef.current?.focus());
+      });
     }
   }, [open, searchable]);
 
@@ -80,106 +82,57 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   const isActive = open || focused;
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
-
+    <div ref={containerRef} className="searchable-dropdown-container">
       {/* ── Trigger ── */}
-      <div
-        tabIndex={0}
-        role="button"
-        aria-expanded={open}
-        onClick={() => { setOpen(o => !o); setFocused(true); }}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(o => !o); }
-          if (e.key === 'Escape') { setOpen(false); setSearch(''); setFocused(false); }
-        }}
-        style={{
-          width: '100%',
-          height: '38px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '6px',
-          padding: '0 10px',
-          background: '#ffffff',
-          border: isActive ? '1.5px solid #3B82F6' : '1px solid #D1D5DB',
-          borderRadius: '8px',
-          boxShadow: isActive ? '0 0 0 3px rgba(59,130,246,0.12)' : '0 1px 2px rgba(0,0,0,0.04)',
-          cursor: 'pointer',
-          userSelect: 'none',
-          boxSizing: 'border-box',
-          outline: 'none',
-          transition: 'border-color 0.15s, box-shadow 0.15s',
-        }}
-      >
-        <span style={{
-          flex: 1,
-          minWidth: 0,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-          fontSize: '13px',
-          color: value ? '#111827' : '#6B7280',
-        }}>
-          {selectedLabel}
-        </span>
+      <div className={`searchable-dropdown-trigger-container ${isActive ? 'active' : ''}`}>
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={() => { setOpen(o => !o); setFocused(true); }}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(o => !o); }
+            if (e.key === 'Escape') { setOpen(false); setSearch(''); setFocused(false); }
+          }}
+          className="searchable-dropdown-trigger"
+        >
+          <span className={`searchable-dropdown-value ${value ? 'has-value' : ''}`}>
+            {selectedLabel}
+          </span>
+        </button>
 
-        <span style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}>
+        <span className="searchable-dropdown-icons">
           {value && (
-            <span
+            <button
+              type="button"
               title="Clear"
               onClick={e => { e.stopPropagation(); handleSelect(''); }}
-              style={{
-                display: 'flex', alignItems: 'center',
-                color: '#9CA3AF', cursor: 'pointer', padding: '2px',
-                borderRadius: '3px',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLSpanElement).style.color = '#EF4444'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLSpanElement).style.color = '#9CA3AF'; }}
+              className="searchable-dropdown-clear"
             >
               <X size={11} strokeWidth={2.5} />
-            </span>
+            </button>
           )}
-          <ChevronDown
-            size={14}
-            strokeWidth={2}
-            style={{
-              color: isActive ? '#3B82F6' : '#6B7280',
-              transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.18s, color 0.15s',
-            }}
-          />
+          <button
+            type="button"
+            onClick={() => { setOpen(o => !o); setFocused(true); }}
+            className="searchable-dropdown-chevron-btn"
+            tabIndex={-1}
+          >
+            <ChevronDown
+              size={14}
+              strokeWidth={2}
+              className={`searchable-dropdown-chevron ${open ? 'open' : ''}`}
+            />
+          </button>
         </span>
       </div>
 
       {/* ── Dropdown panel ── */}
       {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 5px)',
-            left: 0,
-            right: 0,
-            background: '#ffffff',
-            border: '1px solid #E5E7EB',
-            borderRadius: '10px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
-            zIndex: 99999,
-            overflow: 'hidden',
-            maxHeight: '280px',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {/* Search row — reliable absolute-icon approach */}
+        <div className="searchable-dropdown-panel">
+          {/* Search row */}
           {searchable && (
-            <div style={{
-              padding: '8px',
-              borderBottom: '1px solid #F3F4F6',
-              flexShrink: 0,
-              background: '#FAFAFA',
-            }}>
-              <div style={{ position: 'relative' }}>
-                {/* Input — left-padded to clear icon */}
+            <div className="searchable-dropdown-search-row">
+              <div className="searchable-dropdown-search-wrapper">
                 <input
                   ref={searchRef}
                   type="text"
@@ -189,53 +142,30 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                   onKeyDown={e => {
                     if (e.key === 'Escape') { setOpen(false); setSearch(''); setFocused(false); }
                   }}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    height: '34px',
-                    paddingLeft: '10px',
-                    paddingRight: search ? '32px' : '10px',
-                    border: '1.5px solid #E5E7EB',
-                    borderRadius: '7px',
-                    outline: 'none',
-                    fontSize: '12.5px',
-                    color: '#111827',
-                    background: '#ffffff',
-                    boxSizing: 'border-box',
-                    transition: 'border-color 0.15s',
-                  }}
-                  onFocus={e  => { e.currentTarget.style.borderColor = '#3B82F6'; }}
-                  onBlur={e   => { e.currentTarget.style.borderColor = '#E5E7EB'; }}
+                  className={`searchable-dropdown-search-input ${search ? 'has-search-text' : ''}`}
                 />
-                {/* Clear search text button */}
                 {search && (
-                  <span
+                  <button
+                    type="button"
                     onClick={() => { setSearch(''); searchRef.current?.focus(); }}
-                    style={{
-                      position: 'absolute',
-                      right: '9px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      display: 'flex', alignItems: 'center',
-                      cursor: 'pointer', color: '#9CA3AF',
-                    }}
+                    className="searchable-dropdown-search-clear"
                   >
                     <X size={11} strokeWidth={2.5} />
-                  </span>
+                  </button>
                 )}
               </div>
             </div>
           )}
 
           {/* Options list */}
-          <div style={{ overflowY: 'auto', flex: 1 }}>
+          <div className="searchable-dropdown-list">
             <DropdownItem
               label={placeholder}
               isSelected={!value}
               onClick={() => handleSelect('')}
             />
             {filtered.length === 0 ? (
-              <div style={{ padding: '14px 12px', fontSize: '12.5px', color: '#9CA3AF', textAlign: 'center' }}>
+              <div className="searchable-dropdown-empty">
                 No results found
               </div>
             ) : (
@@ -259,31 +189,14 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
 const DropdownItem: React.FC<{ label: string; isSelected: boolean; onClick: () => void }> = ({
   label, isSelected, onClick,
 }) => {
-  const [hovered, setHovered] = useState(false);
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        padding: '9px 14px',
-        fontSize: '13px',
-        lineHeight: '1.3',
-        cursor: 'pointer',
-        color: isSelected ? '#2563EB' : '#374151',
-        fontWeight: isSelected ? 600 : 400,
-        background: isSelected
-          ? '#EFF6FF'
-          : hovered
-          ? '#F5F7FA'
-          : 'transparent',
-        borderLeft: isSelected ? '3px solid #3B82F6' : '3px solid transparent',
-        transition: 'background 0.1s',
-        userSelect: 'none',
-      }}
+      className={`searchable-dropdown-item ${isSelected ? 'selected' : ''}`}
     >
       {label}
-    </div>
+    </button>
   );
 };
 
@@ -327,95 +240,39 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
   ];
   const taskTypeOptions: DropdownOption[] = taskTypes.map(t => ({ value: String(t.value), label: t.label }));
 
-  // ── Shared design tokens ────────────────────────────────────────────────────
-  const FIELD_HEIGHT = '38px';
-  const BORDER_RADIUS = '8px';
-  const BORDER_COLOR = '#D1D5DB';
-  const FOCUS_BORDER = '#3B82F6';
-  const FOCUS_SHADOW = '0 0 0 3px rgba(59,130,246,0.12)';
-  const INPUT_SHADOW = '0 1px 2px rgba(0,0,0,0.04)';
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: '11px',
-    fontWeight: 700,
-    color: '#6B7280',
-    textTransform: 'uppercase',
-    letterSpacing: '0.06em',
-    marginBottom: '5px',
-  };
-
-  const fieldStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-  };
-
-  // Date inputs must visually match the SearchableDropdown trigger
-  const dateStyle: React.CSSProperties = {
-    width: '100%',
-    height: FIELD_HEIGHT,
-    fontSize: '13px',
-    padding: '0 10px',
-    border: `1px solid ${BORDER_COLOR}`,
-    borderRadius: BORDER_RADIUS,
-    background: '#ffffff',
-    color: '#111827',
-    boxSizing: 'border-box',
-    outline: 'none',
-    cursor: 'pointer',
-    boxShadow: INPUT_SHADOW,
-    transition: 'border-color 0.15s, box-shadow 0.15s',
-    // Match font so the date text looks the same weight as dropdown text
-    fontFamily: 'inherit',
-  };
-
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          key="filter-panel"
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
         >
           {/* ── Filter Card ── */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '12px',
-            border: '1px solid #E5E7EB',
-            padding: '18px 20px 16px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            marginBottom: '20px',
-            position: 'relative',
-            zIndex: 100,
-          }}>
+          <div className="filter-panel-card">
 
             {/* ── Header row: title + Clear ── */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#374151', letterSpacing: '0.01em' }}>
+            <div className="filter-panel-header">
+              <span className="filter-panel-title">
                 Filters
               </span>
-              <span
-                style={{ fontSize: '12.5px', color: '#2563EB', cursor: 'pointer', fontWeight: 500, userSelect: 'none' }}
-                onMouseEnter={e => { e.currentTarget.style.textDecoration = 'underline'; }}
-                onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none'; }}
-                onMouseDown={e => { e.preventDefault(); onClear(); }}
+              <button
+                type="button"
+                className="filter-panel-clear"
+                onClick={() => onClear()}
               >
                 Clear Filters
-              </span>
+              </button>
             </div>
 
             {/* ── Uniform 6-column filter grid ── */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(6, 1fr)',
-              gap: '12px',
-              alignItems: 'end',
-            }}>
+            <div className="filter-panel-grid">
 
               {/* 1 — Assigned User */}
-              <div style={fieldStyle}>
-                <label style={labelStyle}>Assigned User</label>
+              <div className="filter-field">
+                <label className="filter-label">Assigned User</label>
                 <SearchableDropdown
                   options={staffOptions}
                   value={localFilters.assignedTo}
@@ -426,8 +283,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
               </div>
 
               {/* 2 — Assigned Role */}
-              <div style={fieldStyle}>
-                <label style={labelStyle}>Assigned Role</label>
+              <div className="filter-field">
+                <label className="filter-label">Assigned Role</label>
                 <SearchableDropdown
                   options={roleOptions}
                   value={localFilters.role}
@@ -438,8 +295,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
               </div>
 
               {/* 3 — Completed */}
-              <div style={fieldStyle}>
-                <label style={labelStyle}>Completed</label>
+              <div className="filter-field">
+                <label className="filter-label">Completed</label>
                 <SearchableDropdown
                   options={completedOptions}
                   value={localFilters.status === 'all' ? '' : localFilters.status}
@@ -450,8 +307,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
               </div>
 
               {/* 4 — Task Type */}
-              <div style={fieldStyle}>
-                <label style={labelStyle}>Task Type</label>
+              <div className="filter-field">
+                <label className="filter-label">Task Type</label>
                 <SearchableDropdown
                   options={taskTypeOptions}
                   value={localFilters.taskType}
@@ -462,89 +319,42 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
               </div>
 
               {/* 5 — Start Date */}
-              <div style={fieldStyle}>
-                <label style={labelStyle}>Start Date</label>
+              <div className="filter-field">
+                <label className="filter-label">Start Date</label>
                 <input
                   type="date"
                   value={localFilters.startDate}
                   onChange={e => set('startDate', e.target.value)}
-                  style={dateStyle}
-                  onFocus={e => {
-                    e.currentTarget.style.borderColor = FOCUS_BORDER;
-                    e.currentTarget.style.boxShadow   = FOCUS_SHADOW;
-                  }}
-                  onBlur={e => {
-                    e.currentTarget.style.borderColor = BORDER_COLOR;
-                    e.currentTarget.style.boxShadow   = INPUT_SHADOW;
-                  }}
+                  className="filter-date-input"
                 />
               </div>
 
               {/* 6 — End Date */}
-              <div style={fieldStyle}>
-                <label style={labelStyle}>End Date</label>
+              <div className="filter-field">
+                <label className="filter-label">End Date</label>
                 <input
                   type="date"
                   value={localFilters.endDate}
                   onChange={e => set('endDate', e.target.value)}
-                  style={dateStyle}
-                  onFocus={e => {
-                    e.currentTarget.style.borderColor = FOCUS_BORDER;
-                    e.currentTarget.style.boxShadow   = FOCUS_SHADOW;
-                  }}
-                  onBlur={e => {
-                    e.currentTarget.style.borderColor = BORDER_COLOR;
-                    e.currentTarget.style.boxShadow   = INPUT_SHADOW;
-                  }}
+                  className="filter-date-input"
                 />
               </div>
 
             </div>
 
             {/* ── Action buttons — right-aligned ── */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
-
+            <div className="filter-actions">
               {/* Apply Filters */}
               <button
                 type="button"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  height: '32px',
-                  padding: '0 14px',
-                  borderRadius: BORDER_RADIUS,
-                  border: 'none',
-                  backgroundColor: '#2563EB',
-                  color: '#ffffff',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '12px',
-                  whiteSpace: 'nowrap',
-                  transition: 'background-color 0.12s, transform 0.1s',
-                  userSelect: 'none',
-                  fontFamily: 'inherit',
-                  boxShadow: '0 1px 3px rgba(37,99,235,0.35)',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#1D4ED8'; }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.backgroundColor = '#2563EB';
-                  e.currentTarget.style.transform       = 'scale(1)';
-                }}
-                onMouseDown={e => {
-                  e.currentTarget.style.transform       = 'scale(0.97)';
-                  e.currentTarget.style.backgroundColor = '#1E40AF';
-                }}
-                onMouseUp={e => {
-                  e.currentTarget.style.transform       = 'scale(1)';
-                  e.currentTarget.style.backgroundColor = '#1D4ED8';
+                className="btn-apply-filters"
+                onClick={() => {
                   onApply(localFilters);
                 }}
               >
                 <Filter size={12} strokeWidth={2} />
                 Apply Filters
               </button>
-
             </div>
 
           </div>
