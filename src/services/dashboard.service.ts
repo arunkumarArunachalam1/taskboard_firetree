@@ -60,9 +60,27 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   };
 }
 
-export async function getDashboardKPIs(): Promise<DashboardSummary> {
+export async function getDashboardKPIs(filters?: DashboardFilters): Promise<DashboardSummary> {
   const context = activeContext;
-  const url = `/ReactTaskBoard/getDashboardKPIs?_=${Date.now()}`;
+  let url = `/ReactTaskBoard/getDashboardKPIs?_=${Date.now()}`;
+  
+  if (filters) {
+    if (filters.assignedTo) url += `&assignedTo=${encodeURIComponent(filters.assignedTo)}`;
+    if (filters.role) url += `&role=${encodeURIComponent(filters.role)}`;
+    if (filters.status && filters.status !== 'all') url += `&status=${encodeURIComponent(filters.status)}`;
+    if (filters.taskType) url += `&taskType=${encodeURIComponent(filters.taskType)}`;
+    
+    const formatToCFDate = (dateStr: string) => {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+      return dateStr;
+    };
+    
+    if (filters.startDate) url += `&startDate=${encodeURIComponent(formatToCFDate(filters.startDate))}`;
+    if (filters.endDate) url += `&endDate=${encodeURIComponent(formatToCFDate(filters.endDate))}`;
+  }
+
   console.log(`[getDashboardKPIs] Fetching KPIs from: ${url}`);
 
   const response = await fetch(url, {
@@ -119,8 +137,26 @@ export async function getDashboardKPIs(): Promise<DashboardSummary> {
   return kpiData;
 }
 
-export async function getDashboardCharts(): Promise<DashboardCharts> {
-  const url = `/ReactTaskBoard/getDashboardCharts?_=${Date.now()}`;
+export async function getDashboardCharts(filters?: DashboardFilters): Promise<DashboardCharts> {
+  let url = `/ReactTaskBoard/getDashboardCharts?_=${Date.now()}`;
+  
+  if (filters) {
+    if (filters.assignedTo) url += `&assignedTo=${encodeURIComponent(filters.assignedTo)}`;
+    if (filters.role) url += `&role=${encodeURIComponent(filters.role)}`;
+    if (filters.status && filters.status !== 'all') url += `&status=${encodeURIComponent(filters.status)}`;
+    if (filters.taskType) url += `&taskType=${encodeURIComponent(filters.taskType)}`;
+    
+    const formatToCFDate = (dateStr: string) => {
+      if (!dateStr) return '';
+      const parts = dateStr.split('-');
+      if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+      return dateStr;
+    };
+    
+    if (filters.startDate) url += `&startDate=${encodeURIComponent(formatToCFDate(filters.startDate))}`;
+    if (filters.endDate) url += `&endDate=${encodeURIComponent(formatToCFDate(filters.endDate))}`;
+  }
+
   console.log(`[getDashboardCharts] Fetching Charts from: ${url}`);
 
   try {
@@ -379,6 +415,11 @@ export async function getTaskList(
     const tasks: Task[] = rawData.map((row: any, idx: number) => {
       // If row is an array, we try to guess indices. If it's an object, we map by Column Labels.
       if (Array.isArray(row)) {
+        const isCompStr = String(row[17] || row[16] || row[10] || '').trim().toLowerCase(); // Fallbacks just in case
+        const isActuallyCompleted = isCompStr !== '' && isCompStr !== '0' && isCompStr !== 'no' && isCompStr !== 'false';
+        let arrStatus = row[16] || 'Active';
+        if (isActuallyCompleted) arrStatus = 'Completed';
+
         return {
           TaskID: Number(row[0]) || idx,
           TaskName: row[1] || 'Unknown Task',
@@ -389,12 +430,19 @@ export async function getTaskList(
           ExpectedDueDate: row[4] || '',
           AssignedTo: row[13] || 'Unassigned',
           Facility: row[14] || 'Unknown',
-          Status: row[16] || 'Active',
+          Status: arrStatus,
           TaskTypeID: Number(row[15]) || 1,
         };
       }
 
       // If row is an object, the keys are usually the ColdFusion column labels (e.g., 'Task Name', 'Client')
+      const isCompletedStr = String(row['Completed'] || row['IsCompleted'] || row['Is Completed'] || '').trim().toLowerCase();
+      const isObjCompleted = isCompletedStr !== '' && isCompletedStr !== 'no' && isCompletedStr !== '0' && isCompletedStr !== 'false';
+      let objStatus = row['Status'] || 'Active';
+      if (isObjCompleted || objStatus === 'completed') {
+        objStatus = 'Completed';
+      }
+
       return {
         TaskID: Number(row['Task ID'] || row['ID'] || row['DT_RowId'] || idx),
         TaskName: row['Task Name'] || row['Task'] || row['TaskName'] || 'Unknown Task',
@@ -405,7 +453,7 @@ export async function getTaskList(
         ExpectedDueDate: row['Due'] || row['Due Date'] || row['ExpectedDueDate'] || '',
         AssignedTo: row['Assigned To'] || row['AssignedTo'] || 'Unassigned',
         Facility: row['Facility'] || row['FacilityName'] || 'Unknown',
-        Status: row['Status'] || 'Active',
+        Status: objStatus,
         TaskTypeID: 1, // Default
       };
     });

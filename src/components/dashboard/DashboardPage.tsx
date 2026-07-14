@@ -59,6 +59,8 @@ const DashboardPage: React.FC = () => {
     setFilters(newFilters);
     setIsFilterOpen(false);
     fetchTasks(1, undefined, undefined, undefined, undefined, newFilters);
+    fetchSummary(newFilters);
+    fetchCharts(newFilters);
   };
 
   const handleClearFilters = () => {
@@ -72,6 +74,27 @@ const DashboardPage: React.FC = () => {
     };
     setFilters(defaultFilters);
     fetchTasks(1, undefined, undefined, undefined, undefined, defaultFilters);
+    fetchSummary(defaultFilters);
+    fetchCharts(defaultFilters);
+  };
+
+  const getActiveFilterTags = () => {
+    const tags = [];
+    if (filters.status && filters.status !== 'all') {
+      const statusLabel = filters.status === '0' ? 'Active' : filters.status === '1' ? 'Completed' : filters.status;
+      tags.push({ key: 'status', label: `Status: ${statusLabel}` });
+    }
+    if (filters.assignedTo) tags.push({ key: 'assignedTo', label: `Assigned: ${filters.assignedTo}` });
+    if (filters.role) tags.push({ key: 'role', label: `Role: ${filters.role}` });
+    if (filters.taskType) tags.push({ key: 'taskType', label: `Type: ${filters.taskType}` });
+    if (filters.startDate) tags.push({ key: 'startDate', label: `From: ${filters.startDate}` });
+    if (filters.endDate) tags.push({ key: 'endDate', label: `To: ${filters.endDate}` });
+    return tags;
+  };
+
+  const removeFilter = (key: keyof DashboardFilters) => {
+    const newFilters = { ...filters, [key]: key === 'status' ? 'all' : '' };
+    handleApplyFilters(newFilters);
   };
 
   return (
@@ -106,6 +129,28 @@ const DashboardPage: React.FC = () => {
           onApply={handleApplyFilters}
           onClear={handleClearFilters}
         />
+
+        {/* {getActiveFilterTags().length > 0 && (
+          <div className="active-filters-container">
+            <span className="active-filters-label">Active Filters:</span>
+            {getActiveFilterTags().map(tag => (
+              <div key={tag.key} className="active-filter-tag">
+                {tag.label}
+                <X 
+                  size={12} 
+                  className="active-filter-close"
+                  onClick={() => removeFilter(tag.key as keyof DashboardFilters)} 
+                />
+              </div>
+            ))}
+            <button 
+              onClick={handleClearFilters} 
+              className="btn-clear-filters"
+            >
+              Clear All
+            </button>
+          </div>
+        )} */}
 
         <KpiGrid data={summary} loading={loadingSummary} />
 
