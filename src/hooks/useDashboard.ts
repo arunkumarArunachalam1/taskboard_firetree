@@ -75,21 +75,23 @@ export function useDashboard() {
     }
   }, [search, sortColumn, sortDir, pageSize, filters]);
 
-  const fetchSummary = useCallback(async () => {
+  const fetchSummary = useCallback(async (newFilters?: DashboardFilters) => {
     setLoadingSummary(true);
-    return getDashboardKPIs()
+    const currentFilters = newFilters !== undefined ? newFilters : filters;
+    return getDashboardKPIs(currentFilters)
       .then(setSummary)
       .catch((err) => setError(err.message))
       .finally(() => setLoadingSummary(false));
-  }, []);
+  }, [filters]);
 
-  const fetchCharts = useCallback(async () => {
+  const fetchCharts = useCallback(async (newFilters?: DashboardFilters) => {
     setLoadingCharts(true);
-    return getDashboardCharts()
+    const currentFilters = newFilters !== undefined ? newFilters : filters;
+    return getDashboardCharts(currentFilters)
       .then(setCharts)
       .catch((err) => setError(err.message))
       .finally(() => setLoadingCharts(false));
-  }, []);
+  }, [filters]);
 
   const handleHardRefresh = useCallback(async () => {
     try {

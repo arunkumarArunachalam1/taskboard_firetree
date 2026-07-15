@@ -44,6 +44,26 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({ data, loading }) => {
     );
   }
 
+  const hasData = 
+    data.last7Days.some(d => d.completed > 0 || d.created > 0) ||
+    data.last30Days.some(d => d.completed > 0 || d.created > 0) ||
+    data.trend.some(d => d.cumulative > 0) ||
+    data.statusDistribution.some(d => d.value > 0);
+
+  if (!hasData) {
+    return (
+      <div className="charts-empty-state">
+        <div className="charts-empty-icon-container">
+          <BarChart3 size={24} className="charts-empty-icon" />
+        </div>
+        <h3 className="charts-empty-title">No Data Available</h3>
+        <p className="charts-empty-text">
+          There is no chart data available for the current filters. Please adjust your filters or select a different facility to view insights.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="charts-grid">
       <ChartCard title="Daily Completions — Last 7 Days" icon={<BarChart3 size={16} strokeWidth={2.5} />}>

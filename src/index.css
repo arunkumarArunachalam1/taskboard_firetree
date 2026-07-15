@@ -37,7 +37,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 28px;
+    padding: 0 12px;
     position: relative;
     z-index: 1000;
   }
@@ -1542,3 +1542,104 @@ h1.page-title {
 .task-btn-submit:hover:not(:disabled) { background-color: #1D4ED8; }
 .task-btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
 
+
+/* Active Filters */
+.active-filters-container {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.active-filters-label {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.active-filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0fdfa; /* Light teal background */
+  color: #0f766e; /* Dark teal text */
+  padding: 4px 14px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #ccfbf1;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+svg.active-filter-close {
+  width: 14px !important;
+  height: 14px !important;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  margin-left: 2px;
+}
+
+svg.active-filter-close:hover {
+  opacity: 1;
+  color: #115e59;
+}
+
+.btn-clear-filters {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 8px;
+  margin-left: 4px;
+  transition: color 0.2s ease;
+  font-weight: 500;
+}
+
+.btn-clear-filters:hover {
+  color: #374151;
+}
+
+/* Chart Empty State */
+.charts-empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  background-color: #fff;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  margin-bottom: 24px;
+}
+
+.charts-empty-icon-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #F3F4F6;
+  margin-bottom: 16px;
+}
+
+.charts-empty-icon {
+  color: #9CA3AF;
+}
+
+.charts-empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+}
+
+.charts-empty-text {
+  color: #6B7280;
+  font-size: 13px;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
