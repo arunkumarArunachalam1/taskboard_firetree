@@ -51,6 +51,7 @@ const TaskStatusChart: React.FC<Props> = ({ data }) => {
     plugins: {
       legend: {
         position: 'bottom' as const,
+        onClick: (e: any) => e.native.stopPropagation(), // Disable default toggle behavior
         labels: {
           usePointStyle: true,
           boxWidth: 6,

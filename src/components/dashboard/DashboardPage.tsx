@@ -55,15 +55,16 @@ const DashboardPage: React.FC = () => {
     adminRoles.has(role.toLowerCase())
   );
 
-  const handleApplyFilters = (newFilters: DashboardFilters) => {
+  const handleApplyFilters = async (newFilters: DashboardFilters) => {
     setFilters(newFilters);
     setIsFilterOpen(false);
-    fetchTasks(1, undefined, undefined, undefined, undefined, newFilters);
-    fetchSummary(newFilters);
-    fetchCharts(newFilters);
+    // Call sequentially to avoid backend session race condition
+    await fetchSummary(newFilters);
+    await fetchCharts(newFilters);
+    await fetchTasks(1, undefined, undefined, undefined, undefined, newFilters);
   };
 
-  const handleClearFilters = () => {
+  const handleClearFilters = async () => {
     const defaultFilters: DashboardFilters = {
       assignedTo: '',
       role: '',
@@ -73,9 +74,10 @@ const DashboardPage: React.FC = () => {
       endDate: ''
     };
     setFilters(defaultFilters);
-    fetchTasks(1, undefined, undefined, undefined, undefined, defaultFilters);
-    fetchSummary(defaultFilters);
-    fetchCharts(defaultFilters);
+    // Call sequentially to avoid backend session race condition
+    await fetchSummary(defaultFilters);
+    await fetchCharts(defaultFilters);
+    await fetchTasks(1, undefined, undefined, undefined, undefined, defaultFilters);
   };
 
 
