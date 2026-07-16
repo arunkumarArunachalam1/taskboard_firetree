@@ -470,30 +470,39 @@ const TaskTable: React.FC<TaskTableProps> = ({
       </button>
 
       {isNewTaskOpen && (
-        <div className={`new-task-dropdown-menu ${alignRight ? 'align-right' : 'align-left'}`}>
-          <button
-            type="button"
-            className="new-task-dropdown-option"
+        <>
+          <div
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9998 }}
             onClick={(e) => {
               e.stopPropagation();
               setIsNewTaskOpen(false);
-              setIsGeneralTaskModalOpen(true);
             }}
-          >
-            General Task
-          </button>
-          <button
-            type="button"
-            className="new-task-dropdown-option"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsNewTaskOpen(false);
-              setIsWhereaboutsTaskModalOpen(true);
-            }}
-          >
-            Whereabouts Task
-          </button>
-        </div>
+          />
+          <div className={`new-task-dropdown-menu ${alignRight ? 'align-right' : 'align-left'}`} style={{ zIndex: 9999 }}>
+            <button
+              type="button"
+              className="new-task-dropdown-option"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsNewTaskOpen(false);
+                setIsGeneralTaskModalOpen(true);
+              }}
+            >
+              General Task
+            </button>
+            <button
+              type="button"
+              className="new-task-dropdown-option"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsNewTaskOpen(false);
+                setIsWhereaboutsTaskModalOpen(true);
+              }}
+            >
+              Whereabouts Task
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

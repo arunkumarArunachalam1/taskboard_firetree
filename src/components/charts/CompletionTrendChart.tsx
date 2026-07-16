@@ -10,21 +10,40 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 interface Props { data: TrendPoint[] }
 
 const CompletionTrendChart: React.FC<Props> = ({ data }) => {
-  const chartData = React.useMemo(() => ({
-    labels: data.map(d => d.date),
-    datasets: [
-      {
-        label: 'Cumulative Completions',
-        data: data.map(d => d.cumulative),
-        borderColor: '#22C55E',
-        backgroundColor: '#22C55E',
-        borderWidth: 2,
-        stepped: 'before' as const,
-        pointRadius: 3,
-        pointHoverRadius: 5,
-      },
-    ],
-  }), [data]);
+  const chartData = React.useMemo(() => {
+    let finalLabels: string[] = [];
+    let finalData: number[] = [];
+
+    if (!data || data.length === 0) {
+      const today = new Date();
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      for (let i = 89; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        finalLabels.push(monthNames[d.getMonth()]);
+        finalData.push(0);
+      }
+    } else {
+      finalLabels = data.map(d => d.date);
+      finalData = data.map(d => d.cumulative);
+    }
+
+    return {
+      labels: finalLabels,
+      datasets: [
+        {
+          label: 'Cumulative Completions',
+          data: finalData,
+          borderColor: '#22C55E',
+          backgroundColor: '#22C55E',
+          borderWidth: 2,
+          stepped: 'before' as const,
+          pointRadius: 3,
+          pointHoverRadius: 5,
+        },
+      ],
+    };
+  }, [data]);
 
   const options = React.useMemo(() => ({
     responsive: true,
@@ -46,12 +65,14 @@ const CompletionTrendChart: React.FC<Props> = ({ data }) => {
     scales: {
       x: {
         grid: { display: false },
-        ticks: { font: { size: 10 }, color: '#9CA3AF', maxTicksLimit: 6 },
+        ticks: { font: { size: 10 }, color: '#9CA3AF', maxTicksLimit: (!data || data.length === 0) ? 3 : 6 },
         border: { display: false }
       },
       y: {
+        min: 0,
+        suggestedMax: 5,
         grid: { color: '#F3F4F6', drawBorder: false },
-        ticks: { font: { size: 10 }, color: '#9CA3AF' },
+        ticks: { font: { size: 10 }, color: '#9CA3AF', precision: 0 },
         border: { display: false }
       }
     }

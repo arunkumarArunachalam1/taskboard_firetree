@@ -54,8 +54,10 @@ const DailyCompletion30DaysChart: React.FC<Props> = ({ data }) => {
         border: { display: false }
       },
       y: {
+        min: 0,
+        suggestedMax: 5,
         grid: { color: '#F3F4F6', drawBorder: false },
-        ticks: { font: { size: 10 }, color: '#9CA3AF' },
+        ticks: { font: { size: 10 }, color: '#9CA3AF', precision: 0 },
         border: { display: false }
       }
     }

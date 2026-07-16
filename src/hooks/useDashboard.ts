@@ -95,7 +95,6 @@ export function useDashboard() {
 
   const handleHardRefresh = useCallback(async () => {
     try {
-      setLoadingTasks(true);
       setLoadingSummary(true);
       setLoadingCharts(true);
       
@@ -104,14 +103,12 @@ export function useDashboard() {
       // Call sequentially to avoid backend session.NextEvent race condition
       await fetchSummary();
       await fetchCharts();
-      await fetchTasks(page);
     } catch (err: any) {
       setError(err.message || 'Failed to perform hard refresh');
-      setLoadingTasks(false);
       setLoadingSummary(false);
       setLoadingCharts(false);
     }
-  }, [fetchSummary, fetchCharts, fetchTasks, page]);
+  }, [fetchSummary, fetchCharts]);
 
   const handleRefresh = useCallback(async () => {
     // Call sequentially to avoid backend session.NextEvent race condition
