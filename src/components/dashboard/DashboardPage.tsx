@@ -78,24 +78,7 @@ const DashboardPage: React.FC = () => {
     fetchCharts(defaultFilters);
   };
 
-  const getActiveFilterTags = () => {
-    const tags = [];
-    if (filters.status && filters.status !== 'all') {
-      const statusLabel = filters.status === '0' ? 'Active' : filters.status === '1' ? 'Completed' : filters.status;
-      tags.push({ key: 'status', label: `Status: ${statusLabel}` });
-    }
-    if (filters.assignedTo) tags.push({ key: 'assignedTo', label: `Assigned: ${filters.assignedTo}` });
-    if (filters.role) tags.push({ key: 'role', label: `Role: ${filters.role}` });
-    if (filters.taskType) tags.push({ key: 'taskType', label: `Type: ${filters.taskType}` });
-    if (filters.startDate) tags.push({ key: 'startDate', label: `From: ${filters.startDate}` });
-    if (filters.endDate) tags.push({ key: 'endDate', label: `To: ${filters.endDate}` });
-    return tags;
-  };
 
-  const removeFilter = (key: keyof DashboardFilters) => {
-    const newFilters = { ...filters, [key]: key === 'status' ? 'all' : '' };
-    handleApplyFilters(newFilters);
-  };
 
   return (
     <div className={`min-h-screen ${isIntegrated ? 'bg-transparent' : 'bg-gray-100'}`}>

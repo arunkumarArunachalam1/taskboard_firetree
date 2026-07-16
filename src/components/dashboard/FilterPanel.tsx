@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, RotateCcw, Search, ChevronDown, X } from 'lucide-react';
+import { Filter, ChevronDown, X } from 'lucide-react';
 import type { DashboardFilters, OptionItem, FacilityStaff } from '../../types/dashboard.types';
 import { getFacilityStaff, getTaskTypes, getRoles } from '../../services/dashboard.service';
 import { useAppContext } from '../../context/AppContext';

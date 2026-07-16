@@ -36,20 +36,7 @@ interface StaffResponse {
   display?: string;
 }
 
-interface DestinationDto {
-  value?: number;
-  VALUE?: number;
-  Value?: number;
-  label?: string;
-  LABEL?: string;
-  Label?: string;
-}
 
-interface ContactDto extends DestinationDto {
-  phone?: string;
-  PHONE?: string;
-  Phone?: string;
-}
 
 const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value, onChange, placeholder, required }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -202,14 +189,14 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
         getClientEventDestinations(actualClientId),
         getClientContacts(actualClientId)
       ]).then(([dests, contactList]) => {
-        setDestinations(dests.map((d: DestinationDto) => ({
+        setDestinations(dests.map((d: any) => ({
           value: d.value ?? d.VALUE ?? d.Value ?? 0,
           label: d.label ?? d.LABEL ?? d.Label ?? 'Unknown Destination'
         })));
-        setContacts(contactList.map((c: ContactDto) => ({
-          value: c.value ?? c.VALUE ?? c.Value ?? 0,
-          label: c.label ?? c.LABEL ?? c.Label ?? 'Unknown Contact',
-          phone: c.phone ?? c.PHONE ?? c.Phone ?? ''
+        setContacts(contactList.map((c: any) => ({
+          value: String(c.value ?? c.VALUE ?? c.Value ?? ''),
+          label: String(c.label ?? c.LABEL ?? c.Label ?? 'Unknown Contact'),
+          phone: String(c.phone ?? c.PHONE ?? c.Phone ?? '')
         })));
         setDestinationId('');
         setContactId('');
