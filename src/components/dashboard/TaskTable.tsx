@@ -220,6 +220,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
     setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
   };
 
   if (!data) return <TableSkeleton />;

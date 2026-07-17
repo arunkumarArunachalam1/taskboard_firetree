@@ -324,8 +324,8 @@ export async function getTaskList(
     }
 
     if (filters.role) {
-      filterKeys.push('RoleID');
-      filterValues.push(`tableFilter.RoleID=${encodeURIComponent(`[0][RoleID][=][${filters.role}][]`)}`);
+      filterKeys.push('UUID_CORE_Role_id');
+      filterValues.push(`tableFilter.UUID_CORE_Role_id=${encodeURIComponent(`[0][Role][=][${filters.role}][]`)}`);
     }
 
     if (filters.taskType) {
@@ -344,12 +344,12 @@ export async function getTaskList(
 
     if (filters.startDate) {
       filterKeys.push('StartDate');
-      filterValues.push(`tableFilter.StartDate=${encodeURIComponent(`[5][Start Date][=][${formatToCFDate(filters.startDate)}][${formatToCFDate(filters.startDate)}]`)}`);
+      filterValues.push(`tableFilter.StartDate=${encodeURIComponent(`[5][Start Date][>=][${formatToCFDate(filters.startDate)}][]`)}`);
     }
 
     if (filters.endDate) {
       filterKeys.push('EndDate');
-      filterValues.push(`tableFilter.EndDate=${encodeURIComponent(`[6][End Date][=][${formatToCFDate(filters.endDate)}][${formatToCFDate(filters.endDate)}]`)}`);
+      filterValues.push(`tableFilter.EndDate=${encodeURIComponent(`[6][End Date][<=][${formatToCFDate(filters.endDate)}][]`)}`);
     }
   } else {
     // Default filter for backwards compatibility

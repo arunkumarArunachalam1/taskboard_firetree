@@ -1409,7 +1409,22 @@ h1.page-title {
 
 /* `.taskboard-toast` existing styles combined with new ones */
 .taskboard-toast { 
-  border-style: solid; border-width: 1px; border-left-width: 4px;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border-style: solid;
+  border-width: 1px;
+  border-left-width: 4px;
+  max-width: 380px;
+  min-width: 260px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  pointer-events: all;
 }
 .toast-icon-container { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
 .toast-icon { width: 20px; height: 20px; min-width: 20px; min-height: 20px; }
