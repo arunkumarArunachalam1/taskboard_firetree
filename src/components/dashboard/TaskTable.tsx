@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown, ExternalLink, Plus, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown, ExternalLink, Plus, ArrowUp, ArrowDown, ArrowUpDown, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { TaskListResponse, Task, FacilityStaff } from '../../types/dashboard.types';
-import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted, getFacilityStaff, assignTasks } from '../../services/dashboard.service';
+import type { TaskListResponse, Task, FacilityStaff, DashboardFilters } from '../../types/dashboard.types';
+import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted, getFacilityStaff, assignTasks, getRoles, getTaskTypes } from '../../services/dashboard.service';
 import { NewGeneralTaskModal } from './NewGeneralTaskModal';
 import { NewWhereaboutsTaskModal } from './NewWhereaboutsTaskModal';
+import { FilterPanel } from './FilterPanel';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -135,6 +136,9 @@ interface TaskTableProps {
   sortDir: 'asc' | 'desc';
   onSortChange: (col: number, dir: 'asc' | 'desc') => void;
   onRefresh?: () => void;
+  listingFilters: DashboardFilters;
+  onApplyFilters: (filters: DashboardFilters) => void;
+  onClearFilters: () => void;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────
@@ -142,7 +146,8 @@ interface TaskTableProps {
 const TaskTable: React.FC<TaskTableProps> = ({
   data, loading, page, pageSize = 25, onPageChange, onPageSizeChange,
   search, onSearchChange,
-  sortColumn, sortDir, onSortChange, onRefresh
+  sortColumn, sortDir, onSortChange, onRefresh,
+  listingFilters, onApplyFilters, onClearFilters
 }) => {
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -173,12 +178,58 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const [staffList, setStaffList] = useState<FacilityStaff[]>([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
+  const [staffMap, setStaffMap] = useState<Record<string, string>>({});
+  const [rolesMap, setRolesMap] = useState<Record<string, string>>({});
+  const [taskTypesMap, setTaskTypesMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const loadMappings = async () => {
+      try {
+        const staff = await getFacilityStaff(currentFacilityID);
+        const sMap: Record<string, string> = {};
+        staff.forEach(s => sMap[String(s.Value)] = s.Display);
+        setStaffMap(sMap);
+
+        const roles = await getRoles();
+        const rMap: Record<string, string> = {};
+        roles.forEach(r => rMap[String(r.value)] = r.label);
+        setRolesMap(rMap);
+
+        const types = await getTaskTypes();
+        const tMap: Record<string, string> = {};
+        types.forEach(t => tMap[String(t.value)] = t.label);
+        setTaskTypesMap(tMap);
+      } catch (e) {
+        console.error("Failed to load filter mappings", e);
+      }
+    };
+    loadMappings();
+  }, [currentFacilityID]);
   const [staffSearch, setStaffSearch] = useState('');
   const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isGeneralTaskModalOpen, setIsGeneralTaskModalOpen] = useState(false);
   const [isWhereaboutsTaskModalOpen, setIsWhereaboutsTaskModalOpen] = useState(false);
+  const [isListingFilterOpen, setIsListingFilterOpen] = useState(false);
+  const filterContainerRef = useRef<HTMLDivElement>(null);
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        filterContainerRef.current && !filterContainerRef.current.contains(target) &&
+        toggleButtonRef.current && !toggleButtonRef.current.contains(target)
+      ) {
+        setIsListingFilterOpen(false);
+      }
+    };
+    if (isListingFilterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isListingFilterOpen]);
 
   // Custom Confirm Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -510,8 +561,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const renderSortIcon = (columnId: number) => {
     if (sortColumn === columnId) {
-      return sortDir === 'asc' 
-        ? <ArrowUp size={14} className="sort-icon active" /> 
+      return sortDir === 'asc'
+        ? <ArrowUp size={14} className="sort-icon active" />
         : <ArrowDown size={14} className="sort-icon active" />;
     }
     return <ArrowUpDown size={14} className="sort-icon inactive" />;
@@ -585,7 +636,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
         {/* Right: Search */}
         <div className="table-header-right">
-
+          <button 
+            ref={toggleButtonRef}
+            className="btn-filters" 
+            onClick={() => setIsListingFilterOpen(!isListingFilterOpen)}
+          >
+            <SlidersHorizontal size={15} />
+            Filters
+          </button>
           <input
             type="text"
             placeholder="Search tasks, clients, assignees…"
@@ -594,6 +652,92 @@ const TaskTable: React.FC<TaskTableProps> = ({
             className="search-input"
           />
         </div>
+      </div>
+
+      {/* Active Filters Bar */}
+      {(() => {
+        const hasActiveFilters = listingFilters.status !== 'all' || !!listingFilters.startDate || !!listingFilters.endDate || !!listingFilters.assignedTo || !!listingFilters.role || !!listingFilters.taskType;
+        if (!hasActiveFilters) return null;
+
+        const clearFilter = (key: keyof DashboardFilters) => {
+          const newFilters = { ...listingFilters, [key]: key === 'status' ? 'all' : '' };
+          onApplyFilters(newFilters);
+        };
+
+        return (
+          <div className="active-filters-bar">
+            <div className="active-filters-left">
+              <div className="active-filters-title">
+                <SlidersHorizontal size={15} />
+                <span>Active Filters</span>
+              </div>
+
+              {listingFilters.status !== 'all' && (
+                <div className="active-filter-tag">
+                  Completed: {listingFilters.status === '1' ? 'Yes' : 'No'}
+                  <X size={14} className="active-filter-tag-close" onClick={() => clearFilter('status')} />
+                </div>
+              )}
+              {listingFilters.startDate && (
+                <div className="active-filter-tag">
+                  Start Date: {listingFilters.startDate}
+                  <X size={14} className="active-filter-tag-close" onClick={() => clearFilter('startDate')} />
+                </div>
+              )}
+              {listingFilters.endDate && (
+                <div className="active-filter-tag">
+                  End Date: {listingFilters.endDate}
+                  <X size={14} className="active-filter-tag-close" onClick={() => clearFilter('endDate')} />
+                </div>
+              )}
+              {listingFilters.assignedTo && (
+                <div className="active-filter-tag">
+                  Assigned User: {staffMap[listingFilters.assignedTo] || listingFilters.assignedTo}
+                  <X size={14} className="active-filter-tag-close" onClick={() => clearFilter('assignedTo')} />
+                </div>
+              )}
+              {listingFilters.role && (
+                <div className="active-filter-tag">
+                  Role: {rolesMap[listingFilters.role] || listingFilters.role}
+                  <X size={14} className="active-filter-tag-close" onClick={() => clearFilter('role')} />
+                </div>
+              )}
+              {listingFilters.taskType && (
+                <div className="active-filter-tag">
+                  Task Type: {taskTypesMap[listingFilters.taskType] || listingFilters.taskType}
+                  <X size={14} className="active-filter-tag-close" onClick={() => clearFilter('taskType')} />
+                </div>
+              )}
+            </div>
+
+            <button className="active-filters-clear-btn" onClick={onClearFilters}>
+              <RefreshCw size={14} />
+              <span>Clear all</span>
+            </button>
+          </div>
+        );
+      })()}
+
+      <div ref={filterContainerRef} style={{ display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 50 }}>
+        <AnimatePresence>
+          {isListingFilterOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+            >
+              <FilterPanel
+                isOpen={true}
+                filters={listingFilters}
+                onApply={(f) => { onApplyFilters(f); setIsListingFilterOpen(false); }}
+                onClear={() => { onClearFilters(); setIsListingFilterOpen(false); }}
+                title=""
+                layout="6col"
+                mode="inline"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Table */}
@@ -865,60 +1009,60 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
                       <div key="reassign-dropdown-panel" className="taskboard-dropdown-panel" style={{ display: isDropdownOpen ? 'flex' : 'none' }}>
                         <div className="taskboard-dropdown-search">
-                            <span className="search-icon">
-                              <Search size={14} />
-                            </span>
-                            <input
-                              type="text"
-                              placeholder="Search staff members..."
-                              value={staffSearch}
-                              onChange={(e) => setStaffSearch(e.target.value)}
-                              onClick={(e) => e.stopPropagation()}
-                              autoFocus
-                            />
-                          </div>
+                          <span className="search-icon">
+                            <Search size={14} />
+                          </span>
+                          <input
+                            type="text"
+                            placeholder="Search staff members..."
+                            value={staffSearch}
+                            onChange={(e) => setStaffSearch(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            autoFocus
+                          />
+                        </div>
 
-                          {/* Staff List */}
-                          <div className="taskboard-dropdown-list">
-                            {loadingStaff ? (
-                              <div className="taskboard-dropdown-empty">
-                                Loading staff...
-                              </div>
-                            ) : (() => {
-                              const filteredStaff = staffList.filter(s =>
-                                s.Display.toLowerCase().includes(staffSearch.toLowerCase())
+                        {/* Staff List */}
+                        <div className="taskboard-dropdown-list">
+                          {loadingStaff ? (
+                            <div className="taskboard-dropdown-empty">
+                              Loading staff...
+                            </div>
+                          ) : (() => {
+                            const filteredStaff = staffList.filter(s =>
+                              s.Display.toLowerCase().includes(staffSearch.toLowerCase())
+                            );
+
+                            if (filteredStaff.length === 0) {
+                              return (
+                                <div className="taskboard-dropdown-empty">
+                                  No staff members found.
+                                </div>
                               );
+                            }
 
-                              if (filteredStaff.length === 0) {
-                                return (
-                                  <div className="taskboard-dropdown-empty">
-                                    No staff members found.
-                                  </div>
-                                );
-                              }
-
-                              return filteredStaff.map(staff => {
-                                const isSelected = selectedStaffId === staff.Value;
-                                return (
-                                  <div
-                                    key={staff.Value}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setSelectedStaffId(staff.Value);
-                                      setIsDropdownOpen(false);
-                                    }}
-                                    className={`taskboard-dropdown-option${isSelected ? ' selected' : ''}`}
-                                  >
-                                    <span>{staff.Display}</span>
-                                    {isSelected && (
-                                      <span className="check-icon">
-                                        <Check size={14} strokeWidth={2.5} />
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              });
-                            })()}
+                            return filteredStaff.map(staff => {
+                              const isSelected = selectedStaffId === staff.Value;
+                              return (
+                                <div
+                                  key={staff.Value}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedStaffId(staff.Value);
+                                    setIsDropdownOpen(false);
+                                  }}
+                                  className={`taskboard-dropdown-option${isSelected ? ' selected' : ''}`}
+                                >
+                                  <span>{staff.Display}</span>
+                                  {isSelected && (
+                                    <span className="check-icon">
+                                      <Check size={14} strokeWidth={2.5} />
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
                     </div>

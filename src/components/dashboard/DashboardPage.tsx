@@ -16,7 +16,7 @@ const DashboardPage: React.FC = () => {
     summary, loadingSummary,
     charts, loadingCharts,
     tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary, fetchCharts, handleHardRefresh, handleRefresh,
-    search, sortColumn, sortDir, filters, setFilters,
+    search, sortColumn, sortDir, listingFilters, setListingFilters, kpiFilters, setKpiFilters,
     error, setError
   } = useDashboard();
   const context = useAppContext();
@@ -55,17 +55,20 @@ const DashboardPage: React.FC = () => {
     adminRoles.has(role.toLowerCase())
   );
 
-  const handleApplyFilters = async (newFilters: DashboardFilters) => {
-    setFilters(newFilters);
+  const handleKpiApplyFilters = async (newKpiFilters: DashboardFilters) => {
+    setKpiFilters(newKpiFilters);
     setIsFilterOpen(false);
-    // Call sequentially to avoid backend session race condition
-    await fetchSummary(newFilters);
-    await fetchCharts(newFilters);
-    await fetchTasks(1, undefined, undefined, undefined, undefined, newFilters);
+    await fetchSummary(newKpiFilters);
+    await fetchCharts(newKpiFilters);
   };
 
-  const handleClearFilters = async () => {
-    const defaultFilters: DashboardFilters = {
+  const handleListingApplyFilters = async (newListingFilters: DashboardFilters) => {
+    setListingFilters(newListingFilters);
+    await fetchTasks(1, undefined, undefined, undefined, undefined, newListingFilters);
+  };
+
+  const handleKpiClearFilters = async () => {
+    const defaultKpiFilters: DashboardFilters = {
       assignedTo: '',
       role: '',
       status: 'all',
@@ -73,11 +76,22 @@ const DashboardPage: React.FC = () => {
       startDate: '',
       endDate: ''
     };
-    setFilters(defaultFilters);
-    // Call sequentially to avoid backend session race condition
-    await fetchSummary(defaultFilters);
-    await fetchCharts(defaultFilters);
-    await fetchTasks(1, undefined, undefined, undefined, undefined, defaultFilters);
+    setKpiFilters(defaultKpiFilters);
+    await fetchSummary(defaultKpiFilters);
+    await fetchCharts(defaultKpiFilters);
+  };
+
+  const handleListingClearFilters = async () => {
+    const clearedListingFilters: DashboardFilters = {
+      assignedTo: '',
+      role: '',
+      status: 'all',
+      taskType: '',
+      startDate: '',
+      endDate: ''
+    };
+    setListingFilters(clearedListingFilters);
+    await fetchTasks(1, undefined, undefined, undefined, undefined, clearedListingFilters);
   };
 
 
@@ -103,16 +117,17 @@ const DashboardPage: React.FC = () => {
             )}
             <button className="btn-filters" onClick={() => setIsFilterOpen(!isFilterOpen)}>
               <SlidersHorizontal size={15} />
-              Filters
+              KPI & Chart Filters
             </button>
           </div>
         </div>
 
         <FilterPanel
           isOpen={isFilterOpen}
-          filters={filters}
-          onApply={handleApplyFilters}
-          onClear={handleClearFilters}
+          filters={kpiFilters}
+          onApply={handleKpiApplyFilters}
+          onClear={handleKpiClearFilters}
+          title="KPI & Graph Filters"
         />
 
         {/* {getActiveFilterTags().length > 0 && (
@@ -152,7 +167,10 @@ const DashboardPage: React.FC = () => {
           sortColumn={sortColumn}
           sortDir={sortDir}
           onSortChange={(col, dir) => fetchTasks(1, undefined, col, dir)}
-          onRefresh={handleRefresh}
+          onRefresh={handleHardRefresh}
+          listingFilters={listingFilters}
+          onApplyFilters={handleListingApplyFilters}
+          onClearFilters={handleListingClearFilters}
         />
       </div>
 
