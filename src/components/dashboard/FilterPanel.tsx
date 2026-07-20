@@ -262,7 +262,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
           <div className={`filter-panel-card ${mode === 'inline' ? 'is-inline' : ''}`}>
 
             {/* ── Header row: Title + Clear ── */}
-            <div className="filter-panel-header" style={{ display: title ? 'flex' : 'flex', justifyContent: title ? 'space-between' : 'flex-end', borderBottom: title ? '' : 'none', marginBottom: title ? '14px' : '0' }}>
+            <div className={`filter-panel-header ${!title ? 'no-title' : ''}`}>
               {title && (
                 <span className="filter-panel-title">
                   {title}
@@ -331,7 +331,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               {/* 5 — Start Date */}
               <div className="filter-field">
                 <label className="filter-label">Start Date</label>
-                <div style={{ position: 'relative' }}>
+                <div className="filter-date-wrapper">
                   <input
                     type="date"
                     value={localFilters.startDate}
@@ -347,8 +347,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                     <button
                       type="button"
                       onClick={() => set('startDate', '')}
-                      className="searchable-dropdown-search-clear"
-                      style={{ right: '32px' }}
+                      className="searchable-dropdown-search-clear date-clear-icon"
                     >
                       <X size={12} strokeWidth={2.5} />
                     </button>
@@ -359,7 +358,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               {/* 6 — End Date */}
               <div className="filter-field">
                 <label className="filter-label">End Date</label>
-                <div style={{ position: 'relative' }}>
+                <div className="filter-date-wrapper">
                   <input
                     type="date"
                     value={localFilters.endDate}
@@ -375,8 +374,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                     <button
                       type="button"
                       onClick={() => set('endDate', '')}
-                      className="searchable-dropdown-search-clear"
-                      style={{ right: '32px' }}
+                      className="searchable-dropdown-search-clear date-clear-icon"
                     >
                       <X size={12} strokeWidth={2.5} />
                     </button>

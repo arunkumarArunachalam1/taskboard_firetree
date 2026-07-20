@@ -506,7 +506,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   };
 
   const renderNewTaskDropdown = (alignRight: boolean) => (
-    <div style={{ position: 'relative', zIndex: 9999, overflow: 'visible' }}>
+    <div className="new-task-wrapper">
       <button
         type="button"
         onClick={(e) => {
@@ -524,13 +524,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
       {isNewTaskOpen && (
         <>
           <div
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9998 }}
+            className="new-task-overlay"
             onClick={(e) => {
               e.stopPropagation();
               setIsNewTaskOpen(false);
             }}
           />
-          <div className={`new-task-dropdown-menu ${alignRight ? 'align-right' : 'align-left'}`} style={{ zIndex: 9999 }}>
+          <div className={`new-task-dropdown-menu ${alignRight ? 'align-right' : 'align-left'}`}>
             <button
               type="button"
               className="new-task-dropdown-option"
@@ -718,7 +718,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         );
       })()}
 
-      <div ref={filterContainerRef} style={{ display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 50 }}>
+      <div ref={filterContainerRef} className="filter-container-wrapper">
         <AnimatePresence>
           {isListingFilterOpen && (
             <motion.div
