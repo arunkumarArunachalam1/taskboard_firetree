@@ -778,7 +778,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               {/* <th className="th-sortable text-center" onClick={() => handleSort(7)}>
                 <div className="th-content-inline">Facility <span className="ml-6px">{renderSortIcon(7)}</span></div>
               </th> */}
-              <th className="th-actions">
+              <th className="th-actions" style={{ paddingRight: '32px', width: '110px' }}>
                 Actions
               </th>
             </tr>
@@ -827,7 +827,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     <span>{task.ExpectedStartDate}</span>
                   </td>
                   <td>
-                    <span className={task.Status === 'Late' ? 'font-bold' : 'font-normal'}>
+                    <span 
+                      className={task.Status === 'Late' ? 'font-bold' : 'font-normal'}
+                      style={{ color: task.Status === 'Late' ? '#DC2626' : 'inherit' }}
+                    >
                       {task.ExpectedDueDate}
                     </span>
                   </td>
@@ -837,7 +840,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   {/* <td style={{ textAlign: 'center' }}>
                     <span>{task.Facility}</span>
                   </td> */}
-                  <td className="td-actions" onClick={(e) => e.stopPropagation()}>
+                  <td className="td-actions" style={{ paddingRight: '32px' }} onClick={(e) => e.stopPropagation()}>
                     {task.Status !== 'Completed' ? (
                       <div className="action-buttons-container">
                         <button

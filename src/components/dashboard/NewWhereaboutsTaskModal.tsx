@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown } from 'lucide-react';
+import { X, ChevronDown, MapPin, Calendar, Info, Settings, User, Phone, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFacilityStaff, getClientList, getClientEventDestinations, getClientContacts, getContactMethods, saveWhereaboutsTask, getContactPhoneNumbers } from '../../services/dashboard.service';
 import { useAppContext } from '../../context/AppContext';
@@ -24,7 +24,9 @@ interface SearchableComboboxProps {
   value: string | number;
   onChange: (value: string | number) => void;
   placeholder?: string;
+  placeholder?: string;
   required?: boolean;
+  icon?: React.ReactNode;
 }
 
 interface StaffResponse {
@@ -38,7 +40,7 @@ interface StaffResponse {
 
 
 
-const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value, onChange, placeholder, required }) => {
+const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value, onChange, placeholder, required, icon }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -73,8 +75,13 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
         }}
         onFocus={() => { setIsOpen(true); setSearch(''); }}
         placeholder={placeholder}
-        className="combobox-input"
+        className={`combobox-input ${icon ? 'task-form-input-with-icon-left' : ''}`}
       />
+      {icon && (
+        <div className="task-input-icon-left">
+          {icon}
+        </div>
+      )}
       <div className="combobox-chevron">
         <ChevronDown size={16} />
       </div>
@@ -514,26 +521,35 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="task-modal-wrapper">
+        <motion.div 
+          className="task-modal-wrapper"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
           {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="task-modal-backdrop"
-          />
+          <div onClick={onClose} className="task-modal-backdrop" />
 
           {/* Modal Content */}
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
             className="task-modal-content"
           >
             {/* Header (Fixed) */}
             <div className="task-modal-header">
-              <h2 className="task-modal-title">Create Whereabouts Task</h2>
+              <div className="task-modal-header-content">
+                <div className="task-modal-header-icon">
+                  <MapPin size={24} />
+                </div>
+                <div>
+                  <h2 className="task-modal-title">Create Whereabouts Task</h2>
+                  <p className="task-modal-subtitle">Add a new whereabouts task to track client movements.</p>
+                </div>
+              </div>
               <button onClick={onClose} type="button" className="task-modal-close">
                 <X size={20} />
               </button>
@@ -551,30 +567,35 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                 )}
 
                 <div className="task-form-group">
-                  <label className="task-form-label">Client *</label>
-                  <SearchableCombobox options={clients} value={clientId} onChange={setClientId} placeholder="Search for a client..." required />
+                  <label className="task-form-label">Client <span className="task-required-asterisk">*</span></label>
+                  <SearchableCombobox options={clients} value={clientId} onChange={setClientId} placeholder="Search for a client..." required icon={<User size={16} />} />
                 </div>
 
                 <div className="task-form-group">
-                  <label className="task-form-label">Method *</label>
-                  <SearchableCombobox options={methods} value={methodId} onChange={setMethodId} placeholder="Select a method..." required />
+                  <label className="task-form-label">Method <span className="task-required-asterisk">*</span></label>
+                  <SearchableCombobox options={methods} value={methodId} onChange={setMethodId} placeholder="Select a method..." required icon={<Settings size={16} />} />
                 </div>
 
                 <div className="task-form-row">
                   <div className="task-form-col">
-                    <label className="task-form-label">Expected Start Date *</label>
-                    <input
-                      type="date"
-                      value={expectedStartDate}
-                      onChange={e => setExpectedStartDate(e.target.value)}
-                      onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
-                      required
-                      className="task-form-input"
-                      style={{ height: '38px', boxSizing: 'border-box' }}
-                    />
+                    <label className="task-form-label">Expected Start Date <span className="task-required-asterisk">*</span></label>
+                    <div className="task-input-wrapper">
+                      <div className="task-input-icon-left">
+                        <Calendar size={16} />
+                      </div>
+                      <input
+                        type="date"
+                        value={expectedStartDate}
+                        onChange={e => setExpectedStartDate(e.target.value)}
+                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
+                        required
+                        className="task-form-input task-form-input-with-icon-left"
+                        style={{ height: '38px', boxSizing: 'border-box' }}
+                      />
+                    </div>
                   </div>
                   <div className="task-form-col">
-                    <label className="task-form-label">Time *</label>
+                    <label className="task-form-label">Time <span className="task-required-asterisk">*</span></label>
                     <CustomTimePicker
                       value={expectedStartTime}
                       onChange={setExpectedStartTime}
@@ -585,19 +606,24 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
 
                 <div className="task-form-row">
                   <div className="task-form-col">
-                    <label className="task-form-label">Expected End Date *</label>
-                    <input
-                      type="date"
-                      value={expectedEndDate}
-                      onChange={e => setExpectedEndDate(e.target.value)}
-                      onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
-                      required
-                      className="task-form-input"
-                      style={{ height: '38px', boxSizing: 'border-box' }}
-                    />
+                    <label className="task-form-label">Expected End Date <span className="task-required-asterisk">*</span></label>
+                    <div className="task-input-wrapper">
+                      <div className="task-input-icon-left">
+                        <Calendar size={16} />
+                      </div>
+                      <input
+                        type="date"
+                        value={expectedEndDate}
+                        onChange={e => setExpectedEndDate(e.target.value)}
+                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
+                        required
+                        className="task-form-input task-form-input-with-icon-left"
+                        style={{ height: '38px', boxSizing: 'border-box' }}
+                      />
+                    </div>
                   </div>
                   <div className="task-form-col">
-                    <label className="task-form-label">Time *</label>
+                    <label className="task-form-label">Time <span className="task-required-asterisk">*</span></label>
                     <CustomTimePicker
                       value={expectedEndTime}
                       onChange={setExpectedEndTime}
@@ -607,25 +633,30 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                 </div>
 
                 <div className="task-form-group">
-                  <label className="task-form-label">Today's Destinations *</label>
-                  <SearchableCombobox options={destinations} value={destinationId} onChange={setDestinationId} placeholder="Select an event destination..." required />
+                  <label className="task-form-label">Today's Destinations <span className="task-required-asterisk">*</span></label>
+                  <SearchableCombobox options={destinations} value={destinationId} onChange={setDestinationId} placeholder="Select an event destination..." required icon={<MapPin size={16} />} />
                   {!clientId && <div className="task-field-error">Select a client first to see destinations.</div>}
                 </div>
 
                 <div className="task-form-row">
                   <div className="task-form-col">
-                    <label className="task-form-label">Contact Name *</label>
-                    <SearchableCombobox options={contacts.map(c => ({ value: c.value, label: c.label }))} value={contactId} onChange={setContactId} placeholder="Select a contact..." required />
+                    <label className="task-form-label">Contact Name <span className="task-required-asterisk">*</span></label>
+                    <SearchableCombobox options={contacts.map(c => ({ value: c.value, label: c.label }))} value={contactId} onChange={setContactId} placeholder="Select a contact..." required icon={<User size={16} />} />
                   </div>
                   <div className="task-form-col">
                     <label className="task-form-label">Phone Number</label>
-                    <SearchableCombobox options={contactPhoneNumbers} value={phoneNumber} onChange={(val) => setPhoneNumber(String(val))} placeholder="Select a phone number..." />
+                    <SearchableCombobox options={contactPhoneNumbers} value={phoneNumber} onChange={(val) => setPhoneNumber(String(val))} placeholder="Select a phone number..." icon={<Phone size={16} />} />
                   </div>
                 </div>
 
                 <div className="task-form-group-sm">
                   <label className="task-form-label">Assign To</label>
-                  <SearchableCombobox options={staff} value={assignedTo} onChange={setAssignedTo} placeholder="Search staff members..." />
+                  <SearchableCombobox options={staff} value={assignedTo} onChange={setAssignedTo} placeholder="Search staff members..." icon={<User size={16} />} />
+                </div>
+
+                <div className="task-modal-info-banner">
+                  <Info size={16} className="task-modal-info-icon" />
+                  <p className="task-modal-info-text">All fields marked with <span className="task-required-asterisk">*</span> are required.</p>
                 </div>
               </div>
 
@@ -636,19 +667,19 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                   onClick={onClose}
                   className="task-btn-cancel"
                 >
-                  Cancel
+                  <X size={16} /> Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="task-btn-submit"
                 >
-                  {isSubmitting ? 'Saving...' : 'Save Task'}
+                  <Save size={16} /> {isSubmitting ? 'Saving...' : 'Save Task'}
                 </button>
               </div>
             </form>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>,
     document.body
