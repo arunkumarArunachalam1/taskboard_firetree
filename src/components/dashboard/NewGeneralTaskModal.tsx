@@ -25,7 +25,6 @@ interface SearchableComboboxProps {
   value: string | number;
   onChange: (value: string | number) => void;
   placeholder?: string;
-  placeholder?: string;
   required?: boolean;
   icon?: React.ReactNode;
 }

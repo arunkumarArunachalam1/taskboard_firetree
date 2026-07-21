@@ -15,7 +15,7 @@ const DashboardPage: React.FC = () => {
   const {
     summary, loadingSummary,
     charts, loadingCharts,
-    tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary, fetchCharts, handleHardRefresh, handleRefresh,
+    tasks, loadingTasks, page, pageSize, fetchTasks, fetchSummary, fetchCharts, handleHardRefresh,
     search, sortColumn, sortDir, listingFilters, setListingFilters, kpiFilters, setKpiFilters,
     error, setError
   } = useDashboard();
