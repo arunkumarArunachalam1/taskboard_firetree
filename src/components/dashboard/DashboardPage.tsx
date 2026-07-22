@@ -56,46 +56,62 @@ const DashboardPage: React.FC = () => {
   );
 
   const handleKpiApplyFilters = async (newKpiFilters: DashboardFilters) => {
-    setKpiFilters(newKpiFilters);
-    setIsFilterOpen(false);
-    await Promise.all([
-      fetchSummary(newKpiFilters),
-      fetchCharts(newKpiFilters)
-    ]);
+    try {
+      setKpiFilters(newKpiFilters);
+      setIsFilterOpen(false);
+      await Promise.all([
+        fetchSummary(newKpiFilters),
+        fetchCharts(newKpiFilters)
+      ]);
+    } catch (err: any) {
+      setError(err.message || "Failed to apply KPI filters");
+    }
   };
 
   const handleListingApplyFilters = async (newListingFilters: DashboardFilters) => {
-    setListingFilters(newListingFilters);
-    await fetchTasks(1, undefined, undefined, undefined, undefined, newListingFilters);
+    try {
+      setListingFilters(newListingFilters);
+      await fetchTasks(1, undefined, undefined, undefined, undefined, newListingFilters);
+    } catch (err: any) {
+      setError(err.message || "Failed to apply task filters");
+    }
   };
 
   const handleKpiClearFilters = async () => {
-    const defaultKpiFilters: DashboardFilters = {
-      assignedTo: '',
-      role: '',
-      status: 'all',
-      taskType: '',
-      startDate: '',
-      endDate: ''
-    };
-    setKpiFilters(defaultKpiFilters);
-    await Promise.all([
-      fetchSummary(defaultKpiFilters),
-      fetchCharts(defaultKpiFilters)
-    ]);
+    try {
+      const defaultKpiFilters: DashboardFilters = {
+        assignedTo: '',
+        role: '',
+        status: 'all',
+        taskType: '',
+        startDate: '',
+        endDate: ''
+      };
+      setKpiFilters(defaultKpiFilters);
+      await Promise.all([
+        fetchSummary(defaultKpiFilters),
+        fetchCharts(defaultKpiFilters)
+      ]);
+    } catch (err: any) {
+      setError(err.message || "Failed to clear KPI filters");
+    }
   };
 
   const handleListingClearFilters = async () => {
-    const clearedListingFilters: DashboardFilters = {
-      assignedTo: '',
-      role: '',
-      status: 'all',
-      taskType: '',
-      startDate: '',
-      endDate: ''
-    };
-    setListingFilters(clearedListingFilters);
-    await fetchTasks(1, undefined, undefined, undefined, undefined, clearedListingFilters);
+    try {
+      const clearedListingFilters: DashboardFilters = {
+        assignedTo: '',
+        role: '',
+        status: 'all',
+        taskType: '',
+        startDate: '',
+        endDate: ''
+      };
+      setListingFilters(clearedListingFilters);
+      await fetchTasks(1, undefined, undefined, undefined, undefined, clearedListingFilters);
+    } catch (err: any) {
+      setError(err.message || "Failed to clear task filters");
+    }
   };
 
 

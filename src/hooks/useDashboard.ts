@@ -123,22 +123,30 @@ export function useDashboard() {
   }, [fetchSummary, fetchCharts]);
 
   const handleRefresh = useCallback(async () => {
-    // Run in parallel for KPI and Charts
-    await Promise.all([
-      fetchSummary(),
-      fetchCharts()
-    ]);
-    await fetchTasks(page);
-  }, [fetchSummary, fetchCharts, fetchTasks, page]);
-
-  useEffect(() => {
-    const initFetch = async () => {
+    try {
       // Run in parallel for KPI and Charts
       await Promise.all([
         fetchSummary(),
         fetchCharts()
       ]);
-      await fetchTasks(1);
+      await fetchTasks(page);
+    } catch (err: any) {
+      setError(err.message || 'Failed to refresh dashboard');
+    }
+  }, [fetchSummary, fetchCharts, fetchTasks, page]);
+
+  useEffect(() => {
+    const initFetch = async () => {
+      try {
+        // Run in parallel for KPI and Charts
+        await Promise.all([
+          fetchSummary(),
+          fetchCharts()
+        ]);
+        await fetchTasks(1);
+      } catch (err: any) {
+        setError(err.message || 'Failed to initialize dashboard');
+      }
     };
     initFetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
