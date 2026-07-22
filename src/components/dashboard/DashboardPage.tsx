@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, X, SlidersHorizontal, RefreshCw } from 'lucide-react';
+import { AlertCircle, X, SlidersHorizontal, RefreshCw, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Header';
 import KpiGrid from './KpiGrid';
 import ChartsSection from './ChartsSection';
 import TaskTable from './TaskTable';
 import { FilterPanel } from './FilterPanel';
+import ExportDialog from './ExportDialog';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useAppContext } from '../../context/AppContext';
 import type { DashboardFilters } from '../../types/dashboard.types';
@@ -22,6 +23,7 @@ const DashboardPage: React.FC = () => {
   const context = useAppContext();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   const isIntegrated = typeof window !== 'undefined' && (window.location.port !== '5173' || !!(window as any).__IS_INTEGRATED__);
 
@@ -135,6 +137,10 @@ const DashboardPage: React.FC = () => {
                 Refresh
               </button>
             )}
+            <button className="btn-filters" onClick={() => setIsExportOpen(true)}>
+              <Download size={15} />
+              Export
+            </button>
             <button className="btn-filters" onClick={() => setIsFilterOpen(!isFilterOpen)}>
               <SlidersHorizontal size={15} />
               KPI & Chart Filters
@@ -240,6 +246,8 @@ const DashboardPage: React.FC = () => {
         </AnimatePresence>,
         document.body
       )}
+
+      <ExportDialog isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
     </div>
   );
 };

@@ -1,0 +1,177 @@
+import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Download, X, Info, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface ExportDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+type ExportFormat = 'excel' | 'csv' | 'pdf';
+
+const ExcelIcon = ({ size = 44 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M28 6H10C8.895 6 8 6.895 8 8V40C8 41.105 8.895 42 10 42H38C39.105 42 40 41.105 40 40V18L28 6Z" fill="#21A366"/>
+    <path d="M28 6V18H40L28 6Z" fill="#107C41"/>
+    <rect x="14" y="22" width="20" height="12" rx="1" fill="white"/>
+    <rect x="15" y="23" width="5" height="4" fill="#21A366"/>
+    <rect x="21.5" y="23" width="5" height="4" fill="#21A366"/>
+    <rect x="28" y="23" width="5" height="4" fill="#21A366"/>
+    <rect x="15" y="29" width="5" height="4" fill="#21A366"/>
+    <rect x="21.5" y="29" width="5" height="4" fill="#21A366"/>
+    <rect x="28" y="29" width="5" height="4" fill="#21A366"/>
+    <rect x="8" y="16" width="16" height="16" rx="2" fill="#107C41"/>
+    <path d="M12.5 28L15 24L12.5 20H15L16 22L17 20H19.5L17 24L19.5 28H17L16 26L15 28H12.5Z" fill="white"/>
+  </svg>
+);
+
+const CsvIcon = ({ size = 44 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* File body */}
+    <path d="M28 6H10C8.895 6 8 6.895 8 8V40C8 41.105 8.895 42 10 42H38C39.105 42 40 41.105 40 40V18L28 6Z" fill="#43A047"/>
+    {/* Folded corner */}
+    <path d="M28 6V18H40L28 6Z" fill="#2E7D32"/>
+    {/* CSV label badge */}
+    <rect x="6" y="26" width="22" height="12" rx="2" fill="#1B5E20"/>
+    {/* C */}
+    <path d="M11.5 35C10.1 35 9 33.9 9 32.5C9 31.1 10.1 30 11.5 30C12.2 30 12.8 30.3 13.2 30.7L12.4 31.5C12.1 31.2 11.8 31 11.5 31C10.7 31 10 31.7 10 32.5C10 33.3 10.7 34 11.5 34C11.8 34 12.1 33.8 12.4 33.5L13.2 34.3C12.8 34.7 12.2 35 11.5 35Z" fill="white"/>
+    {/* S */}
+    <path d="M16.5 35C15.4 35 14.6 34.5 14.2 33.8L15 33.3C15.3 33.8 15.8 34 16.5 34C17.1 34 17.5 33.7 17.5 33.3C17.5 32.9 17.1 32.7 16.4 32.5C15.5 32.2 14.7 31.9 14.7 31C14.7 30.4 15.3 30 16.2 30C17.1 30 17.8 30.4 18.1 31L17.3 31.5C17.1 31.1 16.7 31 16.2 31C15.8 31 15.7 31.2 15.7 31.4C15.7 31.7 16.1 31.9 16.7 32.1C17.6 32.4 18.5 32.7 18.5 33.6C18.5 34.4 17.7 35 16.5 35Z" fill="white"/>
+    {/* V */}
+    <path d="M21 30L22.2 33.5L23.4 30H24.5L22.7 35H21.7L20 30H21Z" fill="white"/>
+  </svg>
+);
+
+const PdfIcon = ({ size = 44 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M28 6H10C8.895 6 8 6.895 8 8V40C8 41.105 8.895 42 10 42H38C39.105 42 40 41.105 40 40V18L28 6Z" fill="#F44336"/>
+    <path d="M28 6V18H40L28 6Z" fill="#D32F2F"/>
+    <rect x="12" y="18" width="24" height="16" rx="2" fill="white"/>
+    <path d="M17.5 28.5V21.5H20.5C22 21.5 22.5 22.5 22.5 23.5C22.5 24.5 22 25.5 20.5 25.5H19V28.5H17.5ZM19 22.5V24.5H20C20.5 24.5 21 24.5 21 23.5C21 22.5 20.5 22.5 20 22.5H19Z" fill="#D32F2F"/>
+    <path d="M23.5 28.5V21.5H26.5C28.5 21.5 29.5 23 29.5 25C29.5 27 28.5 28.5 26.5 28.5H23.5ZM25 22.5V27.5H26C27.5 27.5 28 26.5 28 25C28 23.5 27.5 22.5 26 22.5H25Z" fill="#D32F2F"/>
+    <path d="M31 28.5V21.5H35V22.5H32.5V24.5H34.5V25.5H32.5V28.5H31Z" fill="#D32F2F"/>
+  </svg>
+);
+
+const formatLabels: Record<ExportFormat, string> = {
+  excel: 'Excel (.xlsx)',
+  csv: 'CSV (.csv)',
+  pdf: 'PDF (.pdf)',
+};
+
+const ExportDialog: React.FC<ExportDialogProps> = ({ isOpen, onClose }) => {
+  const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('excel');
+
+  if (typeof document === 'undefined') return null;
+
+  const formats: { id: ExportFormat; label: string; ext: string; desc: string; icon: React.ReactNode }[] = [
+    { id: 'excel', label: 'Excel', ext: '.xlsx', desc: 'Rich workbook with formatting, multiple sheets and tables.', icon: <ExcelIcon size={44} /> },
+    { id: 'csv',   label: 'CSV',   ext: '.csv',  desc: 'Raw tabular data for analysis.', icon: <CsvIcon size={44} /> },
+    { id: 'pdf',   label: 'PDF',   ext: '.pdf',  desc: 'Printable report with KPIs and charts.', icon: <PdfIcon size={44} /> },
+  ];
+
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="task-modal-wrapper"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          {/* Backdrop */}
+          <div onClick={onClose} className="task-modal-backdrop" />
+
+          {/* Modal */}
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.97 }}
+            transition={{ duration: 0.18 }}
+            className="export-dialog-content"
+          >
+            {/* Header */}
+            <div className="export-dialog-header">
+              <div className="export-dialog-title-group">
+                <div className="export-dialog-icon-container">
+                  <Download size={20} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h2 className="export-dialog-title">Export Dashboard Data</h2>
+                  <p className="export-dialog-subtitle">Choose what you want to export, select a format, and download the report.</p>
+                </div>
+              </div>
+              <button onClick={onClose} type="button" className="task-modal-close">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="export-dialog-body">
+
+              {/* Section 1 */}
+              <div className="export-section-header">
+                <span className="export-section-title">Choose export format</span>
+              </div>
+
+              <div className="export-format-grid-h">
+                {formats.map(fmt => (
+                  <div
+                    key={fmt.id}
+                    className={`export-format-row${selectedFormat === fmt.id ? ' export-format-row-active' : ''}`}
+                    onClick={() => setSelectedFormat(fmt.id)}
+                  >
+                    {selectedFormat === fmt.id && (
+                      <div className="export-row-checkmark">
+                        <Check size={12} strokeWidth={3} />
+                      </div>
+                    )}
+                    <div className="export-row-icon">
+                      {fmt.icon}
+                    </div>
+                    <div className="export-row-content">
+                      <div className="export-row-title">
+                        {fmt.label} <span className="export-row-ext">{fmt.ext}</span>
+                      </div>
+                      <div className="export-row-desc">{fmt.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="export-dialog-footer">
+              <div className="export-summary-pill">
+                <Info size={16} className="export-summary-icon" />
+                <div>
+                  <div className="export-summary-label">Export summary</div>
+                  <div className="export-summary-value">
+                    Format: {formatLabels[selectedFormat]}&nbsp;&nbsp;•&nbsp;&nbsp;Includes: KPI, Charts, Task Table
+                  </div>
+                </div>
+              </div>
+              <div className="export-footer-actions">
+                <button onClick={onClose} className="export-btn-cancel">Cancel</button>
+                <button className="export-btn-confirm" onClick={() => {
+                  alert(`Exporting as ${selectedFormat.toUpperCase()}...`);
+                  onClose();
+                }}>
+                  <Download size={16} strokeWidth={2.5} />
+                  Export
+                </button>
+              </div>
+            </div>
+
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body
+  );
+};
+
+export default ExportDialog;
