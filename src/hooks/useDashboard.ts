@@ -115,12 +115,13 @@ export function useDashboard() {
         fetchSummary(),
         fetchCharts()
       ]);
+      await fetchTasks(1);
     } catch (err: any) {
       setError(err.message || 'Failed to perform hard refresh');
       setLoadingSummary(false);
       setLoadingCharts(false);
     }
-  }, [fetchSummary, fetchCharts]);
+  }, [fetchSummary, fetchCharts, fetchTasks]);
 
   const handleRefresh = useCallback(async () => {
     try {

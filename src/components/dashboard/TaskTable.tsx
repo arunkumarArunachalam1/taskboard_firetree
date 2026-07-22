@@ -478,8 +478,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             showToast(response.successMessage || 'Tasks reassigned successfully!', 'success');
             setIsReassignOpen(false);
             setSelectedIds([]);
-            if (onRefresh) onRefresh();
-            else onPageChange(page);
+            onPageChange(page); // Only refresh the table, no need to refresh KPIs/Charts for reassign
           } else {
             showToast(response.errorMessage || 'Failed to reassign tasks.', 'error');
           }
