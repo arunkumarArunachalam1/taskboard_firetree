@@ -11,6 +11,9 @@ interface FilterPanelProps {
   filters: DashboardFilters;
   onApply: (filters: DashboardFilters) => void;
   onClear: () => void;
+  title?: string;
+  layout?: '6col' | '3col';
+  mode?: 'card' | 'inline';
 }
 
 interface DropdownOption {
@@ -201,7 +204,9 @@ const DropdownItem: React.FC<{ label: string; isSelected: boolean; onClick: () =
 };
 
 // ─── FilterPanel ──────────────────────────────────────────────────────────────
-export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApply, onClear }) => {
+export const FilterPanel: React.FC<FilterPanelProps> = ({ 
+  isOpen, filters, onApply, onClear, title = "Filters", layout = '6col', mode = 'card' 
+}) => {
   const [localFilters, setLocalFilters] = useState<DashboardFilters>(filters);
   const [staffList,    setStaffList]    = useState<FacilityStaff[]>([]);
   const [taskTypes,    setTaskTypes]    = useState<OptionItem[]>([]);
@@ -226,10 +231,13 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
     loadData();
   }, [isOpen, currentFacilityID]);
 
-  useEffect(() => { setLocalFilters(filters); }, [filters]);
+  useEffect(() => { 
+    setLocalFilters(filters); 
+  }, [filters]);
 
-  const set = (field: keyof DashboardFilters, value: string) =>
+  const set = (field: keyof DashboardFilters, value: string) => {
     setLocalFilters(prev => ({ ...prev, [field]: value }));
+  };
 
   // Convert to generic DropdownOption lists
   const staffOptions:     DropdownOption[] = staffList.map(s => ({ value: String(s.Value), label: s.Display }));
@@ -251,13 +259,15 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
           transition={{ duration: 0.18, ease: 'easeOut' }}
         >
           {/* ── Filter Card ── */}
-          <div className="filter-panel-card">
+          <div className={`filter-panel-card ${mode === 'inline' ? 'is-inline' : ''}`}>
 
-            {/* ── Header row: title + Clear ── */}
-            <div className="filter-panel-header">
-              <span className="filter-panel-title">
-                Filters
-              </span>
+            {/* ── Header row: Title + Clear ── */}
+            <div className={`filter-panel-header ${!title ? 'no-title' : ''}`}>
+              {title && (
+                <span className="filter-panel-title">
+                  {title}
+                </span>
+              )}
               <button
                 type="button"
                 className="filter-panel-clear"
@@ -267,8 +277,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
               </button>
             </div>
 
-            {/* ── Uniform 6-column filter grid ── */}
-            <div className="filter-panel-grid">
+            {/* ── Uniform filter grid ── */}
+            <div className={`filter-panel-grid ${layout === '3col' ? 'grid-3col' : 'grid-6col'}`}>
 
               {/* 1 — Assigned User */}
               <div className="filter-field">
@@ -321,23 +331,55 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({ isOpen, filters, onApp
               {/* 5 — Start Date */}
               <div className="filter-field">
                 <label className="filter-label">Start Date</label>
-                <input
-                  type="date"
-                  value={localFilters.startDate}
-                  onChange={e => set('startDate', e.target.value)}
-                  className="filter-date-input"
-                />
+                <div className="filter-date-wrapper">
+                  <input
+                    type="date"
+                    value={localFilters.startDate}
+                    onChange={e => set('startDate', e.target.value)}
+                    onClick={(e) => {
+                      if ('showPicker' in HTMLInputElement.prototype) {
+                        try { (e.target as HTMLInputElement).showPicker(); } catch (err) {}
+                      }
+                    }}
+                    className="filter-date-input"
+                  />
+                  {localFilters.startDate && (
+                    <button
+                      type="button"
+                      onClick={() => set('startDate', '')}
+                      className="searchable-dropdown-search-clear date-clear-icon"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* 6 — End Date */}
               <div className="filter-field">
                 <label className="filter-label">End Date</label>
-                <input
-                  type="date"
-                  value={localFilters.endDate}
-                  onChange={e => set('endDate', e.target.value)}
-                  className="filter-date-input"
-                />
+                <div className="filter-date-wrapper">
+                  <input
+                    type="date"
+                    value={localFilters.endDate}
+                    onChange={e => set('endDate', e.target.value)}
+                    onClick={(e) => {
+                      if ('showPicker' in HTMLInputElement.prototype) {
+                        try { (e.target as HTMLInputElement).showPicker(); } catch (err) {}
+                      }
+                    }}
+                    className="filter-date-input"
+                  />
+                  {localFilters.endDate && (
+                    <button
+                      type="button"
+                      onClick={() => set('endDate', '')}
+                      className="searchable-dropdown-search-clear date-clear-icon"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  )}
+                </div>
               </div>
 
             </div>

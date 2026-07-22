@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown } from 'lucide-react';
+import { X, ChevronDown, ClipboardCheck, Calendar, Info, Bot, User, FileText, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFacilityStaff, getClientList, saveGeneralTask } from '../../services/dashboard.service';
 import type { FacilityStaff } from '../../types/dashboard.types';
@@ -26,9 +26,10 @@ interface SearchableComboboxProps {
   onChange: (value: string | number) => void;
   placeholder?: string;
   required?: boolean;
+  icon?: React.ReactNode;
 }
 
-const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value, onChange, placeholder, required }) => {
+const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value, onChange, placeholder, required, icon }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -85,8 +86,13 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
           setSearch('');
         }}
         placeholder={placeholder}
-        className="combobox-input"
+        className={`combobox-input ${icon ? 'task-form-input-with-icon-left' : ''}`}
       />
+      {icon && (
+        <div className="task-input-icon-left">
+          {icon}
+        </div>
+      )}
       <div className="combobox-chevron">
         <ChevronDown size={16} />
       </div>
@@ -269,26 +275,35 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="task-modal-wrapper">
+        <motion.div 
+          className="task-modal-wrapper"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
           {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="task-modal-backdrop"
-          />
+          <div onClick={onClose} className="task-modal-backdrop" />
 
           {/* Modal Content */}
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
             className="task-modal-content"
           >
             {/* Header (Fixed) */}
             <div className="task-modal-header">
-              <h2 className="task-modal-title">Create General Task</h2>
+              <div className="task-modal-header-content">
+                <div className="task-modal-header-icon">
+                  <ClipboardCheck size={24} />
+                </div>
+                <div>
+                  <h2 className="task-modal-title">Create General Task</h2>
+                  <p className="task-modal-subtitle">Add a new general task to assign and track progress.</p>
+                </div>
+              </div>
               <button onClick={onClose} type="button" className="task-modal-close">
                 <X size={20} />
               </button>
@@ -306,63 +321,86 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                 )}
 
                 <div className="task-form-group">
-                  <label className="task-form-label">Task Name *</label>
-                  <input
-                    type="text"
-                    name="TaskName"
-                    value={formData.TaskName}
-                    onChange={handleChange}
-                    required
-                    className="task-form-input"
-                  />
+                  <label className="task-form-label">Task Name <span className="task-required-asterisk">*</span></label>
+                  <div className="task-input-wrapper">
+                    <input
+                      type="text"
+                      name="TaskName"
+                      value={formData.TaskName}
+                      onChange={handleChange}
+                      required
+                      placeholder="Enter task name"
+                      className="task-form-input task-form-input-with-icon-right"
+                    />
+                    <div className="task-input-icon-right">
+                      <FileText size={16} />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="task-form-group">
-                  <label className="task-form-label">Description *</label>
-                  <textarea
-                    name="TaskDescription"
-                    value={formData.TaskDescription}
-                    onChange={handleChange}
-                    required
-                    className="task-form-textarea"
-                  />
+                  <label className="task-form-label">Description <span className="task-required-asterisk">*</span></label>
+                  <div className="textarea-wrapper">
+                    <textarea
+                      name="TaskDescription"
+                      value={formData.TaskDescription}
+                      onChange={handleChange}
+                      required
+                      placeholder="Enter task description..."
+                      className="task-form-textarea task-form-textarea-icon-right"
+                    />
+                    <div className="textarea-icon-bottom-right">
+                      <Bot size={14} />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="task-form-row">
                   <div className="task-form-col">
-                    <label className="task-form-label">Start Date *</label>
-                    <input
-                      type="date"
-                      name="ExpectedStartDate"
-                      value={formData.ExpectedStartDate}
-                      onChange={handleChange}
-                      onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
-                      required
-                      className="task-form-input"
-                    />
+                    <label className="task-form-label">Start Date <span className="task-required-asterisk">*</span></label>
+                    <div className="task-input-wrapper">
+                      <div className="task-input-icon-left">
+                        <Calendar size={16} />
+                      </div>
+                      <input
+                        type="date"
+                        name="ExpectedStartDate"
+                        value={formData.ExpectedStartDate}
+                        onChange={handleChange}
+                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
+                        required
+                        className="task-form-input task-form-input-with-icon-left"
+                      />
+                    </div>
                   </div>
                   <div className="task-form-col">
-                    <label className="task-form-label">Due Date *</label>
-                    <input
-                      type="date"
-                      name="ExpectedDueDate"
-                      value={formData.ExpectedDueDate}
-                      onChange={handleChange}
-                      onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
-                      required
-                      className="task-form-input"
-                    />
+                    <label className="task-form-label">Due Date <span className="task-required-asterisk">*</span></label>
+                    <div className="task-input-wrapper">
+                      <div className="task-input-icon-left">
+                        <Calendar size={16} />
+                      </div>
+                      <input
+                        type="date"
+                        name="ExpectedDueDate"
+                        value={formData.ExpectedDueDate}
+                        onChange={handleChange}
+                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
+                        required
+                        className="task-form-input task-form-input-with-icon-left"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 <div className="task-form-group">
-                  <label className="task-form-label">Client *</label>
+                  <label className="task-form-label">Client <span className="task-required-asterisk">*</span></label>
                   <SearchableCombobox
                     options={clientOptions}
                     value={formData.ClientCaseFileID}
                     onChange={(val) => handleComboboxChange('ClientCaseFileID', val)}
                     placeholder="Search for a client..."
                     required
+                    icon={<User size={16} />}
                   />
                   {fieldErrors['Task.ClientCaseFileID'] && <span className="task-field-error">{fieldErrors['Task.ClientCaseFileID'].MESSAGE}</span>}
                 </div>
@@ -374,7 +412,13 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                     value={formData.AssignTo}
                     onChange={(val) => handleComboboxChange('AssignTo', val)}
                     placeholder="Search staff members..."
+                    icon={<User size={16} />}
                   />
+                </div>
+
+                <div className="task-modal-info-banner">
+                  <Info size={16} className="task-modal-info-icon" />
+                  <p className="task-modal-info-text">All fields marked with <span className="task-required-asterisk">*</span> are required.</p>
                 </div>
               </div>
 
@@ -385,19 +429,19 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                   onClick={onClose}
                   className="task-btn-cancel"
                 >
-                  Cancel
+                  <X size={16} /> Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
                   className="task-btn-submit"
                 >
-                  {loading ? 'Saving...' : 'Save Task'}
+                  <Save size={16} /> {loading ? 'Saving...' : 'Save Task'}
                 </button>
               </div>
             </form>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>,
     document.body
