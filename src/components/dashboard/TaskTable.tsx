@@ -710,10 +710,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               )}
             </div>
 
-            <button className="active-filters-clear-btn" onClick={onClearFilters}>
-              <RefreshCw size={14} />
-              <span>Clear all</span>
-            </button>
+
           </div>
         );
       })()}

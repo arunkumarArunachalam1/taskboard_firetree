@@ -58,8 +58,10 @@ const DashboardPage: React.FC = () => {
   const handleKpiApplyFilters = async (newKpiFilters: DashboardFilters) => {
     setKpiFilters(newKpiFilters);
     setIsFilterOpen(false);
-    await fetchSummary(newKpiFilters);
-    await fetchCharts(newKpiFilters);
+    await Promise.all([
+      fetchSummary(newKpiFilters),
+      fetchCharts(newKpiFilters)
+    ]);
   };
 
   const handleListingApplyFilters = async (newListingFilters: DashboardFilters) => {
@@ -77,8 +79,10 @@ const DashboardPage: React.FC = () => {
       endDate: ''
     };
     setKpiFilters(defaultKpiFilters);
-    await fetchSummary(defaultKpiFilters);
-    await fetchCharts(defaultKpiFilters);
+    await Promise.all([
+      fetchSummary(defaultKpiFilters),
+      fetchCharts(defaultKpiFilters)
+    ]);
   };
 
   const handleListingClearFilters = async () => {

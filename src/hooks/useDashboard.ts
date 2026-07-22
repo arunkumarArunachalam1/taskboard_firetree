@@ -110,9 +110,11 @@ export function useDashboard() {
       
       await triggerHardRefresh();
       
-      // Call sequentially to avoid backend session.NextEvent race condition
-      await fetchSummary();
-      await fetchCharts();
+      // Run in parallel for KPI and Charts
+      await Promise.all([
+        fetchSummary(),
+        fetchCharts()
+      ]);
     } catch (err: any) {
       setError(err.message || 'Failed to perform hard refresh');
       setLoadingSummary(false);
@@ -121,17 +123,21 @@ export function useDashboard() {
   }, [fetchSummary, fetchCharts]);
 
   const handleRefresh = useCallback(async () => {
-    // Call sequentially to avoid backend session.NextEvent race condition
-    await fetchSummary();
-    await fetchCharts();
+    // Run in parallel for KPI and Charts
+    await Promise.all([
+      fetchSummary(),
+      fetchCharts()
+    ]);
     await fetchTasks(page);
   }, [fetchSummary, fetchCharts, fetchTasks, page]);
 
   useEffect(() => {
     const initFetch = async () => {
-      // Call sequentially to avoid backend session.NextEvent race condition
-      await fetchSummary();
-      await fetchCharts();
+      // Run in parallel for KPI and Charts
+      await Promise.all([
+        fetchSummary(),
+        fetchCharts()
+      ]);
       await fetchTasks(1);
     };
     initFetch();
