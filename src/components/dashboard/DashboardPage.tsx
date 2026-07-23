@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertCircle, X, SlidersHorizontal, RefreshCw, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +24,17 @@ const DashboardPage: React.FC = () => {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Chart refs for PDF export — passed to ChartsSection and captured in ExportDialog
+  const chart7Ref  = useRef<any>(null);
+  const chart30Ref = useRef<any>(null);
+  const chart90Ref = useRef<any>(null);
 
   const isIntegrated = typeof window !== 'undefined' && (window.location.port !== '5173' || !!(window as any).__IS_INTEGRATED__);
 
@@ -156,31 +167,15 @@ const DashboardPage: React.FC = () => {
           title="KPI & Graph Filters"
         />
 
-        {/* {getActiveFilterTags().length > 0 && (
-          <div className="active-filters-container">
-            <span className="active-filters-label">Active Filters:</span>
-            {getActiveFilterTags().map(tag => (
-              <div key={tag.key} className="active-filter-tag">
-                {tag.label}
-                <X 
-                  size={12} 
-                  className="active-filter-close"
-                  onClick={() => removeFilter(tag.key as keyof DashboardFilters)} 
-                />
-              </div>
-            ))}
-            <button 
-              onClick={handleClearFilters} 
-              className="btn-clear-filters"
-            >
-              Clear All
-            </button>
-          </div>
-        )} */}
-
         <KpiGrid data={summary} loading={loadingSummary} />
 
-        <ChartsSection data={charts} loading={loadingCharts} />
+        <ChartsSection
+          data={charts}
+          loading={loadingCharts}
+          chart7Ref={chart7Ref}
+          chart30Ref={chart30Ref}
+          chart90Ref={chart90Ref}
+        />
         <TaskTable
           data={tasks}
           loading={loadingTasks}
@@ -247,7 +242,57 @@ const DashboardPage: React.FC = () => {
         document.body
       )}
 
-      <ExportDialog isOpen={isExportOpen} onClose={() => setIsExportOpen(false)} />
+      <ExportDialog
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        chart7Ref={chart7Ref}
+        chart30Ref={chart30Ref}
+        chart90Ref={chart90Ref}
+        facilityID={String(context.currentFacilityID || '')}
+        facilityName={context.facilities?.find(f => String(f.id||f.ID||f.FacilityID) === String(context.currentFacilityID))?.name || 'All'}
+        userID={String(context.userID || '')}
+        isAdmin={hasAdminPrivileges}
+        listingFilters={listingFilters}
+        kpiFilters={kpiFilters}
+        showToast={showToast}
+      />
+      {toast && (() => {
+        const colors = {
+          success: { bg: '#F0FDF4', border: '#86EFAC', leftBorder: '#22C55E', text: '#166534' },
+          error: { bg: '#FEF2F2', border: '#FECACA', leftBorder: '#EF4444', text: '#991B1B' },
+          info: { bg: '#EFF6FF', border: '#BFDBFE', leftBorder: '#3B82F6', text: '#1E40AF' }
+        }[toast.type] || { bg: '#EFF6FF', border: '#BFDBFE', leftBorder: '#3B82F6', text: '#1E40AF' };
+
+        return createPortal(
+          <motion.div 
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="taskboard-toast"
+            style={{ 
+              backgroundColor: colors.bg, 
+              borderColor: colors.border,
+              borderLeftColor: colors.leftBorder,
+              color: colors.text
+            }}
+          >
+            <div className="toast-icon-container">
+              <AlertCircle size={20} strokeWidth={2.5} className="toast-icon" />
+            </div>
+            <div className="toast-content">
+              {toast.message}
+            </div>
+            <button 
+              onClick={() => setToast(null)} 
+              className="toast-close"
+              style={{ color: colors.text }}
+            >
+              <X size={18} strokeWidth={2.5} className="toast-close-icon" />
+            </button>
+          </motion.div>,
+          document.body
+        );
+      })()}
     </div>
   );
 };

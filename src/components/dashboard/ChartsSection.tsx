@@ -33,9 +33,12 @@ const ChartCard: React.FC<ChartCardProps> = ({ title, icon, children }) => (
 interface ChartsSectionProps {
   data: DashboardCharts | null;
   loading: boolean;
+  chart7Ref?: React.Ref<any>;
+  chart30Ref?: React.Ref<any>;
+  chart90Ref?: React.Ref<any>;
 }
 
-const ChartsSection: React.FC<ChartsSectionProps> = ({ data, loading }) => {
+const ChartsSection: React.FC<ChartsSectionProps> = ({ data, loading, chart7Ref, chart30Ref, chart90Ref }) => {
   if (loading || !data) {
     return (
       <div className="charts-grid">
@@ -67,13 +70,13 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({ data, loading }) => {
   return (
     <div className="charts-grid">
       <ChartCard title="Daily Completions — Last 7 Days" icon={<BarChart3 size={16} strokeWidth={2.5} />}>
-        <DailyCompletion7DaysChart data={data.last7Days} />
+        <DailyCompletion7DaysChart data={data.last7Days} chartRef={chart7Ref} />
       </ChartCard>
       <ChartCard title="Daily Completions — Last 30 Days" icon={<LineChart size={16} strokeWidth={2.5} />}>
-        <DailyCompletion30DaysChart data={data.last30Days} />
+        <DailyCompletion30DaysChart data={data.last30Days} chartRef={chart30Ref} />
       </ChartCard>
       <ChartCard title="Cumulative Completion Trend - 90 Days" icon={<TrendingUp size={16} strokeWidth={2.5} />}>
-        <CompletionTrendChart data={data.trend} />
+        <CompletionTrendChart data={data.trend} chartRef={chart90Ref} />
       </ChartCard>
       <ChartCard title="Task Status Distribution" icon={<PieChart size={16} strokeWidth={2.5} />}>
         <TaskStatusChart data={data.statusDistribution} />
