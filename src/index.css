@@ -1619,7 +1619,11 @@ h1.page-title {
 .combobox-container { position: relative; width: 100%; }
 .combobox-input { width: 100%; padding: 8px 30px 8px 12px; border-radius: 6px; border: 1px solid #D1D5DB; box-sizing: border-box; background-color: #fff; cursor: pointer; outline: none; }
 .combobox-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
-.combobox-chevron { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #6B7280; }
+.combobox-chevron { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #6B7280; display: flex; align-items: center; pointer-events: auto; }
+.combobox-clear-icon { cursor: pointer; margin-right: 4px; color: #9CA3AF; transition: color 0.15s; }
+.combobox-clear-icon:hover { color: #6B7280; }
+.combobox-toggle-icon { cursor: pointer; color: #9CA3AF; transition: color 0.15s; }
+.combobox-toggle-icon:hover { color: #6B7280; }
 .combobox-hidden-input { opacity: 0; position: absolute; height: 0; width: 0; pointer-events: none; }
 .combobox-panel { position: absolute; top: 100%; left: 0; right: 0; max-height: 260px; overflow-y: auto; background-color: #fff; border: 1px solid #D1D5DB; border-radius: 6px; margin-top: 4px; z-index: 100000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
 .combobox-option { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #F3F4F6; transition: background-color 0.1s; }

@@ -64,44 +64,100 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
 
   return (
     <div ref={wrapperRef} className="combobox-container">
-      <input
-        type="text"
-        value={displayValue}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          if (!isOpen) setIsOpen(true);
-          if (e.target.value === '') onChange('');
-        }}
-        onFocus={() => { setIsOpen(true); setSearch(''); }}
-        placeholder={placeholder}
+      <div
         className={`combobox-input ${icon ? 'task-form-input-with-icon-left' : ''}`}
-      />
+        style={{ display: 'flex', alignItems: 'center', minHeight: '38px', userSelect: 'none' }}
+        onClick={() => {
+          if (isOpen) {
+             setIsOpen(false);
+             setSearch('');
+          } else {
+             setIsOpen(true);
+          }
+        }}
+      >
+        <span style={{ 
+          whiteSpace: 'nowrap', 
+          overflow: 'hidden', 
+          textOverflow: 'ellipsis', 
+          width: 'calc(100% - 24px)',
+          color: selectedOption ? '#111827' : '#9CA3AF'
+        }}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+      </div>
       {icon && (
-        <div className="task-input-icon-left">
+        <div className="task-input-icon-left" style={{ pointerEvents: 'none' }}>
           {icon}
         </div>
       )}
       <div className="combobox-chevron">
-        <ChevronDown size={16} />
+        {value ? (
+          <X 
+            size={16} 
+            className="combobox-clear-icon"
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              onChange(''); 
+              setSearch(''); 
+              setIsOpen(false); 
+            }} 
+          />
+        ) : null}
+        <ChevronDown 
+          size={16} 
+          className="combobox-toggle-icon"
+          style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isOpen) {
+               setIsOpen(false);
+               setSearch('');
+            } else {
+               setIsOpen(true);
+            }
+          }} 
+        />
       </div>
       {required && !value && <input type="text" className="combobox-hidden-input" required />}
 
       {isOpen && (
         <div className="combobox-panel">
-          {filteredOptions.length > 0 ? (
-            filteredOptions.map(option => (
-              <div
-                key={option.value}
-                onClick={() => { onChange(option.value); setIsOpen(false); setSearch(''); }}
-                className="combobox-option"
-              >
-                <div className="combobox-option-label">{option.label}</div>
-                {option.secondary && <div className="combobox-option-secondary">{option.secondary}</div>}
-              </div>
-            ))
-          ) : (
-            <div className="combobox-empty">No matches found</div>
-          )}
+          <div style={{ padding: '8px', borderBottom: '1px solid #E5E7EB', position: 'sticky', top: 0, background: '#fff', zIndex: 2 }}>
+            <input
+              type="text"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                borderRadius: '4px',
+                border: '1px solid #D1D5DB',
+                fontSize: '13px',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+          <div style={{ maxHeight: '210px', overflowY: 'auto' }}>
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(option => (
+                <div
+                  key={option.value}
+                  onClick={() => { onChange(option.value); setIsOpen(false); setSearch(''); }}
+                  className="combobox-option"
+                >
+                  <div className="combobox-option-label">{option.label}</div>
+                  {option.secondary && <div className="combobox-option-secondary">{option.secondary}</div>}
+                </div>
+              ))
+            ) : (
+              <div className="combobox-empty">No matches found</div>
+            )}
+          </div>
         </div>
       )}
     </div>
