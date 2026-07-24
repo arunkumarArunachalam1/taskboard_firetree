@@ -125,8 +125,8 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
       const f = listingFilters;
       const k = kpiFilters;
 
-      setExporting(true);
-      if (showToast) showToast('Preparing export, please wait...', 'info');
+      if (showToast) showToast('Export started in background. You can continue working...', 'info');
+      onClose();
 
       try {
         const body = new URLSearchParams({
@@ -184,16 +184,13 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
       } catch (error) {
         console.error('Export error:', error);
         if (showToast) showToast('Failed to download export.', 'error');
-      } finally {
-        setExporting(false);
-        onClose();
       }
       return;
     }
 
     // ── PDF export via CF hybrid approach ──────────────────────────
-    setExporting(true);
-    if (showToast) showToast('Preparing PDF export, please wait...', 'info');
+    if (showToast) showToast('PDF Export started in background. You can continue working...', 'info');
+    onClose();
     try {
       // Capture each chart canvas as a base64 PNG data URI
       const chart7img = chart7Ref?.current?.toBase64Image?.('image/png', 1.0) ?? '';
@@ -257,9 +254,6 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
     } catch (error: any) {
       console.error('PDF export error:', error);
       if (showToast) showToast('Failed to download PDF export.', 'error');
-    } finally {
-      setExporting(false);
-      onClose();
     }
   };
 
