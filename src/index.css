@@ -1764,3 +1764,168 @@ h1.page-title {
   margin: 0 auto;
   line-height: 1.5;
 }
+
+/* ── Whereabouts Modal & Combobox / TimePicker Classes ── */
+.combobox-input-flex {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  user-select: none;
+}
+
+.combobox-value-span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: calc(100% - 24px);
+  color: #111827;
+}
+
+.combobox-value-placeholder {
+  color: #9CA3AF;
+}
+
+.task-input-icon-none {
+  pointer-events: none;
+}
+
+.combobox-toggle-icon {
+  transition: transform 0.2s, color 0.15s;
+}
+
+.combobox-toggle-icon-open {
+  transform: rotate(180deg);
+}
+
+.combobox-search-header {
+  padding: 8px;
+  border-bottom: 1px solid #E5E7EB;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 2;
+}
+
+.combobox-search-input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #D1D5DB;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.combobox-options-list {
+  max-height: 210px;
+  overflow-y: auto;
+}
+
+.timepicker-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.custom-time-col::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-time-col {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.timepicker-input {
+  padding-right: 30px;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.timepicker-icon-right {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+}
+
+.timepicker-dropdown-panel {
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  width: 220px;
+  height: 200px;
+  box-sizing: border-box;
+}
+
+.timepicker-column {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.timepicker-column-bordered {
+  border-left: 1px solid #F3F4F6;
+  border-right: 1px solid #F3F4F6;
+}
+
+.timepicker-column-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.timepicker-item-btn {
+  border: none;
+  padding: 6px 0;
+  background-color: transparent;
+  color: #111827;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: normal;
+  text-align: center;
+}
+
+.timepicker-item-btn.active {
+  background-color: #EFF6FF;
+  color: #2563EB;
+  font-weight: bold;
+}
+
+.timepicker-ampm-col {
+  width: 45px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.timepicker-ampm-btn {
+  border: none;
+  padding: 8px 0;
+  background-color: transparent;
+  color: #111827;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: normal;
+  text-align: center;
+}
+
+.timepicker-ampm-btn.active {
+  background-color: #EFF6FF;
+  color: #2563EB;
+  font-weight: bold;
+}
+
+.task-form-input-h38 {
+  height: 38px;
+  box-sizing: border-box;
+}

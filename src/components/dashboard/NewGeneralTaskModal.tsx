@@ -71,8 +71,7 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
   return (
     <div ref={wrapperRef} className="combobox-container">
       <div
-        className={`combobox-input ${icon ? 'task-form-input-with-icon-left' : ''}`}
-        style={{ display: 'flex', alignItems: 'center', minHeight: '38px', userSelect: 'none' }}
+        className={`combobox-input combobox-input-flex ${icon ? 'task-form-input-with-icon-left' : ''}`}
         onClick={() => {
           if (isOpen) {
              setIsOpen(false);
@@ -82,18 +81,12 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
           }
         }}
       >
-        <span style={{ 
-          whiteSpace: 'nowrap', 
-          overflow: 'hidden', 
-          textOverflow: 'ellipsis', 
-          width: 'calc(100% - 24px)',
-          color: selectedOption ? '#111827' : '#9CA3AF'
-        }}>
+        <span className={`combobox-value-span ${!selectedOption ? 'combobox-value-placeholder' : ''}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
       </div>
       {icon && (
-        <div className="task-input-icon-left" style={{ pointerEvents: 'none' }}>
+        <div className="task-input-icon-left task-input-icon-none">
           {icon}
         </div>
       )}
@@ -112,8 +105,7 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
         ) : null}
         <ChevronDown 
           size={16} 
-          className="combobox-toggle-icon"
-          style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+          className={`combobox-toggle-icon ${isOpen ? 'combobox-toggle-icon-open' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
             if (isOpen) {
@@ -130,7 +122,7 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
 
       {isOpen && (
         <div className="combobox-panel">
-          <div style={{ padding: '8px', borderBottom: '1px solid #E5E7EB', position: 'sticky', top: 0, background: '#fff', zIndex: 2 }}>
+          <div className="combobox-search-header">
             <input
               type="text"
               placeholder="Search..."
@@ -138,18 +130,10 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
               onChange={(e) => setSearch(e.target.value)}
               onClick={(e) => e.stopPropagation()}
               autoFocus
-              style={{
-                width: '100%',
-                padding: '6px 10px',
-                borderRadius: '4px',
-                border: '1px solid #D1D5DB',
-                fontSize: '13px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
+              className="combobox-search-input"
             />
           </div>
-          <div style={{ maxHeight: '210px', overflowY: 'auto' }}>
+          <div className="combobox-options-list">
             {filteredOptions.length > 0 ? filteredOptions.map(option => (
               <div
                 key={option.value}

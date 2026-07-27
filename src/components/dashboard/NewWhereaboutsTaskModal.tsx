@@ -65,8 +65,7 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
   return (
     <div ref={wrapperRef} className="combobox-container">
       <div
-        className={`combobox-input ${icon ? 'task-form-input-with-icon-left' : ''}`}
-        style={{ display: 'flex', alignItems: 'center', minHeight: '38px', userSelect: 'none' }}
+        className={`combobox-input combobox-input-flex ${icon ? 'task-form-input-with-icon-left' : ''}`}
         onClick={() => {
           if (isOpen) {
              setIsOpen(false);
@@ -76,18 +75,12 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
           }
         }}
       >
-        <span style={{ 
-          whiteSpace: 'nowrap', 
-          overflow: 'hidden', 
-          textOverflow: 'ellipsis', 
-          width: 'calc(100% - 24px)',
-          color: selectedOption ? '#111827' : '#9CA3AF'
-        }}>
+        <span className={`combobox-value-span ${!selectedOption ? 'combobox-value-placeholder' : ''}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
       </div>
       {icon && (
-        <div className="task-input-icon-left" style={{ pointerEvents: 'none' }}>
+        <div className="task-input-icon-left task-input-icon-none">
           {icon}
         </div>
       )}
@@ -106,8 +99,7 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
         ) : null}
         <ChevronDown 
           size={16} 
-          className="combobox-toggle-icon"
-          style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+          className={`combobox-toggle-icon ${isOpen ? 'combobox-toggle-icon-open' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
             if (isOpen) {
@@ -123,7 +115,7 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
 
       {isOpen && (
         <div className="combobox-panel">
-          <div style={{ padding: '8px', borderBottom: '1px solid #E5E7EB', position: 'sticky', top: 0, background: '#fff', zIndex: 2 }}>
+          <div className="combobox-search-header">
             <input
               type="text"
               placeholder="Search..."
@@ -131,18 +123,10 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
               onChange={(e) => setSearch(e.target.value)}
               onClick={(e) => e.stopPropagation()}
               autoFocus
-              style={{
-                width: '100%',
-                padding: '6px 10px',
-                borderRadius: '4px',
-                border: '1px solid #D1D5DB',
-                fontSize: '13px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
+              className="combobox-search-input"
             />
           </div>
-          <div style={{ maxHeight: '210px', overflowY: 'auto' }}>
+          <div className="combobox-options-list">
             {filteredOptions.length > 0 ? (
               filteredOptions.map(option => (
                 <div
@@ -271,16 +255,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
   const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
-      <style>{`
-        .custom-time-col::-webkit-scrollbar {
-          display: none;
-        }
-        .custom-time-col {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-      `}</style>
+    <div ref={containerRef} className="timepicker-wrapper">
       <input
         type="text"
         value={inputValue}
@@ -290,10 +265,9 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
         onKeyDown={handleKeyDown}
         placeholder="--:--"
         required={required}
-        className="task-form-input"
-        style={{ paddingRight: '30px', height: '38px', boxSizing: 'border-box' }}
+        className="task-form-input timepicker-input"
       />
-      <div style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6B7280', display: 'flex', alignItems: 'center' }}>
+      <div className="timepicker-icon-right">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <polyline points="12 6 12 12 16 14"></polyline>
@@ -301,17 +275,10 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
       </div>
 
       {isOpen && (
-        <div className="combobox-panel" style={{
-          padding: '8px',
-          display: 'flex',
-          gap: '8px',
-          width: '220px',
-          height: '200px',
-          boxSizing: 'border-box'
-        }}>
+        <div className="combobox-panel timepicker-dropdown-panel">
           {/* Hour Column */}
-          <div className="custom-time-col" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#9CA3AF', textAlign: 'center', marginBottom: '4px' }}>HH</div>
+          <div className="custom-time-col timepicker-column">
+            <div className="timepicker-column-header">HH</div>
             {hours.map(h => {
               const isSelected = String(h) === String(parseInt(currentHour, 10));
               return (
@@ -319,17 +286,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
                   key={h}
                   type="button"
                   onClick={() => handleSelectTime(h, currentMinute, currentAmpm)}
-                  style={{
-                    border: 'none',
-                    padding: '6px 0',
-                    backgroundColor: isSelected ? '#EFF6FF' : 'transparent',
-                    color: isSelected ? '#2563EB' : '#111827',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: isSelected ? 'bold' : 'normal',
-                    textAlign: 'center'
-                  }}
+                  className={`timepicker-item-btn ${isSelected ? 'active' : ''}`}
                 >
                   {h}
                 </button>
@@ -338,8 +295,8 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
           </div>
 
           {/* Minute Column */}
-          <div className="custom-time-col" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', borderLeft: '1px solid #F3F4F6', borderRight: '1px solid #F3F4F6' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#9CA3AF', textAlign: 'center', marginBottom: '4px' }}>MM</div>
+          <div className="custom-time-col timepicker-column timepicker-column-bordered">
+            <div className="timepicker-column-header">MM</div>
             {minutes.map(m => {
               const isSelected = m === currentMinute;
               return (
@@ -347,17 +304,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
                   key={m}
                   type="button"
                   onClick={() => handleSelectTime(currentHour, m, currentAmpm)}
-                  style={{
-                    border: 'none',
-                    padding: '6px 0',
-                    backgroundColor: isSelected ? '#EFF6FF' : 'transparent',
-                    color: isSelected ? '#2563EB' : '#111827',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: isSelected ? 'bold' : 'normal',
-                    textAlign: 'center'
-                  }}
+                  className={`timepicker-item-btn ${isSelected ? 'active' : ''}`}
                 >
                   {m}
                 </button>
@@ -366,7 +313,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
           </div>
 
           {/* AM/PM Column */}
-          <div style={{ width: '45px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px' }}>
+          <div className="timepicker-ampm-col">
             {['AM', 'PM'].map(a => {
               const isSelected = a === currentAmpm;
               return (
@@ -374,17 +321,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
                   key={a}
                   type="button"
                   onClick={() => handleSelectTime(currentHour, currentMinute, a)}
-                  style={{
-                    border: 'none',
-                    padding: '8px 0',
-                    backgroundColor: isSelected ? '#EFF6FF' : 'transparent',
-                    color: isSelected ? '#2563EB' : '#111827',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                    textAlign: 'center'
-                  }}
+                  className={`timepicker-ampm-btn ${isSelected ? 'active' : ''}`}
                 >
                   {a}
                 </button>
@@ -644,8 +581,7 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                         onChange={e => setExpectedStartDate(e.target.value)}
                         onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                         required
-                        className="task-form-input task-form-input-with-icon-left"
-                        style={{ height: '38px', boxSizing: 'border-box' }}
+                        className="task-form-input task-form-input-with-icon-left task-form-input-h38"
                       />
                     </div>
                   </div>
@@ -672,8 +608,7 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                         onChange={e => setExpectedEndDate(e.target.value)}
                         onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                         required
-                        className="task-form-input task-form-input-with-icon-left"
-                        style={{ height: '38px', boxSizing: 'border-box' }}
+                        className="task-form-input task-form-input-with-icon-left task-form-input-h38"
                       />
                     </div>
                   </div>
