@@ -636,9 +636,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
         {/* Right: Search */}
         <div className="table-header-right">
-          <button 
+          <button
             ref={toggleButtonRef}
-            className="btn-filters" 
+            className="btn-filters"
             onClick={() => setIsListingFilterOpen(!isListingFilterOpen)}
           >
             <SlidersHorizontal size={15} />
@@ -820,7 +820,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     <span>{task.ExpectedStartDate}</span>
                   </td>
                   <td>
-                    <span 
+                    <span
                       className={task.Status === 'Late' ? 'font-bold' : 'font-normal'}
                       style={{ color: task.Status === 'Late' ? '#DC2626' : 'inherit' }}
                     >

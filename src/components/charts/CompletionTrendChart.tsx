@@ -7,9 +7,9 @@ import type { TrendPoint } from '../../types/dashboard.types';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-interface Props { data: TrendPoint[] }
+interface Props { data: TrendPoint[], chartRef?: React.Ref<any> }
 
-const CompletionTrendChart: React.FC<Props> = ({ data }) => {
+const CompletionTrendChart: React.FC<Props> = ({ data, chartRef }) => {
   const chartData = React.useMemo(() => {
     let finalLabels: string[] = [];
     let finalData: number[] = [];
@@ -80,7 +80,7 @@ const CompletionTrendChart: React.FC<Props> = ({ data }) => {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: 160 }}>
-      <Line data={chartData} options={options as any} />
+      <Line ref={chartRef} data={chartData} options={options as any} />
     </div>
   );
 };

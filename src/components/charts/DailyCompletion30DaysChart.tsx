@@ -7,9 +7,9 @@ import type { DailyCompletionPoint } from '../../types/dashboard.types';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-interface Props { data: DailyCompletionPoint[] }
+interface Props { data: DailyCompletionPoint[], chartRef?: React.Ref<any> }
 
-const DailyCompletion30DaysChart: React.FC<Props> = ({ data }) => {
+const DailyCompletion30DaysChart: React.FC<Props> = ({ data, chartRef }) => {
   const chartData = React.useMemo(() => ({
     labels: data.map(d => d.date),
     datasets: [
@@ -65,7 +65,7 @@ const DailyCompletion30DaysChart: React.FC<Props> = ({ data }) => {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: 160 }}>
-      <Line data={chartData} options={options as any} />
+      <Line ref={chartRef} data={chartData} options={options as any} />
     </div>
   );
 };
