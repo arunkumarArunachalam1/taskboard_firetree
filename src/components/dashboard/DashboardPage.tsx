@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, X, SlidersHorizontal, RefreshCw, Download } from 'lucide-react';
+import { AlertCircle, X, SlidersHorizontal, RefreshCw, Download, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Header';
 import KpiGrid from './KpiGrid';
@@ -28,7 +28,9 @@ const DashboardPage: React.FC = () => {
 
   const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => {
+      setToast(prev => (prev?.message === message ? null : prev));
+    }, type === 'info' ? 15000 : 4000);
   };
 
   // Chart refs for PDF export — passed to ChartsSection and captured in ExportDialog
@@ -255,6 +257,7 @@ const DashboardPage: React.FC = () => {
         listingFilters={listingFilters}
         kpiFilters={kpiFilters}
         showToast={showToast}
+        totalTasks={tasks?.total || 0}
       />
       {toast && (() => {
         const colors = {
@@ -276,8 +279,12 @@ const DashboardPage: React.FC = () => {
               color: colors.text
             }}
           >
-            <div className="toast-icon-container">
-              <AlertCircle size={20} strokeWidth={2.5} className="toast-icon" />
+            <div className="toast-icon-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {toast.type === 'info' ? (
+                <Loader2 size={20} className="toast-icon animate-spin" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+              ) : (
+                <AlertCircle size={20} strokeWidth={2.5} className="toast-icon" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+              )}
             </div>
             <div className="toast-content">
               {toast.message}

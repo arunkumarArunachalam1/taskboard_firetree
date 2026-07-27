@@ -18,6 +18,7 @@ interface ExportDialogProps {
   kpiFilters?: DashboardFilters;
   facilityName?: string;
   showToast?: (message: string, type: 'info' | 'success' | 'error') => void;
+  totalTasks?: number;
 }
 
 type ExportFormat = 'excel' | 'csv' | 'pdf';
@@ -77,8 +78,10 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   chart7Ref, chart30Ref, chart90Ref,
   facilityID = '', userID = '', isAdmin = false,
   listingFilters, kpiFilters, facilityName = 'All',
-  showToast
+  showToast,
+  totalTasks = 0
 }) => {
+  const isOverLimit = totalTasks > 50000;
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('excel');
   const [exporting, setExporting] = useState(false);
   const [filterLabels, setFilterLabels] = useState<any>({});
@@ -121,12 +124,24 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
   };
 
   const handleExport = async () => {
+    if (isOverLimit || exporting) {
+      if (isOverLimit && showToast) {
+        showToast(
+          `Too many rows (${totalTasks.toLocaleString()}). Please apply a date range or status filter and try again.`,
+          'error'
+        );
+      }
+      return;
+    }
+
+    setExporting(true);
+    onClose();
+
     if (selectedFormat !== 'pdf') {
       const f = listingFilters;
       const k = kpiFilters;
 
-      if (showToast) showToast('Export started in background. You can continue working...', 'info');
-      onClose();
+      if (showToast) showToast('Preparing your export, please wait...', 'info');
 
       try {
         const body = new URLSearchParams({
@@ -161,7 +176,18 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
           body: body.toString(),
         });
 
-        if (!response.ok) throw new Error('Export failed');
+        if (!response.ok) {
+          if (response.status === 400) {
+            const errorText = await response.text();
+            if (errorText && errorText.trim()) {
+              const cleanMsg = errorText.trim().replace(/\s+/g, ' ');
+              setExporting(false);
+              if (showToast) showToast(cleanMsg, 'error');
+              return;
+            }
+          }
+          throw new Error('Export failed');
+        }
 
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -180,17 +206,18 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
         a.click();
         window.URL.revokeObjectURL(url);
         
+        setExporting(false);
         if (showToast) showToast('Download completed successfully!', 'success');
       } catch (error) {
         console.error('Export error:', error);
+        setExporting(false);
         if (showToast) showToast('Failed to download export.', 'error');
       }
       return;
     }
 
     // ── PDF export via CF hybrid approach ──────────────────────────
-    if (showToast) showToast('PDF Export started in background. You can continue working...', 'info');
-    onClose();
+    if (showToast) showToast('Preparing your PDF export, please wait...', 'info');
     try {
       // Capture each chart canvas as a base64 PNG data URI
       const chart7img = chart7Ref?.current?.toBase64Image?.('image/png', 1.0) ?? '';
@@ -237,7 +264,18 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
         body,
       });
 
-      if (!response.ok) throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      if (!response.ok) {
+        if (response.status === 400) {
+          const errorText = await response.text();
+          if (errorText && errorText.trim()) {
+            const cleanMsg = errorText.trim().replace(/\s+/g, ' ');
+            setExporting(false);
+            if (showToast) showToast(cleanMsg, 'error');
+            return;
+          }
+        }
+        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      }
 
       // Trigger browser download from blob response
       const blob = await response.blob();
@@ -250,9 +288,11 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
+      setExporting(false);
       if (showToast) showToast('PDF Download completed successfully!', 'success');
     } catch (error: any) {
       console.error('PDF export error:', error);
+      setExporting(false);
       if (showToast) showToast('Failed to download PDF export.', 'error');
     }
   };
@@ -274,7 +314,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
           transition={{ duration: 0.15 }}
         >
           {/* Backdrop */}
-          <div onClick={onClose} className="task-modal-backdrop" />
+          <div onClick={exporting ? undefined : onClose} className="task-modal-backdrop" />
 
           {/* Modal */}
           <motion.div
@@ -295,13 +335,44 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                   <p className="export-dialog-subtitle">Choose what you want to export, select a format, and download the report.</p>
                 </div>
               </div>
-              <button onClick={onClose} type="button" className="task-modal-close">
+              <button onClick={exporting ? undefined : onClose} disabled={exporting} type="button" className="task-modal-close" style={exporting ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}>
                 <X size={20} />
               </button>
             </div>
 
             {/* Body */}
             <div className="export-dialog-body">
+              {isOverLimit && (
+                <div style={{
+                  marginBottom: '16px',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  backgroundColor: '#FEF2F2',
+                  border: '1px solid #FECACA',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px'
+                }}>
+                  <div style={{
+                    padding: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: '#FEE2E2',
+                    color: '#DC2626',
+                    marginTop: '2px',
+                    flexShrink: 0
+                  }}>
+                    <Info size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#991B1B' }}>
+                      Row Limit Exceeded ({totalTasks.toLocaleString()} rows)
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#B91C1C', marginTop: '4px', lineHeight: '1.4' }}>
+                      You cannot export more than 50,000 tasks at once. Please apply a date range or status filter to reduce the count before exporting.
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Section 1 */}
               <div className="export-section-header">
@@ -313,7 +384,8 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                   <div
                     key={fmt.id}
                     className={`export-format-row${selectedFormat === fmt.id ? ' export-format-row-active' : ''}`}
-                    onClick={() => setSelectedFormat(fmt.id)}
+                    onClick={() => !exporting && setSelectedFormat(fmt.id)}
+                    style={exporting ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                   >
                     {selectedFormat === fmt.id && (
                       <div className="export-row-checkmark">
@@ -347,8 +419,14 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
                 </div>
               </div>
               <div className="export-footer-actions">
-                <button onClick={onClose} className="export-btn-cancel">Cancel</button>
-                <button className="export-btn-confirm" onClick={handleExport} disabled={exporting}>
+                <button onClick={exporting ? undefined : onClose} disabled={exporting} className="export-btn-cancel" style={exporting ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}>Cancel</button>
+                <button
+                  className="export-btn-confirm"
+                  onClick={handleExport}
+                  disabled={exporting || isOverLimit}
+                  style={(exporting || isOverLimit) ? { opacity: 0.6, cursor: 'not-allowed', backgroundColor: '#9CA3AF' } : undefined}
+                  title={isOverLimit ? 'Cannot export more than 50,000 rows. Please apply a filter.' : undefined}
+                >
                   {exporting ? (
                     <Loader2 size={18} className="animate-spin" />
                   ) : (
