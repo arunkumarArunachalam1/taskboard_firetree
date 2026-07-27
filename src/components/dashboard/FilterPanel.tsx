@@ -253,10 +253,11 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       {isOpen && (
         <motion.div
           key="filter-panel"
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          style={{ overflow: 'visible' }}
         >
           {/* ── Filter Card ── */}
           <div className={`filter-panel-card ${mode === 'inline' ? 'is-inline' : ''}`}>
@@ -335,6 +336,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                   <input
                     type="date"
                     value={localFilters.startDate}
+                    max={localFilters.endDate || undefined}
                     onChange={e => set('startDate', e.target.value)}
                     onClick={(e) => {
                       if ('showPicker' in HTMLInputElement.prototype) {
@@ -362,6 +364,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                   <input
                     type="date"
                     value={localFilters.endDate}
+                    min={localFilters.startDate || undefined}
                     onChange={e => set('endDate', e.target.value)}
                     onClick={(e) => {
                       if ('showPicker' in HTMLInputElement.prototype) {
@@ -391,6 +394,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
                 type="button"
                 className="btn-apply-filters"
                 onClick={() => {
+                  if (localFilters.startDate && localFilters.endDate && new Date(localFilters.startDate) > new Date(localFilters.endDate)) {
+                    alert('Start date cannot be after end date.');
+                    return;
+                  }
                   onApply(localFilters);
                 }}
               >

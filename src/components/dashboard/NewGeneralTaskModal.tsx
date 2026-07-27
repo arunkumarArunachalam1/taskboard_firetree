@@ -70,55 +70,89 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
 
   return (
     <div ref={wrapperRef} className="combobox-container">
-      <input
-        type="text"
-        value={displayValue}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          if (!isOpen) setIsOpen(true);
-          // If clearing out completely
-          if (e.target.value === '') {
-            onChange('');
+      <div
+        className={`combobox-input combobox-input-flex ${icon ? 'task-form-input-with-icon-left' : ''}`}
+        onClick={() => {
+          if (isOpen) {
+             setIsOpen(false);
+             setSearch('');
+          } else {
+             setIsOpen(true);
           }
         }}
-        onFocus={() => {
-          setIsOpen(true);
-          setSearch('');
-        }}
-        placeholder={placeholder}
-        className={`combobox-input ${icon ? 'task-form-input-with-icon-left' : ''}`}
-      />
+      >
+        <span className={`combobox-value-span ${!selectedOption ? 'combobox-value-placeholder' : ''}`}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+      </div>
       {icon && (
-        <div className="task-input-icon-left">
+        <div className="task-input-icon-left task-input-icon-none">
           {icon}
         </div>
       )}
       <div className="combobox-chevron">
-        <ChevronDown size={16} />
+        {value ? (
+          <X 
+            size={16} 
+            className="combobox-clear-icon"
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              onChange(''); 
+              setSearch(''); 
+              setIsOpen(false); 
+            }} 
+          />
+        ) : null}
+        <ChevronDown 
+          size={16} 
+          className={`combobox-toggle-icon ${isOpen ? 'combobox-toggle-icon-open' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isOpen) {
+               setIsOpen(false);
+               setSearch('');
+            } else {
+               setIsOpen(true);
+            }
+          }} 
+        />
       </div>
       {/* Hidden input to ensure required validation fires natively if empty */}
       {required && !value && <input type="text" className="combobox-hidden-input" required />}
 
       {isOpen && (
         <div className="combobox-panel">
-          {filteredOptions.length > 0 ? filteredOptions.map(option => (
-            <div
-              key={option.value}
-              onClick={() => {
-                onChange(option.value);
-                setIsOpen(false);
-                setSearch('');
-              }}
-              className="combobox-option"
-            >
-              <div className="combobox-option-label">{highlightMatch(option.label, search)}</div>
-              {option.secondary && <div className="combobox-option-secondary">Case File ID: {highlightMatch(option.secondary, search)}</div>}
-            </div>
-          )) : (
-            <div className="combobox-empty">
-              No results found for "{search}"
-            </div>
-          )}
+          <div className="combobox-search-header">
+            <input
+              type="text"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+              className="combobox-search-input"
+            />
+          </div>
+          <div className="combobox-options-list">
+            {filteredOptions.length > 0 ? filteredOptions.map(option => (
+              <div
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                  setSearch('');
+                }}
+                className="combobox-option"
+              >
+                <div className="combobox-option-label">{highlightMatch(option.label, search)}</div>
+                {option.secondary && <div className="combobox-option-secondary">Case File ID: {highlightMatch(option.secondary, search)}</div>}
+              </div>
+            )) : (
+              <div className="combobox-empty">
+                No results found for "{search}"
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

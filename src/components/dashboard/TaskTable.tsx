@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from '../../context/AppContext';
-import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown, ExternalLink, Plus, ArrowUp, ArrowDown, ArrowUpDown, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, X, User, UserPlus, Check, Search, ChevronDown, ExternalLink, Plus, ArrowUp, ArrowDown, ArrowUpDown, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { TaskListResponse, Task, FacilityStaff, DashboardFilters } from '../../types/dashboard.types';
@@ -478,7 +478,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
             showToast(response.successMessage || 'Tasks reassigned successfully!', 'success');
             setIsReassignOpen(false);
             setSelectedIds([]);
-            onPageChange(page); // Only refresh the table, no need to refresh KPIs/Charts for reassign
+            if (onRefresh) onRefresh();
+            else onPageChange(page);
           } else {
             showToast(response.errorMessage || 'Failed to reassign tasks.', 'error');
           }
@@ -663,6 +664,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onApplyFilters(newFilters);
         };
 
+        const formatDisplayDate = (d?: string) => {
+          if (!d) return '';
+          const p = d.split('-');
+          return p.length === 3 ? `${p[1]}/${p[2]}/${p[0]}` : d;
+        };
+
         return (
           <div className="active-filters-bar">
             <div className="active-filters-left">
@@ -679,13 +686,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
               )}
               {listingFilters.startDate && (
                 <div className="active-filter-tag">
-                  Start Date: {listingFilters.startDate}
+                  Start Date: {formatDisplayDate(listingFilters.startDate)}
                   <X size={14} className="active-filter-tag-close" onClick={() => clearFilter('startDate')} />
                 </div>
               )}
               {listingFilters.endDate && (
                 <div className="active-filter-tag">
-                  End Date: {listingFilters.endDate}
+                  End Date: {formatDisplayDate(listingFilters.endDate)}
                   <X size={14} className="active-filter-tag-close" onClick={() => clearFilter('endDate')} />
                 </div>
               )}
@@ -715,25 +722,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
       })()}
 
       <div ref={filterContainerRef} className="filter-container-wrapper">
-        <AnimatePresence>
-          {isListingFilterOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-            >
-              <FilterPanel
-                isOpen={true}
-                filters={listingFilters}
-                onApply={(f) => { onApplyFilters(f); setIsListingFilterOpen(false); }}
-                onClear={() => { onClearFilters(); setIsListingFilterOpen(false); }}
-                title=""
-                layout="6col"
-                mode="inline"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <FilterPanel
+          isOpen={isListingFilterOpen}
+          filters={listingFilters}
+          onApply={(f) => { onApplyFilters(f); setIsListingFilterOpen(false); }}
+          onClear={() => { onClearFilters(); setIsListingFilterOpen(false); }}
+          title=""
+          layout="6col"
+          mode="inline"
+        />
       </div>
 
       {/* Table */}
