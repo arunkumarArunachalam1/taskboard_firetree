@@ -70,17 +70,46 @@ const CompletionTrendChart: React.FC<Props> = ({ data, chartRef }) => {
       },
       y: {
         min: 0,
-        suggestedMax: 5,
+        suggestedMax: Math.max(5, ...data.map(d => d.cumulative)) * 1.18,
         grid: { color: '#F3F4F6', drawBorder: false },
         ticks: { font: { size: 10 }, color: '#9CA3AF', precision: 0 },
         border: { display: false }
       }
     }
+  }), [data]);
+
+  const trendLabelsPlugin = React.useMemo(() => ({
+    id: 'trendLabelsPlugin',
+    afterDatasetsDraw(chart: any) {
+      if (!chart._exportingPdf) return;
+      const { ctx } = chart;
+      chart.data.datasets.forEach((dataset: any, i: number) => {
+        const meta = chart.getDatasetMeta(i);
+        if (meta.hidden) return;
+        meta.data.forEach((element: any, index: number) => {
+          const val = dataset.data[index];
+          if (val === null || val === undefined || Number(val) === 0) return;
+          const prevVal = index > 0 ? Number(dataset.data[index - 1] || 0) : 0;
+          const jump = Number(val) - prevVal;
+          const isLatest = index === dataset.data.length - 1;
+          const isMajorJump = jump >= 15 || (index === 0 && Number(val) > 0);
+          if (!isLatest && !isMajorJump) return;
+          ctx.save();
+          ctx.font = 'bold 10px Helvetica, Arial, sans-serif';
+          ctx.fillStyle = '#166534';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          const formatted = Number(val).toLocaleString();
+          ctx.fillText(formatted, element.x, element.y - 4);
+          ctx.restore();
+        });
+      });
+    },
   }), []);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: 160 }}>
-      <Line ref={chartRef} data={chartData} options={options as any} />
+      <Line ref={chartRef} data={chartData} options={options as any} plugins={[trendLabelsPlugin]} />
     </div>
   );
 };

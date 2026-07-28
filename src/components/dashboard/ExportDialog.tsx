@@ -11,6 +11,7 @@ interface ExportDialogProps {
   chart7Ref?: React.RefObject<any>;
   chart30Ref?: React.RefObject<any>;
   chart90Ref?: React.RefObject<any>;
+  chartPieRef?: React.RefObject<any>;
   facilityID?: string;
   userID?: string;
   isAdmin?: boolean;
@@ -75,7 +76,7 @@ const formatLabels: Record<ExportFormat, string> = {
 
 const ExportDialog: React.FC<ExportDialogProps> = ({
   isOpen, onClose,
-  chart7Ref, chart30Ref, chart90Ref,
+  chart7Ref, chart30Ref, chart90Ref, chartPieRef,
   facilityID = '', userID = '', isAdmin = false,
   listingFilters, kpiFilters, facilityName = 'All',
   showToast,
@@ -219,10 +220,32 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
     // ── PDF export via CF hybrid approach ──────────────────────────
     if (showToast) showToast('Preparing your PDF export, please wait...', 'info');
     try {
+      // Temporarily enable PDF export mode and 3x retina scaling on chart instances to draw crisp PDF charts
+      const chartRefs = [chart7Ref, chart30Ref, chart90Ref, chartPieRef];
+      chartRefs.forEach(r => {
+        if (r?.current) {
+          r.current._exportingPdf = true;
+          r.current.options.devicePixelRatio = 1.5;
+          r.current.resize();
+          r.current.update('none');
+        }
+      });
+
       // Capture each chart canvas as a base64 PNG data URI
       const chart7img = chart7Ref?.current?.toBase64Image?.('image/png', 1.0) ?? '';
       const chart30img = chart30Ref?.current?.toBase64Image?.('image/png', 1.0) ?? '';
       const chart90img = chart90Ref?.current?.toBase64Image?.('image/png', 1.0) ?? '';
+      const chartPieImg = chartPieRef?.current?.toBase64Image?.('image/png', 1.0) ?? '';
+
+      // Restore normal UI mode and native screen resolution
+      chartRefs.forEach(r => {
+        if (r?.current) {
+          r.current._exportingPdf = false;
+          r.current.options.devicePixelRatio = window.devicePixelRatio || 1;
+          r.current.resize();
+          r.current.update('none');
+        }
+      });
 
       // Build filter params matching the dashboard service format
       const f = listingFilters;
@@ -255,6 +278,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
         chart7img,
         chart30img,
         chart90img,
+        chartPieImg,
       });
 
       const response = await fetch('/ReactTaskBoard/exportReport', {

@@ -36,9 +36,10 @@ interface ChartsSectionProps {
   chart7Ref?: React.Ref<any>;
   chart30Ref?: React.Ref<any>;
   chart90Ref?: React.Ref<any>;
+  chartPieRef?: React.Ref<any>;
 }
 
-const ChartsSection: React.FC<ChartsSectionProps> = ({ data, loading, chart7Ref, chart30Ref, chart90Ref }) => {
+const ChartsSection: React.FC<ChartsSectionProps> = ({ data, loading, chart7Ref, chart30Ref, chart90Ref, chartPieRef }) => {
   if (loading || !data) {
     return (
       <div className="charts-grid">
@@ -79,7 +80,7 @@ const ChartsSection: React.FC<ChartsSectionProps> = ({ data, loading, chart7Ref,
         <CompletionTrendChart data={data.trend} chartRef={chart90Ref} />
       </ChartCard>
       <ChartCard title="Task Status Distribution" icon={<PieChart size={16} strokeWidth={2.5} />}>
-        <TaskStatusChart data={data.statusDistribution} />
+        <TaskStatusChart data={data.statusDistribution} chartRef={chartPieRef} />
       </ChartCard>
     </div>
   );

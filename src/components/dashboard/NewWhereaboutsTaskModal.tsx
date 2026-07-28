@@ -55,7 +55,7 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
   }, []);
 
   const selectedOption = options.find(o => String(o.value) === String(value));
-  const displayValue = isOpen ? search : (selectedOption ? selectedOption.label : '');
+  // const _displayValue = isOpen ? search : (selectedOption ? selectedOption.label : '');
 
   const filteredOptions = options.filter(o =>
     o.label.toLowerCase().includes(search.toLowerCase()) ||

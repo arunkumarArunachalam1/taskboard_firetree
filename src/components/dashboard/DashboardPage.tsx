@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertCircle, X, SlidersHorizontal, RefreshCw, Download, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,17 +26,21 @@ const DashboardPage: React.FC = () => {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
 
-  const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
+  const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info', duration?: number) => {
     setToast({ message, type });
-    setTimeout(() => {
-      setToast(prev => (prev?.message === message ? null : prev));
-    }, type === 'info' ? 15000 : 4000);
+    const ms = duration !== undefined ? duration : (type === 'info' ? 0 : 5000);
+    if (ms > 0) {
+      setTimeout(() => {
+        setToast(prev => (prev?.message === message ? null : prev));
+      }, ms);
+    }
   };
 
   // Chart refs for PDF export — passed to ChartsSection and captured in ExportDialog
   const chart7Ref  = useRef<any>(null);
   const chart30Ref = useRef<any>(null);
   const chart90Ref = useRef<any>(null);
+  const chartPieRef = useRef<any>(null);
 
   const isIntegrated = typeof window !== 'undefined' && (window.location.port !== '5173' || !!(window as any).__IS_INTEGRATED__);
 
@@ -177,6 +181,7 @@ const DashboardPage: React.FC = () => {
           chart7Ref={chart7Ref}
           chart30Ref={chart30Ref}
           chart90Ref={chart90Ref}
+          chartPieRef={chartPieRef}
         />
         <TaskTable
           data={tasks}
@@ -250,8 +255,9 @@ const DashboardPage: React.FC = () => {
         chart7Ref={chart7Ref}
         chart30Ref={chart30Ref}
         chart90Ref={chart90Ref}
+        chartPieRef={chartPieRef}
         facilityID={String(context.currentFacilityID || '')}
-        facilityName={context.facilities?.find(f => String(f.id||f.ID||f.FacilityID) === String(context.currentFacilityID))?.name || 'All'}
+        facilityName={context.facilities?.find(f => String((f as any).id||(f as any).ID||(f as any).FacilityID) === String(context.currentFacilityID))?.name || 'All'}
         userID={String(context.userID || '')}
         isAdmin={hasAdminPrivileges}
         listingFilters={listingFilters}

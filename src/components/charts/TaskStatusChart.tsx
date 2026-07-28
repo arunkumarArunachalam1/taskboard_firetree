@@ -5,11 +5,11 @@ import type { StatusDistribution } from '../../types/dashboard.types';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-interface Props { data: StatusDistribution[] }
+interface Props { data: StatusDistribution[], chartRef?: React.Ref<any> }
 
 const FALLBACK_COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6'];
 
-const TaskStatusChart: React.FC<Props> = ({ data }) => {
+const TaskStatusChart: React.FC<Props> = ({ data, chartRef }) => {
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   const chartData = React.useMemo(() => ({
@@ -59,6 +59,34 @@ const TaskStatusChart: React.FC<Props> = ({ data }) => {
           font: { size: 9 },
           color: '#374151',
           padding: 8,
+          generateLabels: (chart: any) => {
+            const chartData = chart.data;
+            if (!chartData.labels.length || !chartData.datasets.length) return [];
+            return chartData.labels.map((label: string, i: number) => {
+              const meta = chart.getDatasetMeta(0);
+              const style = meta.controller.getStyle(i, false);
+              const d = data[i];
+              let textText = label;
+              if (chart._exportingPdf && d) {
+                const formattedCount = Number(d.value || 0).toLocaleString();
+                let pctStr = '';
+                if (d.percentage !== undefined) {
+                  pctStr = Number(d.percentage) % 1 === 0 ? Math.round(d.percentage).toString() : Number(d.percentage).toString();
+                } else {
+                  pctStr = total > 0 ? Math.round((d.value / total) * 100).toString() : '0';
+                }
+                textText = `${d.name}: ${formattedCount} (${pctStr}%)`;
+              }
+              return {
+                text: textText,
+                fillStyle: style.backgroundColor,
+                strokeStyle: style.borderColor,
+                lineWidth: style.borderWidth,
+                hidden: !chart.getDataVisibility(i),
+                index: i
+              };
+            });
+          }
         }
       },
       tooltip: {
@@ -81,7 +109,7 @@ const TaskStatusChart: React.FC<Props> = ({ data }) => {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: 160 }}>
-      <Doughnut data={chartData} options={options as any} />
+      <Doughnut ref={chartRef} data={chartData} options={options as any} />
     </div>
   );
 };
