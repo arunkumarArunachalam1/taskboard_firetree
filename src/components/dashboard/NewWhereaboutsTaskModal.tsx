@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, MapPin, Calendar, Info, Settings, User, Phone, Save } from 'lucide-react';
+import { X, ChevronDown, ChevronUp, MapPin, Calendar, Info, Settings, User, Phone, Save, Search, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFacilityStaff, getClientList, getClientEventDestinations, getClientContacts, getContactMethods, saveWhereaboutsTask, getContactPhoneNumbers } from '../../services/dashboard.service';
 import { useAppContext } from '../../context/AppContext';
@@ -85,46 +85,44 @@ const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value,
         </div>
       )}
       <div className="combobox-chevron">
-        {value ? (
-          <X 
+        {isOpen ? (
+          <ChevronUp 
             size={16} 
-            className="combobox-clear-icon"
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              onChange(''); 
-              setSearch(''); 
-              setIsOpen(false); 
+            className="combobox-toggle-icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(false);
+              setSearch('');
             }} 
           />
-        ) : null}
-        <ChevronDown 
-          size={16} 
-          className={`combobox-toggle-icon ${isOpen ? 'combobox-toggle-icon-open' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isOpen) {
-               setIsOpen(false);
-               setSearch('');
-            } else {
-               setIsOpen(true);
-            }
-          }} 
-        />
+        ) : (
+          <ChevronDown 
+            size={16} 
+            className="combobox-toggle-icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(true);
+            }} 
+          />
+        )}
       </div>
       {required && !value && <input type="text" className="combobox-hidden-input" required />}
 
       {isOpen && (
         <div className="combobox-panel">
           <div className="combobox-search-header">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              autoFocus
-              className="combobox-search-input"
-            />
+            <div className="combobox-search-input-wrapper">
+              <Search size={14} className="combobox-search-icon" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                autoFocus
+                className="combobox-search-input"
+              />
+            </div>
           </div>
           <div className="combobox-options-list">
             {filteredOptions.length > 0 ? (
@@ -268,10 +266,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
         className="task-form-input timepicker-input"
       />
       <div className="timepicker-icon-right">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <polyline points="12 6 12 12 16 14"></polyline>
-        </svg>
+        <Clock size={15} />
       </div>
 
       {isOpen && (

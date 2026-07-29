@@ -2381,13 +2381,46 @@ h1.page-title {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
+.combobox-value-span {
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  width: calc(100% - 40px) !important;
+  line-height: 20px !important;
+}
+
+.combobox-value-placeholder {
+  color: #9CA3AF !important;
+}
+
 .combobox-chevron {
   position: absolute;
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  pointer-events: none;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
   color: #6B7280;
+  z-index: 5;
+}
+
+.combobox-toggle-icon {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  color: #6B7280 !important;
+  transition: color 0.15s ease !important;
+  flex-shrink: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+}
+
+.combobox-toggle-icon:hover {
+  color: #111827 !important;
 }
 
 .combobox-hidden-input {
@@ -2403,14 +2436,73 @@ h1.page-title {
   top: 100%;
   left: 0;
   right: 0;
-  max-height: 260px;
-  overflow-y: auto;
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
   background-color: #fff;
   border: 1px solid #D1D5DB;
-  border-radius: 6px;
+  border-radius: 8px;
   margin-top: 4px;
   z-index: 100000;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.combobox-search-header {
+  padding: 8px;
+  border-bottom: 1px solid #E5E7EB;
+  background-color: #F8FAFC;
+  flex-shrink: 0;
+}
+
+.combobox-search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.combobox-search-icon {
+  position: absolute !important;
+  left: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 14px !important;
+  height: 14px !important;
+  max-width: 14px !important;
+  max-height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  color: #9CA3AF !important;
+  pointer-events: none !important;
+  z-index: 5 !important;
+  flex-shrink: 0 !important;
+}
+
+.combobox-search-input {
+  width: 100% !important;
+  padding: 7px 10px 7px 30px !important;
+  font-size: 13px !important;
+  color: #1E293B !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 6px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  transition: all 0.15s ease !important;
+  font-family: inherit !important;
+  height: 32px !important;
+  line-height: 1 !important;
+}
+
+.combobox-search-input:focus {
+  border-color: #3B82F6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
+
+.combobox-options-list {
+  overflow-y: auto;
+  max-height: 190px;
 }
 
 .combobox-option {
@@ -2448,6 +2540,164 @@ h1.page-title {
   background-color: #EFF6FF;
   padding: 0 2px;
   border-radius: 2px;
+}
+
+/*  Custom Time Picker  */
+.timepicker-wrapper {
+  position: relative !important;
+  display: inline-block !important;
+  width: 100% !important;
+}
+
+.timepicker-input {
+  width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 8px 36px 8px 12px !important;
+  border-radius: 6px !important;
+  border: 1px solid #D1D5DB !important;
+  font-size: 14px !important;
+  cursor: pointer;
+  box-sizing: border-box !important;
+}
+
+.timepicker-icon-right {
+  position: absolute !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 16px !important;
+  height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+  color: #6B7280 !important;
+  pointer-events: none !important;
+  z-index: 5 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.timepicker-icon-right svg {
+  width: 16px !important;
+  height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+  stroke: #6B7280 !important;
+}
+
+.timepicker-dropdown-panel {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  width: 240px !important;
+  max-height: 220px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  background-color: #ffffff !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05) !important;
+  margin-top: 4px !important;
+  z-index: 100000 !important;
+  overflow: hidden !important;
+}
+
+.timepicker-column {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-y: auto !important;
+  max-height: 220px !important;
+  border-right: 1px solid #F3F4F6 !important;
+  background-color: #FFFFFF !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.timepicker-column::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.timepicker-column-bordered {
+  border-right: 1px solid #F3F4F6 !important;
+}
+
+.timepicker-column-header {
+  padding: 8px 4px !important;
+  background-color: #FFFFFF !important;
+  border-bottom: 1px solid #F3F4F6 !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  text-align: center !important;
+  color: #9CA3AF !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 2 !important;
+}
+
+.timepicker-item-btn {
+  padding: 6px 0 !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 13px !important;
+  color: #374151 !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transition: all 0.15s ease !important;
+  width: 85% !important;
+  border-radius: 6px !important;
+  margin: 2px auto !important;
+  display: block !important;
+}
+
+.timepicker-item-btn:hover {
+  background-color: #F3F4F6 !important;
+}
+
+.timepicker-item-btn.active {
+  background-color: #EFF6FF !important;
+  color: #2563EB !important;
+  font-weight: 700 !important;
+}
+
+.timepicker-ampm-col {
+  width: 64px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  background-color: #FFFFFF !important;
+  border-left: 1px solid #F3F4F6 !important;
+  padding: 8px 0 !important;
+}
+
+.timepicker-ampm-btn {
+  padding: 8px 12px !important;
+  border: none !important;
+  background: transparent !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #111827 !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transition: all 0.15s ease !important;
+  width: 75% !important;
+  border-radius: 6px !important;
+  margin: 4px auto !important;
+  display: block !important;
+}
+
+.timepicker-ampm-btn:hover {
+  background-color: #F3F4F6 !important;
+}
+
+.timepicker-ampm-btn.active {
+  background-color: #EFF6FF !important;
+  color: #2563EB !important;
+  font-weight: 700 !important;
 }
 
 /*  New General Task Modal  */
@@ -2569,6 +2819,12 @@ h1.page-title {
   color: #111827;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.task-form-input, .combobox-input, .timepicker-input {
+  height: 38px !important;
+  min-height: 38px !important;
+  box-sizing: border-box !important;
 }
 
 .task-form-input:focus {
