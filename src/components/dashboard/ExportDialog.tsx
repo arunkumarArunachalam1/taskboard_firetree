@@ -280,7 +280,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
         chartPieImg,
       });
 
-      const response = await fetch('/ReactTaskBoard/exportReport', {
+      const response = await fetch('/ReactTaskBoard/exportPdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         credentials: 'include',
