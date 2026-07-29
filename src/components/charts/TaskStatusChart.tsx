@@ -9,21 +9,29 @@ interface Props { data: StatusDistribution[], chartRef?: React.Ref<any> }
 
 const FALLBACK_COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6'];
 
+const formatPercentage = (val: number, total: number, pct?: number | string): string => {
+  if (!val || val <= 0) return '0%';
+  const actualPct = total > 0 ? (val / total) * 100 : 0;
+  if (actualPct > 0 && actualPct < 0.01) {
+    return '<0.01%';
+  }
+  const numPct = pct !== undefined ? Number(pct) : actualPct;
+  if (numPct > 0 && numPct < 0.01) {
+    return '<0.01%';
+  }
+  const pctStr = numPct % 1 === 0
+    ? Math.round(numPct).toString()
+    : Number(numPct.toFixed(2)).toString();
+  return `${pctStr}%`;
+};
+
 const TaskStatusChart: React.FC<Props> = ({ data, chartRef }) => {
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   const chartData = React.useMemo(() => ({
     labels: data.map(d => {
-      let pctStr = '';
-      if (d.percentage !== undefined) {
-        // If the API provides a percentage (e.g. 0.01 or 81.68), use it directly but format it nicely
-        pctStr = Number(d.percentage) % 1 === 0
-          ? Math.round(d.percentage).toString()
-          : Number(d.percentage).toString();
-      } else {
-        pctStr = total > 0 ? Math.round((d.value / total) * 100).toString() : '0';
-      }
-      return `${d.name} ${pctStr}%`;
+      const pctFormatted = formatPercentage(d.value, total, d.percentage);
+      return `${d.name} ${pctFormatted}`;
     }),
     datasets: [
       {
@@ -69,13 +77,8 @@ const TaskStatusChart: React.FC<Props> = ({ data, chartRef }) => {
               let textText = label;
               if (chart._exportingPdf && d) {
                 const formattedCount = Number(d.value || 0).toLocaleString();
-                let pctStr = '';
-                if (d.percentage !== undefined) {
-                  pctStr = Number(d.percentage) % 1 === 0 ? Math.round(d.percentage).toString() : Number(d.percentage).toString();
-                } else {
-                  pctStr = total > 0 ? Math.round((d.value / total) * 100).toString() : '0';
-                }
-                textText = `${d.name}: ${formattedCount} (${pctStr}%)`;
+                const pctFormatted = formatPercentage(d.value, total, d.percentage);
+                textText = `${d.name}: ${formattedCount} (${pctFormatted})`;
               }
               return {
                 text: textText,

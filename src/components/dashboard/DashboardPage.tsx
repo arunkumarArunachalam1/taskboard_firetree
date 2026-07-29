@@ -154,13 +154,13 @@ const DashboardPage: React.FC = () => {
                 Refresh
               </button>
             )}
-            <button className="btn-filters" onClick={() => setIsExportOpen(true)}>
-              <Download size={15} />
-              Export
-            </button>
             <button className="btn-filters" onClick={() => setIsFilterOpen(!isFilterOpen)}>
               <SlidersHorizontal size={15} />
               KPI & Chart Filters
+            </button>
+            <button className="btn-filters" onClick={() => setIsExportOpen(true)}>
+              <Download size={15} />
+              Export
             </button>
           </div>
         </div>
