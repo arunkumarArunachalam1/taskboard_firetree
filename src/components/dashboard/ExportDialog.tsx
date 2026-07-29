@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Download, X, Info, Check, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { DashboardFilters } from '../../types/dashboard.types';
+import { getFacilityStaff, getRoles, getTaskTypes } from '../../services/dashboard.service';
 
 interface ExportDialogProps {
   isOpen: boolean;
@@ -89,26 +90,24 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
 
   React.useEffect(() => {
     if (isOpen) {
-      import('../../services/dashboard.service').then(({ getFacilityStaff, getRoles, getTaskTypes }) => {
-        Promise.all([
-          getFacilityStaff(facilityID).catch(() => []),
-          getRoles().catch(() => []),
-          getTaskTypes().catch(() => [])
-        ]).then(([staffList, rolesList, taskTypesList]) => {
-          const getName = (list: any[], val: any) => {
-            if (!val || val === 'all') return 'All';
-            const found = list.find((x: any) => String(x.value) === String(val) || String(x.id) === String(val));
-            return found ? (found.label || found.name || found.Display || val) : val;
-          };
-          setFilterLabels({
-            tableAssignedTo: getName(staffList, listingFilters?.assignedTo),
-            tableRole: getName(rolesList, listingFilters?.role),
-            tableTaskType: getName(taskTypesList, listingFilters?.taskType),
-            
-            kpiAssignedTo: getName(staffList, kpiFilters?.assignedTo),
-            kpiRole: getName(rolesList, kpiFilters?.role),
-            kpiTaskType: getName(taskTypesList, kpiFilters?.taskType)
-          });
+      Promise.all([
+        getFacilityStaff(facilityID).catch(() => []),
+        getRoles().catch(() => []),
+        getTaskTypes().catch(() => [])
+      ]).then(([staffList, rolesList, taskTypesList]) => {
+        const getName = (list: any[], val: any) => {
+          if (!val || val === 'all') return 'All';
+          const found = list.find((x: any) => String(x.value) === String(val) || String(x.id) === String(val));
+          return found ? (found.label || found.name || found.Display || val) : val;
+        };
+        setFilterLabels({
+          tableAssignedTo: getName(staffList, listingFilters?.assignedTo),
+          tableRole: getName(rolesList, listingFilters?.role),
+          tableTaskType: getName(taskTypesList, listingFilters?.taskType),
+          
+          kpiAssignedTo: getName(staffList, kpiFilters?.assignedTo),
+          kpiRole: getName(rolesList, kpiFilters?.role),
+          kpiTaskType: getName(taskTypesList, kpiFilters?.taskType)
         });
       });
     }
