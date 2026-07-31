@@ -5,6 +5,8 @@ import type { StatusDistribution } from '../../types/dashboard.types';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+type ExportableChart = ChartJS & { _exportingPdf?: boolean };
+
 interface Props { data: StatusDistribution[], chartRef?: React.Ref<any> }
 
 const FALLBACK_COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6'];
@@ -59,7 +61,7 @@ const TaskStatusChart: React.FC<Props> = ({ data, chartRef }) => {
     plugins: {
       legend: {
         position: 'bottom' as const,
-        onClick: (e: any) => e.native.stopPropagation(), // Disable default toggle behavior
+        onClick: (e: { native: Event }) => e.native.stopPropagation(), // Disable default toggle behavior
         labels: {
           usePointStyle: true,
           boxWidth: 6,
@@ -67,14 +69,14 @@ const TaskStatusChart: React.FC<Props> = ({ data, chartRef }) => {
           font: { size: 9 },
           color: '#374151',
           padding: 8,
-          generateLabels: (chart: any) => {
-            const chartData = chart.data;
-            if (!chartData.labels.length || !chartData.datasets.length) return [];
-            return chartData.labels.map((label: string, i: number) => {
+          generateLabels: (chart: ExportableChart) => {
+            const labels = chart.data.labels || [];
+            if (!labels.length || !chart.data.datasets.length) return [];
+            return labels.map((label: unknown, i: number) => {
               const meta = chart.getDatasetMeta(0);
               const style = meta.controller.getStyle(i, false);
               const d = data[i];
-              let textText = label;
+              let textText = String(label);
               if (chart._exportingPdf && d) {
                 const formattedCount = Number(d.value || 0).toLocaleString();
                 const pctFormatted = formatPercentage(d.value, total, d.percentage);
@@ -102,7 +104,7 @@ const TaskStatusChart: React.FC<Props> = ({ data, chartRef }) => {
         boxPadding: 4,
         displayColors: false,
         callbacks: {
-          label: function (context: any) {
+          label: function (context: { raw: unknown }) {
             return ` ${context.raw}`;
           }
         }

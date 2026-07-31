@@ -7,6 +7,8 @@ import type { TrendPoint } from '../../types/dashboard.types';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
+type ExportableChart = ChartJS & { _exportingPdf?: boolean };
+
 interface Props { data: TrendPoint[], chartRef?: React.Ref<any> }
 
 const CompletionTrendChart: React.FC<Props> = ({ data, chartRef }) => {
@@ -80,13 +82,13 @@ const CompletionTrendChart: React.FC<Props> = ({ data, chartRef }) => {
 
   const trendLabelsPlugin = React.useMemo(() => ({
     id: 'trendLabelsPlugin',
-    afterDatasetsDraw(chart: any) {
+    afterDatasetsDraw(chart: ExportableChart) {
       if (!chart._exportingPdf) return;
       const { ctx } = chart;
-      chart.data.datasets.forEach((dataset: any, i: number) => {
+      chart.data.datasets.forEach((dataset: { data: unknown[] }, i: number) => {
         const meta = chart.getDatasetMeta(i);
         if (meta.hidden) return;
-        meta.data.forEach((element: any, index: number) => {
+        meta.data.forEach((element: { x: number; y: number }, index: number) => {
           const val = dataset.data[index];
           if (val === null || val === undefined || Number(val) === 0) return;
           const prevVal = index > 0 ? Number(dataset.data[index - 1] || 0) : 0;

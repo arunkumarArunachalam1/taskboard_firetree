@@ -7,6 +7,8 @@ import type { DailyCompletionPoint } from '../../types/dashboard.types';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+type ExportableChart = ChartJS & { _exportingPdf?: boolean };
+
 interface Props { data: DailyCompletionPoint[], chartRef?: React.Ref<any> }
 
 const DailyCompletion7DaysChart: React.FC<Props> = ({ data, chartRef }) => {
@@ -62,13 +64,13 @@ const DailyCompletion7DaysChart: React.FC<Props> = ({ data, chartRef }) => {
 
   const valueLabelsPlugin = React.useMemo(() => ({
     id: 'valueLabelsPlugin',
-    afterDatasetsDraw(chart: any) {
+    afterDatasetsDraw(chart: ExportableChart) {
       if (!chart._exportingPdf) return;
       const { ctx } = chart;
-      chart.data.datasets.forEach((dataset: any, i: number) => {
+      chart.data.datasets.forEach((dataset: { data: unknown[] }, i: number) => {
         const meta = chart.getDatasetMeta(i);
         if (meta.hidden) return;
-        meta.data.forEach((element: any, index: number) => {
+        meta.data.forEach((element: { x: number; y: number }, index: number) => {
           const val = dataset.data[index];
           if (val === null || val === undefined || Number(val) === 0) return;
           ctx.save();
