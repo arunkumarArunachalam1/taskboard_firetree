@@ -24,6 +24,7 @@ const DashboardPage: React.FC = () => {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [activeCard, setActiveCard] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
 
   const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info', duration?: number) => {
@@ -118,6 +119,7 @@ const DashboardPage: React.FC = () => {
 
   const handleListingClearFilters = async () => {
     try {
+      setActiveCard(null);
       const clearedListingFilters: DashboardFilters = {
         assignedTo: '',
         role: '',
@@ -131,6 +133,65 @@ const DashboardPage: React.FC = () => {
     } catch (err: any) {
       setError(err.message || "Failed to clear task filters");
     }
+  };
+
+  const handleKpiCardClick = async (kpiType: 'dueToday' | 'overdue' | 'pending' | 'completed') => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    const yesterday = new Date(Date.now() - 86400000);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
+    const tomorrow = new Date(Date.now() + 86400000);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    if (activeCard === kpiType) {
+      await handleListingClearFilters();
+      return;
+    }
+
+    setActiveCard(kpiType);
+
+    // Carry over KPI-level filters (assignedTo, role, taskType) so the table
+    // matches the same scope as the KPI cards the user is looking at.
+    const baseFilters: DashboardFilters = {
+      ...listingFilters,
+      assignedTo: kpiFilters.assignedTo || listingFilters.assignedTo || '',
+      role: kpiFilters.role || listingFilters.role || '',
+      taskType: kpiFilters.taskType || listingFilters.taskType || '',
+    };
+
+    let newFilters: DashboardFilters = { ...baseFilters };
+    if (kpiType === 'completed') {
+      newFilters = {
+        ...baseFilters,
+        status: '1',
+        startDate: '',
+        endDate: ''
+      };
+    } else if (kpiType === 'dueToday') {
+      newFilters = {
+        ...baseFilters,
+        status: '0',
+        startDate: todayStr,
+        endDate: todayStr
+      };
+    } else if (kpiType === 'overdue') {
+      newFilters = {
+        ...baseFilters,
+        status: '0',
+        startDate: '',
+        endDate: yesterdayStr
+      };
+    } else if (kpiType === 'pending') {
+      newFilters = {
+        ...baseFilters,
+        status: '0',
+        startDate: tomorrowStr,
+        endDate: ''
+      };
+    }
+    await handleListingApplyFilters(newFilters);
   };
 
 
@@ -173,7 +234,12 @@ const DashboardPage: React.FC = () => {
           title="KPI & Graph Filters"
         />
 
-        <KpiGrid data={summary} loading={loadingSummary} />
+        <KpiGrid
+          data={summary}
+          loading={loadingSummary}
+          onCardClick={handleKpiCardClick}
+          activeCard={activeCard}
+        />
 
         <ChartsSection
           data={charts}

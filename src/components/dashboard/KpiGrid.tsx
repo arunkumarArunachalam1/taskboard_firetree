@@ -26,19 +26,52 @@ const IconWrapper: React.FC<{ icon: React.ReactNode; color: string; bg: string }
 interface KpiGridProps {
   data: DashboardSummary | null;
   loading: boolean;
+  onCardClick?: (kpiType: 'dueToday' | 'overdue' | 'pending' | 'completed') => void;
+  activeCard?: string | null;
 }
 
-const KpiGrid: React.FC<KpiGridProps> = ({ data, loading }) => (
+const KpiGrid: React.FC<KpiGridProps> = ({ data, loading, onCardClick, activeCard }) => (
   <div className="kpi-grid">
     {loading || !data ? (
       Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
     ) : (
       <>
-        <KpiCard title="Due Today" value={data.dueToday || 0} icon={<IconWrapper icon={<AlarmClock size={18} strokeWidth={2.5} />} color="#F59E0B" bg="#FEF3C7" />} accentColor="#F59E0B" valueColor="#111827" />
-        <KpiCard title="Overdue" value={data.overdue || 0} icon={<IconWrapper icon={<CircleAlert size={18} strokeWidth={2.5} />} color="#EF4444" bg="#FEE2E2" />} accentColor="#EF4444" valueColor="#EF4444" />
-        <KpiCard title="Due in Future" value={data.pending || 0} icon={<IconWrapper icon={<FileEdit size={18} strokeWidth={2.5} />} color="#991B1B" bg="#FEE2E2" />} accentColor="#991B1B" valueColor="#991B1B" />
-        <KpiCard title="Completed" value={data.completed || 0} icon={<IconWrapper icon={<CheckCircle2 size={18} strokeWidth={2.5} />} color="#22C55E" bg="#DCFCE7" />} accentColor="#22C55E" valueColor="#22C55E" />
-        {/* <KpiCard title="Total Assigned" value={data.totalAssigned || 0} icon={<IconWrapper icon={<ClipboardList size={18} strokeWidth={2.5} />} color="#6B7280" bg="#F3F4F6" />} accentColor="#9CA3AF" valueColor="#111827" /> */}
+        <KpiCard
+          title="Due Today"
+          value={data.dueToday || 0}
+          icon={<IconWrapper icon={<AlarmClock size={18} strokeWidth={2.5} />} color="#F59E0B" bg="#FEF3C7" />}
+          accentColor="#F59E0B"
+          valueColor="#111827"
+          onClick={() => onCardClick?.('dueToday')}
+          isActive={activeCard === 'dueToday'}
+        />
+        <KpiCard
+          title="Overdue"
+          value={data.overdue || 0}
+          icon={<IconWrapper icon={<CircleAlert size={18} strokeWidth={2.5} />} color="#EF4444" bg="#FEE2E2" />}
+          accentColor="#EF4444"
+          valueColor="#EF4444"
+          onClick={() => onCardClick?.('overdue')}
+          isActive={activeCard === 'overdue'}
+        />
+        <KpiCard
+          title="Due in Future"
+          value={data.pending || 0}
+          icon={<IconWrapper icon={<FileEdit size={18} strokeWidth={2.5} />} color="#991B1B" bg="#FEE2E2" />}
+          accentColor="#991B1B"
+          valueColor="#991B1B"
+          onClick={() => onCardClick?.('pending')}
+          isActive={activeCard === 'pending'}
+        />
+        <KpiCard
+          title="Completed"
+          value={data.completed || 0}
+          icon={<IconWrapper icon={<CheckCircle2 size={18} strokeWidth={2.5} />} color="#22C55E" bg="#DCFCE7" />}
+          accentColor="#22C55E"
+          valueColor="#22C55E"
+          onClick={() => onCardClick?.('completed')}
+          isActive={activeCard === 'completed'}
+        />
       </>
     )}
   </div>
