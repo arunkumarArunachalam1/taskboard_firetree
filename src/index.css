@@ -204,10 +204,11 @@
     background: var(--card);
     border-radius: 12px;
     border: 1px solid var(--border);
-    border-top-width: 3px;
+    border-top: 3px solid var(--accent, var(--border));
     padding: 10px 12px;
-    transition: transform 0.22s, box-shadow 0.22s, border-color 0.22s;
+    transition: all 0.2s ease-in-out;
     cursor: default;
+    position: relative;
 
     &:hover {
       transform: translateY(-3px);
@@ -215,10 +216,51 @@
     }
   }
 
+  .kpi-card-clickable {
+    cursor: pointer;
+  }
+
   .kpi-card-active {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
-    border-color: var(--primary);
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 12%, transparent);
+    transform: translateY(-2px);
+  }
+
+  /* "Active" pill badge shown on the selected KPI card */
+  .kpi-active-badge {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: color-mix(in srgb, var(--accent) 9%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 21%, transparent);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .kpi-active-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--accent);
+    display: inline-block;
+  }
+
+  /* Icon wrapper used inside KpiGrid cards */
+  .kpi-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 12%, transparent);
   }
 
   .kpi-icon {
@@ -236,10 +278,33 @@
     margin-bottom: 4px;
   }
 
+  .kpi-label-active {
+    font-weight: 600;
+  }
+
   .kpi-value {
     font-size: 24px;
     font-weight: 700;
     line-height: 1;
+    color: var(--value-color, #111827);
+  }
+
+  /* Skeleton placeholders inside KPI grid */
+  .kpi-skeleton-icon {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 10px;
+  }
+
+  .kpi-skeleton-label {
+    height: 11px;
+    width: 70%;
+    margin-bottom: 8px;
+  }
+
+  .kpi-skeleton-value {
+    height: 36px;
+    width: 45%;
   }
 
   /* ── Charts Grid ─────────────────────────────── */

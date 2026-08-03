@@ -3,22 +3,20 @@ import KpiCard from './KpiCard';
 import type { DashboardSummary } from '../../types/dashboard.types';
 
 const SkeletonCard: React.FC = () => (
-  <div className="kpi-card" style={{ borderTopColor: '#E5E7EB' }}>
-    <div className="skeleton" style={{ width: 24, height: 24, marginBottom: 10 }} />
-    <div className="skeleton" style={{ height: 11, width: '70%', marginBottom: 8 }} />
-    <div className="skeleton" style={{ height: 36, width: '45%' }} />
+  <div className="kpi-card">
+    <div className="skeleton kpi-skeleton-icon" />
+    <div className="skeleton kpi-skeleton-label" />
+    <div className="skeleton kpi-skeleton-value" />
   </div>
 );
 
 import { AlarmClock, CircleAlert, FileEdit, CheckCircle2 } from 'lucide-react';
 
 const IconWrapper: React.FC<{ icon: React.ReactNode; color: string; bg: string }> = ({ icon, color, bg }) => (
-  <div style={{
-    width: 32, height: 32, borderRadius: 8,
-    background: bg, color: color,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    marginBottom: 10, boxShadow: `0 2px 8px ${color}20`
-  }}>
+  <div
+    className="kpi-icon-wrapper"
+    style={{ background: bg, color: color, '--accent': color } as React.CSSProperties}
+  >
     {icon}
   </div>
 );

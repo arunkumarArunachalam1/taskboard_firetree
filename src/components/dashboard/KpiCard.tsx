@@ -15,50 +15,19 @@ const KpiCard: React.FC<KpiCardProps> = ({
   title, value, icon, accentColor, valueColor = '#111827', onClick, isActive
 }) => (
   <div 
-    className={`kpi-card ${isActive ? 'kpi-card-active' : ''}`}
+    className={`kpi-card ${isActive ? 'kpi-card-active' : ''} ${onClick ? 'kpi-card-clickable' : ''}`}
     onClick={onClick}
-    style={{ 
-      borderTop: `3px solid ${accentColor}`,
-      borderLeft: isActive ? `1px solid ${accentColor}` : '1px solid var(--border)',
-      borderRight: isActive ? `1px solid ${accentColor}` : '1px solid var(--border)',
-      borderBottom: isActive ? `1px solid ${accentColor}` : '1px solid var(--border)',
-      backgroundColor: 'var(--card)',
-      cursor: onClick ? 'pointer' : 'default',
-      boxShadow: isActive ? `0 4px 14px ${accentColor}20` : undefined,
-      transform: isActive ? 'translateY(-2px)' : undefined,
-      transition: 'all 0.2s ease-in-out',
-      position: 'relative'
-    }}
+    style={{ '--accent': accentColor, '--value-color': valueColor } as React.CSSProperties}
   >
     {isActive && (
-      <div style={{
-        position: 'absolute',
-        top: 10,
-        right: 12,
-        background: `${accentColor}18`,
-        color: accentColor,
-        border: `1px solid ${accentColor}35`,
-        fontSize: '10px',
-        fontWeight: 600,
-        padding: '2px 8px',
-        borderRadius: '10px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px'
-      }}>
-        <span style={{
-          width: '5px',
-          height: '5px',
-          borderRadius: '50%',
-          backgroundColor: accentColor,
-          display: 'inline-block'
-        }} />
+      <div className="kpi-active-badge">
+        <span className="kpi-active-dot" />
         Active
       </div>
     )}
     <span className="kpi-icon">{icon}</span>
-    <p className="kpi-label" style={{ fontWeight: isActive ? 600 : 500 }}>{title}</p>
-    <p className="kpi-value" style={{ color: valueColor }}>
+    <p className={`kpi-label ${isActive ? 'kpi-label-active' : ''}`}>{title}</p>
+    <p className="kpi-value">
       {value.toLocaleString()}
     </p>
   </div>
