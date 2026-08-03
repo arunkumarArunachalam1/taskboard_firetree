@@ -5,25 +5,35 @@ import type { StatusDistribution } from '../../types/dashboard.types';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-interface Props { data: StatusDistribution[] }
+type ExportableChart = ChartJS & { _exportingPdf?: boolean };
+
+interface Props { data: StatusDistribution[], chartRef?: React.Ref<any> }
 
 const FALLBACK_COLORS = ['#10B981', '#F59E0B', '#EF4444', '#3B82F6'];
 
-const TaskStatusChart: React.FC<Props> = ({ data }) => {
+const formatPercentage = (val: number, total: number, pct?: number | string): string => {
+  if (!val || val <= 0) return '0%';
+  const actualPct = total > 0 ? (val / total) * 100 : 0;
+  if (actualPct > 0 && actualPct < 0.01) {
+    return '<0.01%';
+  }
+  const numPct = pct !== undefined ? Number(pct) : actualPct;
+  if (numPct > 0 && numPct < 0.01) {
+    return '<0.01%';
+  }
+  const pctStr = numPct % 1 === 0
+    ? Math.round(numPct).toString()
+    : Number(numPct.toFixed(2)).toString();
+  return `${pctStr}%`;
+};
+
+const TaskStatusChart: React.FC<Props> = ({ data, chartRef }) => {
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   const chartData = React.useMemo(() => ({
     labels: data.map(d => {
-      let pctStr = '';
-      if (d.percentage !== undefined) {
-        // If the API provides a percentage (e.g. 0.01 or 81.68), use it directly but format it nicely
-        pctStr = Number(d.percentage) % 1 === 0
-          ? Math.round(d.percentage).toString()
-          : Number(d.percentage).toString();
-      } else {
-        pctStr = total > 0 ? Math.round((d.value / total) * 100).toString() : '0';
-      }
-      return `${d.name} ${pctStr}%`;
+      const pctFormatted = formatPercentage(d.value, total, d.percentage);
+      return `${d.name} ${pctFormatted}`;
     }),
     datasets: [
       {
@@ -51,7 +61,7 @@ const TaskStatusChart: React.FC<Props> = ({ data }) => {
     plugins: {
       legend: {
         position: 'bottom' as const,
-        onClick: (e: any) => e.native.stopPropagation(), // Disable default toggle behavior
+        onClick: (e: { native: Event }) => e.native.stopPropagation(), // Disable default toggle behavior
         labels: {
           usePointStyle: true,
           boxWidth: 6,
@@ -59,6 +69,29 @@ const TaskStatusChart: React.FC<Props> = ({ data }) => {
           font: { size: 9 },
           color: '#374151',
           padding: 8,
+          generateLabels: (chart: ExportableChart) => {
+            const labels = chart.data.labels || [];
+            if (!labels.length || !chart.data.datasets.length) return [];
+            return labels.map((label: unknown, i: number) => {
+              const meta = chart.getDatasetMeta(0);
+              const style = meta.controller.getStyle(i, false);
+              const d = data[i];
+              let textText = String(label);
+              if (chart._exportingPdf && d) {
+                const formattedCount = Number(d.value || 0).toLocaleString();
+                const pctFormatted = formatPercentage(d.value, total, d.percentage);
+                textText = `${d.name}: ${formattedCount} (${pctFormatted})`;
+              }
+              return {
+                text: textText,
+                fillStyle: style.backgroundColor,
+                strokeStyle: style.borderColor,
+                lineWidth: style.borderWidth,
+                hidden: !chart.getDataVisibility(i),
+                index: i
+              };
+            });
+          }
         }
       },
       tooltip: {
@@ -71,7 +104,7 @@ const TaskStatusChart: React.FC<Props> = ({ data }) => {
         boxPadding: 4,
         displayColors: false,
         callbacks: {
-          label: function (context: any) {
+          label: function (context: { raw: unknown }) {
             return ` ${context.raw}`;
           }
         }
@@ -81,7 +114,7 @@ const TaskStatusChart: React.FC<Props> = ({ data }) => {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: 160 }}>
-      <Doughnut data={chartData} options={options as any} />
+      <Doughnut ref={chartRef} data={chartData} options={options as any} />
     </div>
   );
 };

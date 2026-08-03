@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, X, SlidersHorizontal, RefreshCw } from 'lucide-react';
+import { AlertCircle, X, SlidersHorizontal, RefreshCw, Download, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './Header';
 import KpiGrid from './KpiGrid';
 import ChartsSection from './ChartsSection';
 import TaskTable from './TaskTable';
 import { FilterPanel } from './FilterPanel';
+import ExportDialog from './ExportDialog';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useAppContext } from '../../context/AppContext';
 import type { DashboardFilters } from '../../types/dashboard.types';
@@ -22,6 +23,25 @@ const DashboardPage: React.FC = () => {
   const context = useAppContext();
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [activeCard, setActiveCard] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info', duration?: number) => {
+    setToast({ message, type });
+    const ms = duration !== undefined ? duration : (type === 'info' ? 0 : 5000);
+    if (ms > 0) {
+      setTimeout(() => {
+        setToast(prev => (prev?.message === message ? null : prev));
+      }, ms);
+    }
+  };
+
+  // Chart refs for PDF export — passed to ChartsSection and captured in ExportDialog
+  const chart7Ref  = useRef<any>(null);
+  const chart30Ref = useRef<any>(null);
+  const chart90Ref = useRef<any>(null);
+  const chartPieRef = useRef<any>(null);
 
   const isIntegrated = typeof window !== 'undefined' && (window.location.port !== '5173' || !!(window as any).__IS_INTEGRATED__);
 
@@ -99,6 +119,7 @@ const DashboardPage: React.FC = () => {
 
   const handleListingClearFilters = async () => {
     try {
+      setActiveCard(null);
       const clearedListingFilters: DashboardFilters = {
         assignedTo: '',
         role: '',
@@ -112,6 +133,65 @@ const DashboardPage: React.FC = () => {
     } catch (err: any) {
       setError(err.message || "Failed to clear task filters");
     }
+  };
+
+  const handleKpiCardClick = async (kpiType: 'dueToday' | 'overdue' | 'pending' | 'completed') => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    const yesterday = new Date(Date.now() - 86400000);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
+    const tomorrow = new Date(Date.now() + 86400000);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    if (activeCard === kpiType) {
+      await handleListingClearFilters();
+      return;
+    }
+
+    setActiveCard(kpiType);
+
+    // Carry over KPI-level filters (assignedTo, role, taskType) so the table
+    // matches the same scope as the KPI cards the user is looking at.
+    const baseFilters: DashboardFilters = {
+      ...listingFilters,
+      assignedTo: kpiFilters.assignedTo || listingFilters.assignedTo || '',
+      role: kpiFilters.role || listingFilters.role || '',
+      taskType: kpiFilters.taskType || listingFilters.taskType || '',
+    };
+
+    let newFilters: DashboardFilters = { ...baseFilters };
+    if (kpiType === 'completed') {
+      newFilters = {
+        ...baseFilters,
+        status: '1',
+        startDate: '',
+        endDate: ''
+      };
+    } else if (kpiType === 'dueToday') {
+      newFilters = {
+        ...baseFilters,
+        status: '0',
+        startDate: todayStr,
+        endDate: todayStr
+      };
+    } else if (kpiType === 'overdue') {
+      newFilters = {
+        ...baseFilters,
+        status: '0',
+        startDate: '',
+        endDate: yesterdayStr
+      };
+    } else if (kpiType === 'pending') {
+      newFilters = {
+        ...baseFilters,
+        status: '0',
+        startDate: tomorrowStr,
+        endDate: ''
+      };
+    }
+    await handleListingApplyFilters(newFilters);
   };
 
 
@@ -139,6 +219,10 @@ const DashboardPage: React.FC = () => {
               <SlidersHorizontal size={15} />
               KPI & Chart Filters
             </button>
+            <button className="btn-filters" onClick={() => setIsExportOpen(true)}>
+              <Download size={15} />
+              Export
+            </button>
           </div>
         </div>
 
@@ -150,31 +234,21 @@ const DashboardPage: React.FC = () => {
           title="KPI & Graph Filters"
         />
 
-        {/* {getActiveFilterTags().length > 0 && (
-          <div className="active-filters-container">
-            <span className="active-filters-label">Active Filters:</span>
-            {getActiveFilterTags().map(tag => (
-              <div key={tag.key} className="active-filter-tag">
-                {tag.label}
-                <X 
-                  size={12} 
-                  className="active-filter-close"
-                  onClick={() => removeFilter(tag.key as keyof DashboardFilters)} 
-                />
-              </div>
-            ))}
-            <button 
-              onClick={handleClearFilters} 
-              className="btn-clear-filters"
-            >
-              Clear All
-            </button>
-          </div>
-        )} */}
+        <KpiGrid
+          data={summary}
+          loading={loadingSummary}
+          onCardClick={handleKpiCardClick}
+          activeCard={activeCard}
+        />
 
-        <KpiGrid data={summary} loading={loadingSummary} />
-
-        <ChartsSection data={charts} loading={loadingCharts} />
+        <ChartsSection
+          data={charts}
+          loading={loadingCharts}
+          chart7Ref={chart7Ref}
+          chart30Ref={chart30Ref}
+          chart90Ref={chart90Ref}
+          chartPieRef={chartPieRef}
+        />
         <TaskTable
           data={tasks}
           loading={loadingTasks}
@@ -240,6 +314,64 @@ const DashboardPage: React.FC = () => {
         </AnimatePresence>,
         document.body
       )}
+
+      <ExportDialog
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        chart7Ref={chart7Ref}
+        chart30Ref={chart30Ref}
+        chart90Ref={chart90Ref}
+        chartPieRef={chartPieRef}
+        facilityID={String(context.currentFacilityID || '')}
+        facilityName={context.facilities?.find(f => String((f as any).id||(f as any).ID||(f as any).FacilityID) === String(context.currentFacilityID))?.name || 'All'}
+        userID={String(context.userID || '')}
+        isAdmin={hasAdminPrivileges}
+        listingFilters={listingFilters}
+        kpiFilters={kpiFilters}
+        showToast={showToast}
+        totalTasks={tasks?.total || 0}
+      />
+      {toast && (() => {
+        const colors = {
+          success: { bg: '#F0FDF4', border: '#86EFAC', leftBorder: '#22C55E', text: '#166534' },
+          error: { bg: '#FEF2F2', border: '#FECACA', leftBorder: '#EF4444', text: '#991B1B' },
+          info: { bg: '#EFF6FF', border: '#BFDBFE', leftBorder: '#3B82F6', text: '#1E40AF' }
+        }[toast.type] || { bg: '#EFF6FF', border: '#BFDBFE', leftBorder: '#3B82F6', text: '#1E40AF' };
+
+        return createPortal(
+          <motion.div 
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="taskboard-toast"
+            style={{ 
+              backgroundColor: colors.bg, 
+              borderColor: colors.border,
+              borderLeftColor: colors.leftBorder,
+              color: colors.text
+            }}
+          >
+            <div className="toast-icon-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {toast.type === 'info' ? (
+                <Loader2 size={20} className="toast-icon animate-spin" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+              ) : (
+                <AlertCircle size={20} strokeWidth={2.5} className="toast-icon" style={{ width: '20px', height: '20px', flexShrink: 0 }} />
+              )}
+            </div>
+            <div className="toast-content">
+              {toast.message}
+            </div>
+            <button 
+              onClick={() => setToast(null)} 
+              className="toast-close"
+              style={{ color: colors.text }}
+            >
+              <X size={18} strokeWidth={2.5} className="toast-close-icon" />
+            </button>
+          </motion.div>,
+          document.body
+        );
+      })()}
     </div>
   );
 };
