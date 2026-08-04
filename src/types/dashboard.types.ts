@@ -51,6 +51,8 @@ export interface Task {
   Facility: string;
   Status: 'Late' | 'Pending' | 'Completed' | 'Active';
   TaskTypeID: number;
+  taskType?: string;
+  ClientID?: number;
 }
 
 export interface TaskListResponse {

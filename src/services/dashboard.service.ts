@@ -412,6 +412,33 @@ export async function getTaskList(
 
     console.log("Raw tasks data from API:", rawData.slice(0, 2)); // Log first 2 rows for debugging
 
+    const parseTaskTypeID = (r: any): number => {
+      if (Array.isArray(r)) {
+        const arrVal = Number(r[15]);
+        if (!isNaN(arrVal) && arrVal > 0) return arrVal;
+        return 1;
+      }
+      const idVal = r['TaskTypeID'] ?? r['Task Type ID'] ?? r['TaskTypeId'] ?? r['TaskType_ID'] ?? r['taskTypeId'] ?? r['task_type_id'] ?? r['TaskTypeID_PK'];
+      if (idVal !== undefined && idVal !== null && idVal !== '') {
+        const num = Number(idVal);
+        if (!isNaN(num) && num > 0) return num;
+      }
+      const typeStr = String(r['Task Type'] || r['TaskType'] || r['Task Type Name'] || r['TaskTypeName'] || r['Type'] || r['type'] || r['taskType'] || '').trim().toLowerCase();
+      if (typeStr) {
+        if (typeStr.includes('whereabout')) return 2;
+        if (typeStr.includes('follow')) return 3;
+        if (typeStr.includes('general')) return 1;
+        const num = Number(typeStr);
+        if (!isNaN(num) && num > 0) return num;
+      }
+      return 1;
+    };
+
+    const parseTaskTypeLabel = (r: any): string => {
+      if (Array.isArray(r)) return '';
+      return String(r['Task Type'] || r['TaskType'] || r['Task Type Name'] || r['TaskTypeName'] || r['Type'] || r['type'] || r['taskType'] || '').trim();
+    };
+
     const tasks: Task[] = rawData.map((row: any, idx: number) => {
       // If row is an array, we try to guess indices. If it's an object, we map by Column Labels.
       if (Array.isArray(row)) {
@@ -431,7 +458,8 @@ export async function getTaskList(
           AssignedTo: row[13] || 'Unassigned',
           Facility: row[14] || 'Unknown',
           Status: arrStatus,
-          TaskTypeID: Number(row[15]) || 1,
+          TaskTypeID: parseTaskTypeID(row),
+          taskType: parseTaskTypeLabel(row),
         };
       }
 
@@ -454,7 +482,8 @@ export async function getTaskList(
         AssignedTo: row['Assigned To'] || row['AssignedTo'] || 'Unassigned',
         Facility: row['Facility'] || row['FacilityName'] || 'Unknown',
         Status: objStatus,
-        TaskTypeID: 1, // Default
+        TaskTypeID: parseTaskTypeID(row),
+        taskType: parseTaskTypeLabel(row),
       };
     });
 
@@ -863,9 +892,52 @@ export async function getContactMethods(): Promise<{ value: string; label: strin
     },
     credentials: 'include'
   });
-  if (!response.ok) throw new Error(`Failed to fetch contact methods`);
   const json = await safeJsonParse(response);
   return Array.isArray(json) ? json : parseCFQuery(json);
+}
+
+export async function getOptionSetPopulations(uuid: string): Promise<{ value: string; label: string }[]> {
+  const response = await fetch(`/ReactTaskBoard/GetOptionSetPopulations?uuid=${encodeURIComponent(uuid)}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error(`Failed to fetch option set for ${uuid}`);
+  const json = await safeJsonParse(response);
+  return Array.isArray(json) ? json : parseCFQuery(json);
+}
+
+export async function getWhereaboutsReasons(): Promise<{ value: string; label: string }[]> {
+  try {
+    const list = await getOptionSetPopulations('BBF4F863-5C81-42DC-BFD3-EAE4D82C6A6C');
+    if (list && list.length > 0) return list;
+  } catch (err) {}
+  return [
+    { value: '7-day Followup', label: '7-day Followup' },
+    { value: '14-day Followup', label: '14-day Followup' },
+    { value: '30-day Followup', label: '30-day Followup' },
+    { value: '60-day Followup', label: '60-day Followup' },
+    { value: 'Other', label: 'Other' }
+  ];
+}
+
+export async function getWhereaboutsDispositions(): Promise<{ value: string; label: string }[]> {
+  try {
+    const list = await getOptionSetPopulations('3D1D9DE9-BD51-47E7-AD20-A3D663030E34');
+    if (list && list.length > 0) return list;
+  } catch (err) {}
+  return [
+    { value: 'Whereabouts Verified', label: 'Whereabouts Verified' },
+    { value: 'Whereabouts Unverified', label: 'Whereabouts Unverified' },
+    { value: 'Left Message', label: 'Left Message / No Answer' },
+    { value: 'Rescheduled', label: 'Rescheduled' },
+    { value: 'Completed', label: 'Completed' },
+    { value: 'Other', label: 'Other' }
+  ];
 }
 
 export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: number; successMessage?: string; errorMessage?: string }> {
@@ -912,5 +984,95 @@ export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: nu
     };
   } catch (e) {
     throw new Error(`Failed to parse server response: ${rawText}`);
+  }
+}
+
+// ─── Modal Service Functions ─────────────────────────────────────────────
+
+export async function getTaskDetails(taskId: number): Promise<any> {
+  const url = `/ReactTaskBoard/GetTaskDetails?taskID=${taskId}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch task details: ${response.statusText}`);
+  }
+  const rawText = await response.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Failed to parse task details response: ${rawText}`);
+  }
+}
+
+export async function getWhereaboutsTaskDetails(taskId: number): Promise<any> {
+  return getTaskDetails(taskId);
+}
+
+export async function getFollowupModalData(taskId: number): Promise<any> {
+  return getTaskDetails(taskId);
+}
+
+export async function saveFollowupTask(taskId: number, payload: any = {}): Promise<any> {
+  const formData = new FormData();
+  formData.append('taskID', String(taskId));
+  Object.keys(payload).forEach(key => {
+    formData.append(key, String(payload[key]));
+  });
+
+  const response = await fetch('/ReactTaskBoard/SaveFollowupTask', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include',
+    body: formData
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to save followup task: ${response.statusText}`);
+  }
+  const rawText = await response.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Failed to parse save followup response: ${rawText}`);
+  }
+}
+
+export async function saveEditWhereaboutsTask(taskId: number, payload: any = {}): Promise<any> {
+  const formData = new FormData();
+  formData.append('ListIDs', String(taskId));
+  formData.append('Task.TaskID', String(taskId));
+  formData.append('taskID', String(taskId));
+  Object.keys(payload).forEach(key => {
+    formData.append(key, String(payload[key]));
+  });
+
+  const response = await fetch('/ReactTaskBoard/SaveEditWhereaboutsTask', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include',
+    body: formData
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to save edit whereabouts task: ${response.statusText}`);
+  }
+  const rawText = await response.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Failed to parse save edit whereabouts response: ${rawText}`);
   }
 }

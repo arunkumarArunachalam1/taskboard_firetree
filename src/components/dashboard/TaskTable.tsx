@@ -8,6 +8,10 @@ import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted, getFacili
 import { NewGeneralTaskModal } from './NewGeneralTaskModal';
 import { NewWhereaboutsTaskModal } from './NewWhereaboutsTaskModal';
 import { FilterPanel } from './FilterPanel';
+import { ViewTaskModal } from './ViewTaskModal';
+import { EditWhereaboutsModal } from './EditWhereaboutsModal';
+import { FollowupTaskModal } from './FollowupTaskModal';
+import { WhereaboutsCompleteModal } from './WhereaboutsCompleteModal';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -211,6 +215,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isGeneralTaskModalOpen, setIsGeneralTaskModalOpen] = useState(false);
   const [isWhereaboutsTaskModalOpen, setIsWhereaboutsTaskModalOpen] = useState(false);
+  const [isViewTaskModalOpen, setIsViewTaskModalOpen] = useState(false);
+  const [isEditWhereaboutsModalOpen, setIsEditWhereaboutsModalOpen] = useState(false);
+  const [isFollowupModalOpen, setIsFollowupModalOpen] = useState(false);
+  const [isWhereaboutsCompleteModalOpen, setIsWhereaboutsCompleteModalOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const [whereaboutsCompleteIds, setWhereaboutsCompleteIds] = useState<number[]>([]);
+  const [whereaboutsCompleteClientId, setWhereaboutsCompleteClientId] = useState<number>(0);
   const [isListingFilterOpen, setIsListingFilterOpen] = useState(false);
   const filterContainerRef = useRef<HTMLDivElement>(null);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
@@ -319,7 +330,24 @@ const TaskTable: React.FC<TaskTableProps> = ({
       return;
     }
 
-    navigateToTask(task);
+    const taskTypeId = Number(task.TaskTypeID || 0);
+    const typeStr = String(task.taskType || '').trim().toLowerCase();
+
+    if (taskTypeId === 2 || typeStr.includes('whereabout')) {
+      setSelectedTaskId(task.TaskID);
+      setIsEditWhereaboutsModalOpen(true);
+      return;
+    }
+    if (taskTypeId === 3 || typeStr.includes('follow')) {
+      setSelectedTaskId(task.TaskID);
+      setIsFollowupModalOpen(true);
+      return;
+    }
+    if (taskTypeId === 1 || typeStr.includes('general') || (!typeStr.includes('whereabout') && !typeStr.includes('follow'))) {
+      setSelectedTaskId(task.TaskID);
+      setIsViewTaskModalOpen(true);
+      return;
+    }
   };
 
   const handleTableClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -389,6 +417,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const handleMarkSelectedComplete = () => {
     if (selectedIds.length === 0) return;
+
+    const selectedWhereaboutsTasks = data ? data.tasks.filter(t => selectedIds.includes(t.TaskID) && Number(t.TaskTypeID) === 2) : [];
+    if (selectedWhereaboutsTasks.length > 0) {
+      setWhereaboutsCompleteIds(selectedWhereaboutsTasks.map(t => t.TaskID));
+      setWhereaboutsCompleteClientId(Number((selectedWhereaboutsTasks[0] as any)?.ClientID || 0));
+      setIsWhereaboutsCompleteModalOpen(true);
+      return;
+    }
 
     const confirmMessage = selectedIds.length === 1
       ? 'Are you sure you want to mark the selected task complete?'
@@ -1259,6 +1295,44 @@ const TaskTable: React.FC<TaskTableProps> = ({
           showToast('Whereabouts Task created successfully.', 'success');
           if (onRefresh) onRefresh();
         }}
+      />
+
+      <ViewTaskModal
+        isOpen={isViewTaskModalOpen}
+        onClose={() => setIsViewTaskModalOpen(false)}
+        taskId={selectedTaskId}
+      />
+
+      <EditWhereaboutsModal
+        isOpen={isEditWhereaboutsModalOpen}
+        onClose={() => setIsEditWhereaboutsModalOpen(false)}
+        onSuccess={() => {
+          showToast('Whereabouts Task updated successfully.', 'success');
+          if (onRefresh) onRefresh();
+        }}
+        taskId={selectedTaskId}
+      />
+
+      <FollowupTaskModal
+        isOpen={isFollowupModalOpen}
+        onClose={() => setIsFollowupModalOpen(false)}
+        onSuccess={() => {
+          showToast('Followup Task completed successfully.', 'success');
+          if (onRefresh) onRefresh();
+        }}
+        taskId={selectedTaskId}
+      />
+
+      <WhereaboutsCompleteModal
+        isOpen={isWhereaboutsCompleteModalOpen}
+        onClose={() => setIsWhereaboutsCompleteModalOpen(false)}
+        onSuccess={() => {
+          showToast('Whereabouts task(s) marked complete successfully.', 'success');
+          setSelectedIds([]);
+          if (onRefresh) onRefresh();
+        }}
+        selectedTaskIds={whereaboutsCompleteIds}
+        selectedClientId={whereaboutsCompleteClientId}
       />
 
     </div>
