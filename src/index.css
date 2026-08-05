@@ -354,10 +354,11 @@
     border-collapse: collapse;
     table-layout: auto;
     font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
 
     thead th {
       background: #FFFFFF;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       color: #6B7280;
       text-transform: uppercase;
@@ -396,7 +397,7 @@
 
     tbody td {
       padding: 13px 10px;
-      font-size: 13px;
+      font-size: 14px;
       color: inherit;
       vertical-align: middle;
     }
