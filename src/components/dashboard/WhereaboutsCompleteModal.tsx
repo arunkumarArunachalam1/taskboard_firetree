@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, Save, Calendar, Clock } from 'lucide-react';
-import { saveWhereaboutsTask, getContactMethods, getWhereaboutsTaskDetails, getWhereaboutsReasons, getWhereaboutsDispositions } from '../../services/dashboard.service';
+import { completeWhereaboutsTasks, getContactMethods, getWhereaboutsTaskDetails, getWhereaboutsReasons, getWhereaboutsDispositions } from '../../services/dashboard.service';
 
 interface WhereaboutsCompleteModalProps {
   isOpen: boolean;
@@ -286,20 +286,15 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
     setSaving(true);
     setError(null);
     try {
-      const res = await saveWhereaboutsTask({
-        clientId: selectedClientId,
+      const res = await completeWhereaboutsTasks({
+        listids: selectedTaskIds.join(','),
         methodId: methodId || '1',
-        expectedStartDate: contactDate,
-        expectedStartTime: contactTime,
-        expectedEndDate: contactDate,
-        expectedEndTime: contactTime,
-        destinationId: 0,
-        contactId: 0,
-        reason: reason,
-        disposition: disposition,
-        consent: consent,
+        contactDate: contactDate,
+        contactTime: contactTime,
+        reasonId: reason,
+        dispositionId: disposition,
+        isConsent: consent === 'yes' ? 1 : 0,
         consentExpiration: consent === 'yes' ? consentExpiration : '',
-        documentationFile: documentationFile,
         notes: notes
       });
 
@@ -384,15 +379,8 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                   </div>
                 </div>
 
-                {/* 5-Column Grid: Date, Time, Reason, Method, Disposition */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-                    gap: '14px',
-                    marginBottom: '20px'
-                  }}
-                >
+                {/* Stacked Form Fields: Date, Time, Reason, Method, Disposition, Documentation */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
                   <div className="task-form-group">
                     <label className="task-form-label">Date</label>
                     <div className="task-input-wrapper">
@@ -496,103 +484,17 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                       )}
                     </select>
                   </div>
-                </div>
 
-                {/* Consent & Consent Expiration */}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-                    gap: '14px',
-                    marginBottom: '20px'
-                  }}
-                >
-                  <div className="task-form-group" style={{ gridColumn: 'span 2' }}>
-                    <label className="task-form-label">Consent</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '10px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
-                        <input
-                          type="radio"
-                          name="consent"
-                          checked={consent === 'yes'}
-                          onChange={() => setConsent('yes')}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        Yes
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px', color: '#374151' }}>
-                        <input
-                          type="radio"
-                          name="consent"
-                          checked={consent === 'no'}
-                          onChange={() => {
-                            setConsent('no');
-                            setConsentExpiration('');
-                          }}
-                          style={{ cursor: 'pointer' }}
-                        />
-                        No
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="task-form-group" style={{ gridColumn: 'span 3' }}>
-                    <label className="task-form-label">Consent Expiration</label>
-                    <div className="task-input-wrapper">
-                      <div className="task-input-icon-left" style={{ opacity: consent === 'no' ? 0.4 : 1 }}>
-                        <Calendar size={16} />
-                      </div>
-                      <input
-                        type="date"
-                        value={consentExpiration}
-                        onChange={(e) => setConsentExpiration(e.target.value)}
-                        disabled={consent === 'no'}
-                        onClick={(e) => { if (consent === 'yes') { try { (e.target as any).showPicker?.(); } catch(err) {} } }}
-                        className="task-form-input task-form-input-with-icon-left"
-                        style={{
-                          height: '38px',
-                          fontSize: '13px',
-                          opacity: consent === 'no' ? 0.5 : 1,
-                          cursor: consent === 'no' ? 'not-allowed' : 'pointer',
-                          background: consent === 'no' ? '#F3F4F6' : '#FFFFFF'
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Documentation */}
-                <div className="task-form-group" style={{ marginBottom: '20px' }}>
-                  <label className="task-form-label">Documentation</label>
-                  <div style={{ marginTop: '6px' }}>
-                    <input
-                      type="file"
-                      onChange={(e) => setDocumentationFile(e.target.files?.[0] || null)}
-                      style={{
-                        fontSize: '13px',
-                        color: '#4B5563',
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '6px',
-                        padding: '6px 10px',
-                        background: '#F9FAFB',
-                        cursor: 'pointer',
-                        width: 'auto'
-                      }}
+                  <div className="task-form-group">
+                    <label className="task-form-label">Documentation</label>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="task-form-textarea"
+                      rows={4}
+                      style={{ width: '100%', minHeight: '100px', fontSize: '14px', padding: '10px 12px' }}
                     />
                   </div>
-                </div>
-
-                {/* Notes */}
-                <div className="task-form-group">
-                  <label className="task-form-label">Notes</label>
-                  <textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="task-form-textarea"
-                    rows={4}
-                    placeholder="Enter contact notes..."
-                    style={{ width: '100%', minHeight: '100px', fontSize: '14px', padding: '10px 12px' }}
-                  />
                 </div>
               </div>
 

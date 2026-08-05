@@ -1307,10 +1307,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
         isOpen={isEditWhereaboutsModalOpen}
         onClose={() => setIsEditWhereaboutsModalOpen(false)}
         onSuccess={() => {
-          showToast('Whereabouts Task updated successfully.', 'success');
           if (onRefresh) onRefresh();
         }}
         taskId={selectedTaskId}
+        showToast={showToast}
       />
 
       <FollowupTaskModal

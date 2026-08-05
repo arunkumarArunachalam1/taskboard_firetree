@@ -9,8 +9,10 @@ interface EditWhereaboutsModalProps {
   onClose: () => void;
   onSuccess: () => void;
   taskId: number | null;
+  showToast?: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
+// ... keeping utility functions as they are
 const formatToYYYYMMDD = (dateStr: string): string => {
   if (!dateStr) return '';
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
@@ -212,7 +214,8 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  taskId
+  taskId,
+  showToast
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
@@ -231,7 +234,7 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
       
       getWhereaboutsTaskDetails(taskId)
         .then((taskRes) => {
-          if (taskRes && taskRes.isSuccess) {
+          if (taskRes && (taskRes.isSuccess || taskRes.ISSUCCESS)) {
             const cName = taskRes.ClientName || 'Philip Riehl';
             setClientName(cName);
             setContactDisplay(taskRes.ContactDisplay || `${cName} @ ${taskRes.ContactPhone || '(717) 933-5729'}`);
@@ -241,7 +244,7 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
             if (taskRes.ExpectedDueDate) setDueDate(formatToYYYYMMDD(taskRes.ExpectedDueDate));
             if (taskRes.ExpectedDueTime) setDueTime(taskRes.ExpectedDueTime);
           } else {
-            setError(taskRes?.errorMessage || 'Failed to load Whereabouts task details.');
+            setError(taskRes?.errorMessage || taskRes?.ERRORMESSAGE || 'Failed to load Whereabouts task details.');
           }
         })
         .catch((err) => {
@@ -274,14 +277,19 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
         'Task.ExpectedDueDate': dueDate,
         'Task.ExpectedDueTime': dueTime
       });
-      if (res && res.isSuccess) {
+      if (res && (res.isSuccess || res.ISSUCCESS)) {
+        if (showToast) showToast('Whereabouts Task updated successfully.', 'success');
         onSuccess();
         onClose();
       } else {
-        setError(res?.errorMessage || 'Failed to update Whereabouts task.');
+        const errMsg = res?.errorMessage || res?.ERRORMESSAGE || 'Failed to update Whereabouts task.';
+        setError(errMsg);
+        if (showToast) showToast(errMsg, 'error');
       }
     } catch (err: any) {
-      setError(err.message || 'Error updating task.');
+      const errMsg = err.message || 'Error updating task.';
+      setError(errMsg);
+      if (showToast) showToast(errMsg, 'error');
     } finally {
       setSaving(false);
     }

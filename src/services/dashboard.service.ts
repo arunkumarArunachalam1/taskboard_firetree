@@ -987,6 +987,59 @@ export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: nu
   }
 }
 
+export async function completeWhereaboutsTasks(payload: {
+  listids: string;
+  methodId: string;
+  contactDate: string;
+  contactTime: string;
+  reasonId: string;
+  dispositionId: string;
+  isConsent: number;
+  consentExpiration: string;
+  notes: string;
+}): Promise<{ isSuccess: number; errorMessage: string; successMessage: string }> {
+  const formData = new FormData();
+  
+  formData.append('listids', payload.listids);
+  formData.append('methodId', payload.methodId);
+  formData.append('contactDate', payload.contactDate);
+  formData.append('contactTime', payload.contactTime);
+  formData.append('reasonId', payload.reasonId);
+  formData.append('dispositionId', payload.dispositionId);
+  formData.append('isConsent', String(payload.isConsent));
+  if (payload.consentExpiration) {
+    formData.append('consentExpiration', payload.consentExpiration);
+  }
+  formData.append('notes', payload.notes);
+
+  const response = await fetch('/ReactTaskBoard/CompleteWhereaboutsTasks', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include',
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const rawText = await response.text();
+  try {
+    const json = JSON.parse(rawText);
+    return {
+      isSuccess: json.isSuccess !== undefined ? Number(json.isSuccess) : (json.ISSUCCESS !== undefined ? Number(json.ISSUCCESS) : 0),
+      errorMessage: json.errorMessage || json.ERRORMESSAGE || (json.ERRORS && Array.isArray(json.ERRORS) ? json.ERRORS.join(', ') : undefined),
+      successMessage: json.successMessage || json.SUCCESSMESSAGE || ''
+    };
+  } catch (e) {
+    throw new Error(`Failed to parse complete whereabouts response: ${rawText}`);
+  }
+}
+
 // ─── Modal Service Functions ─────────────────────────────────────────────
 
 export async function getTaskDetails(taskId: number): Promise<any> {
@@ -1012,7 +1065,25 @@ export async function getTaskDetails(taskId: number): Promise<any> {
 }
 
 export async function getWhereaboutsTaskDetails(taskId: number): Promise<any> {
-  return getTaskDetails(taskId);
+  const url = `/ReactTaskBoard/GetEditWhereaboutsTask?taskID=${taskId}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch whereabouts task details: ${response.statusText}`);
+  }
+  const rawText = await response.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Failed to parse whereabouts task details response: ${rawText}`);
+  }
 }
 
 export async function getFollowupModalData(taskId: number): Promise<any> {
@@ -1052,6 +1123,7 @@ export async function saveEditWhereaboutsTask(taskId: number, payload: any = {})
   formData.append('ListIDs', String(taskId));
   formData.append('Task.TaskID', String(taskId));
   formData.append('taskID', String(taskId));
+  formData.append('key', String(taskId));
   Object.keys(payload).forEach(key => {
     formData.append(key, String(payload[key]));
   });
@@ -1071,7 +1143,13 @@ export async function saveEditWhereaboutsTask(taskId: number, payload: any = {})
   }
   const rawText = await response.text();
   try {
-    return JSON.parse(rawText);
+    const json = JSON.parse(rawText);
+    return {
+      isSuccess: json.isSuccess !== undefined ? Number(json.isSuccess) : (json.ISSUCCESS !== undefined ? Number(json.ISSUCCESS) : 0),
+      successMessage: json.successMessage || json.SUCCESSMESSAGE,
+      errorMessage: json.errorMessage || json.ERRORMESSAGE || (json.ERRORS && Array.isArray(json.ERRORS) ? json.ERRORS.join(', ') : undefined),
+      ...json
+    };
   } catch (e) {
     throw new Error(`Failed to parse save edit whereabouts response: ${rawText}`);
   }

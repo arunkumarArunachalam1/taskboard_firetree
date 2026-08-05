@@ -340,9 +340,6 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
 
             {/* ── FOOTER ── */}
             <div className="vt-footer">
-              <button onClick={onClose} type="button" className="vt-btn-cancel">
-                Cancel
-              </button>
               <button onClick={onClose} type="button" className="vt-btn-primary">
                 Close
               </button>
