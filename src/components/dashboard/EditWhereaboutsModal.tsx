@@ -628,25 +628,6 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Eastern Time (ET) Info Banner */}
-                    <div
-                      style={{
-                        background: '#F5F3FF',
-                        border: '1px solid #EDE9FE',
-                        borderRadius: '10px',
-                        padding: '12px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        marginTop: '8px',
-                        color: '#374151',
-                        fontSize: '13.5px',
-                        fontWeight: 500
-                      }}
-                    >
-                      <Info size={18} color="#8B5CF6" style={{ flexShrink: 0 }} />
-                      <span>All times are in Eastern Time (ET).</span>
-                    </div>
                   </div>
                 )}
               </div>

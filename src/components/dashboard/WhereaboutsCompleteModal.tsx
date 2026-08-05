@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, Save, Calendar, Clock } from 'lucide-react';
+import { X, ClipboardCheck, Save, Calendar, Clock, User, Phone, Paperclip, MessageSquare, Upload, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { completeWhereaboutsTasks, getContactMethods, getWhereaboutsTaskDetails, getWhereaboutsReasons, getWhereaboutsDispositions } from '../../services/dashboard.service';
 
 interface WhereaboutsCompleteModalProps {
@@ -11,6 +11,140 @@ interface WhereaboutsCompleteModalProps {
   selectedTaskIds: number[];
   selectedClientId: number;
 }
+
+interface ComboboxOption {
+  label: string;
+  value: string | number;
+  secondary?: string;
+}
+
+interface SearchableComboboxProps {
+  options: ComboboxOption[];
+  value: string | number;
+  onChange: (value: string | number) => void;
+  placeholder?: string;
+  required?: boolean;
+  icon?: React.ReactNode;
+}
+
+const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value, onChange, placeholder, required, icon }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(o => String(o.value) === String(value));
+
+  const filteredOptions = options.filter(o =>
+    o.label.toLowerCase().includes(search.toLowerCase()) ||
+    (o.secondary && o.secondary.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  return (
+    <div ref={wrapperRef} className="combobox-container">
+      <div
+        className={`combobox-input combobox-input-flex ${icon ? 'task-form-input-with-icon-left' : ''}`}
+        onClick={() => {
+          if (isOpen) {
+             setIsOpen(false);
+             setSearch('');
+          } else {
+             setIsOpen(true);
+          }
+        }}
+      >
+        <span className={`combobox-value-span ${!selectedOption ? 'combobox-value-placeholder' : ''}`}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+      </div>
+      {icon && (
+        <div className="task-input-icon-left task-input-icon-none">
+          {icon}
+        </div>
+      )}
+      <div className="combobox-chevron">
+        {isOpen ? (
+          <ChevronUp 
+            size={16} 
+            className="combobox-toggle-icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(false);
+              setSearch('');
+            }} 
+          />
+        ) : (
+          <ChevronDown 
+            size={16} 
+            className="combobox-toggle-icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(true);
+            }} 
+          />
+        )}
+      </div>
+      {required && !value && <input type="text" className="combobox-hidden-input" required />}
+
+      {isOpen && (
+        <div className="combobox-panel">
+          <div className="combobox-search-header">
+            <div className="combobox-search-input-wrapper">
+              <Search size={14} className="combobox-search-icon" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (filteredOptions.length > 0) {
+                      onChange(filteredOptions[0].value);
+                      setIsOpen(false);
+                      setSearch('');
+                    }
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    setIsOpen(false);
+                  }
+                }}
+                autoFocus
+                className="combobox-search-input"
+              />
+            </div>
+          </div>
+          <div className="combobox-options-list">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map(option => (
+                <div
+                  key={option.value}
+                  onClick={() => { onChange(option.value); setIsOpen(false); setSearch(''); }}
+                  className="combobox-option"
+                >
+                  <div className="combobox-option-label">{option.label}</div>
+                  {option.secondary && <div className="combobox-option-secondary">{option.secondary}</div>}
+                </div>
+              ))
+            ) : (
+              <div className="combobox-empty">No matches found</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 
 interface CustomTimePickerProps {
@@ -206,12 +340,12 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
   const [contactDisplay, setContactDisplay] = useState<string>('Quintez Hall @ (223) 384-0113');
   const [contactDate, setContactDate] = useState<string>('');
   const [contactTime, setContactTime] = useState<string>('09:25 AM');
-  const [reason, setReason] = useState<string>('7-day Followup');
-  const [methodId, setMethodId] = useState<string>('Phone');
+  const [reason, setReason] = useState<string>('');
+  const [methodId, setMethodId] = useState<string>('');
   const [methods, setMethods] = useState<{ value: string; label: string }[]>([]);
   const [reasons, setReasons] = useState<{ value: string; label: string }[]>([]);
   const [dispositions, setDispositions] = useState<{ value: string; label: string }[]>([]);
-  const [disposition, setDisposition] = useState<string>('Whereabouts Verified');
+  const [disposition, setDisposition] = useState<string>('');
   const [consent, setConsent] = useState<'yes' | 'no'>('no');
   const [consentExpiration, setConsentExpiration] = useState<string>('');
   const [documentationFile, setDocumentationFile] = useState<File | null>(null);
@@ -222,10 +356,17 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
     if (isOpen) {
       const today = new Date().toISOString().split('T')[0];
       setContactDate(today);
-      setContactTime('09:25 AM');
-      setReason('7-day Followup');
-      setMethodId('Phone');
-      setDisposition('Whereabouts Verified');
+      
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      setContactTime(timeString);
+      
+      setReason('10');
+      setMethodId('1');
+      setDisposition('');
       setConsent('no');
       setConsentExpiration('');
       setDocumentationFile(null);
@@ -273,29 +414,51 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
               value: String(item.value ?? item.VALUE ?? item.Value ?? ''),
               label: String(item.label ?? item.LABEL ?? item.Label ?? '')
             })));
+            const verified = list.find((d: any) => {
+              const lbl = String(d.label ?? d.LABEL ?? d.Label ?? '').toLowerCase();
+              return lbl === 'whereabouts verified' || lbl === 'verified' || lbl.includes('verified');
+            });
+            if (verified) {
+              setDisposition(String(verified.value ?? verified.VALUE ?? verified.Value ?? ''));
+            }
           }
         })
         .catch(() => {});
     }
   }, [isOpen, selectedTaskIds]);
 
+  useEffect(() => {
+    if (error) {
+      const modalBody = document.querySelector('.task-modal-body');
+      if (modalBody) {
+        modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }, [error]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedTaskIds.length === 0) return;
+
+    if (!contactDate || !contactTime || !reason || !methodId || !disposition) {
+      setError('Please fill out all required fields.');
+      return;
+    }
 
     setSaving(true);
     setError(null);
     try {
       const res = await completeWhereaboutsTasks({
         listids: selectedTaskIds.join(','),
-        methodId: methodId || '1',
+        methodId: methodId,
         contactDate: contactDate,
         contactTime: contactTime,
         reasonId: reason,
         dispositionId: disposition,
         isConsent: consent === 'yes' ? 1 : 0,
         consentExpiration: consent === 'yes' ? consentExpiration : '',
-        notes: notes
+        notes: notes,
+        documentationFile: documentationFile
       });
 
       if (res && res.isSuccess) {
@@ -323,187 +486,191 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          style={{ zIndex: 10005 }}
+          style={{ zIndex: 10005, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)', position: 'fixed', inset: 0 }}
         >
-          <div onClick={onClose} className="task-modal-backdrop" />
+          <div onClick={onClose} className="task-modal-backdrop" style={{ position: 'absolute', inset: 0 }} />
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className="task-modal-content"
-            style={{ maxWidth: '820px', width: '95%' }}
+            style={{ 
+              position: 'relative',
+              backgroundColor: '#fff', 
+              borderRadius: '12px', 
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              maxWidth: '1140px', 
+              width: '95%',
+              display: 'flex',
+              flexDirection: 'column',
+              maxHeight: '90vh'
+            }}
           >
-            <div className="task-modal-header">
-              <div className="task-modal-header-content">
-                <div className="task-modal-header-icon">
-                  <CheckCircle size={24} />
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #f3f4f6' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f3e8ff', color: '#6d28d9' }}>
+                  <ClipboardCheck size={22} />
                 </div>
-                <div>
-                  <h2 className="task-modal-title">Mark Whereabouts Complete</h2>
-                  <p className="task-modal-subtitle">
-                    Record accountability contact for {selectedTaskIds.length} task(s)
-                  </p>
-                </div>
+                <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', margin: 0 }}>Mark Whereabouts Complete</h2>
               </div>
-              <button onClick={onClose} className="task-modal-close-btn" type="button">
-                <X size={20} />
+              <button 
+                onClick={onClose} 
+                type="button"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #e5e7eb', backgroundColor: '#fff', color: '#6b7280', cursor: 'pointer' }}
+              >
+                <X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="task-modal-body" style={{ padding: '24px', overflowY: 'auto', maxHeight: '75vh' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div className="task-modal-body" style={{ padding: '24px', overflowY: 'auto' }}>
                 {error && (
-                  <div className="task-alert-error" style={{ marginBottom: '16px' }}>
+                  <div className="task-alert-error" style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#fee2e2', color: '#b91c1c', borderRadius: '6px', fontSize: '14px' }}>
                     {error}
                   </div>
                 )}
 
                 {/* Client and Contact Read-only display */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '22px' }}>
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '4px' }}>
-                      Clients
+                <div style={{ display: 'flex', gap: '24px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', marginBottom: '32px' }}>
+                  <div style={{ flex: 1, display: 'flex', gap: '12px', alignItems: 'center', borderRight: '1px solid #e5e7eb', paddingRight: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#f3e8ff', color: '#6d28d9', flexShrink: 0 }}>
+                      <User size={20} />
                     </div>
-                    <div style={{ fontSize: '14px', color: '#4B5563' }}>
-                      {clientName}
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '2px' }}>Client</div>
+                      <div style={{ fontSize: '15px', fontWeight: 500, color: '#111827' }}>{clientName}</div>
                     </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#111827', marginBottom: '4px' }}>
-                      Contact
+                  <div style={{ flex: 1, display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#f3e8ff', color: '#6d28d9', flexShrink: 0 }}>
+                      <Phone size={20} />
                     </div>
-                    <div style={{ fontSize: '14px', color: '#4B5563' }}>
-                      {contactDisplay}
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '2px' }}>Contact</div>
+                      <div style={{ fontSize: '15px', fontWeight: 500, color: '#111827' }}>{contactDisplay}</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Stacked Form Fields: Date, Time, Reason, Method, Disposition, Documentation */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
-                  <div className="task-form-group">
-                    <label className="task-form-label">Date</label>
-                    <div className="task-input-wrapper">
-                      <div className="task-input-icon-left">
-                        <Calendar size={16} />
+                {/* Whereabouts Details */}
+                <div style={{ marginBottom: '32px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <Calendar size={18} color="#6d28d9" />
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0 }}>Whereabouts Details</h3>
+                  </div>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563' }}>Date <span style={{color: '#ef4444'}}>*</span></label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type="date"
+                          value={contactDate}
+                          onChange={(e) => setContactDate(e.target.value)}
+                          style={{ width: '100%', height: '38px', padding: '0 12px 0 36px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '13px', color: '#111827', boxSizing: 'border-box' }}
+                        />
+                        <Calendar size={14} color="#6b7280" style={{ position: 'absolute', left: '12px', top: '12px', pointerEvents: 'none' }} />
                       </div>
-                      <input
-                        type="date"
-                        value={contactDate}
-                        onChange={(e) => setContactDate(e.target.value)}
-                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
-                        className="task-form-input task-form-input-with-icon-left"
-                        style={{ height: '38px', fontSize: '13px' }}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563' }}>Time <span style={{color: '#ef4444'}}>*</span></label>
+                      <CustomTimePicker
+                        value={contactTime}
+                        onChange={setContactTime}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563' }}>Reason <span style={{color: '#ef4444'}}>*</span></label>
+                      <SearchableCombobox
+                        options={reasons}
+                        value={reason}
+                        onChange={(val) => setReason(String(val))}
+                        placeholder="Select Reason..."
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563' }}>Method <span style={{color: '#ef4444'}}>*</span></label>
+                      <SearchableCombobox
+                        options={methods}
+                        value={methodId}
+                        onChange={(val) => setMethodId(String(val))}
+                        placeholder="Select Method..."
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563' }}>Disposition <span style={{color: '#ef4444'}}>*</span></label>
+                      <SearchableCombobox
+                        options={dispositions}
+                        value={disposition}
+                        onChange={(val) => setDisposition(String(val))}
+                        placeholder="Select Disposition..."
                       />
                     </div>
                   </div>
+                </div>
 
-                  <div className="task-form-group">
-                    <label className="task-form-label">Time</label>
-                    <CustomTimePicker
-                      value={contactTime}
-                      onChange={setContactTime}
-                    />
+                {/* Documentation Section */}
+                <div style={{ marginBottom: '32px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <Paperclip size={18} color="#6d28d9" />
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0 }}>Documentation</h3>
                   </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: '6px', cursor: 'pointer', backgroundColor: '#fff', fontSize: '13px', fontWeight: 500, color: '#111827' }}>
+                      <Upload size={16} color="#6d28d9" />
+                      Choose File
+                      <input
+                        type="file"
+                        onChange={(e) => setDocumentationFile(e.target.files ? e.target.files[0] : null)}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                    <span style={{ fontSize: '13px', color: '#6b7280' }}>
+                      {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
+                    </span>
+                  </div>
+                </div>
 
-                  <div className="task-form-group">
-                    <label className="task-form-label">Reason</label>
-                    <select
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                      className="task-form-input"
-                      style={{ height: '38px', fontSize: '13px' }}
-                    >
-                      {reasons.length > 0 ? (
-                        reasons.map((r) => (
-                          <option key={r.value} value={r.value}>
-                            {r.label}
-                          </option>
-                        ))
-                      ) : (
-                        <>
-                          <option value="7-day Followup">7-day Followup</option>
-                          <option value="14-day Followup">14-day Followup</option>
-                          <option value="30-day Followup">30-day Followup</option>
-                          <option value="60-day Followup">60-day Followup</option>
-                          <option value="Other">Other</option>
-                        </>
-                      )}
-                    </select>
+                {/* Notes Section */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <MessageSquare size={18} color="#6d28d9" />
+                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0 }}>Notes</h3>
                   </div>
-
-                  <div className="task-form-group">
-                    <label className="task-form-label">Method</label>
-                    <select
-                      value={methodId}
-                      onChange={(e) => setMethodId(e.target.value)}
-                      className="task-form-input"
-                      style={{ height: '38px', fontSize: '13px' }}
-                    >
-                      {methods.length > 0 ? (
-                        methods.map((m) => (
-                          <option key={m.value} value={m.value}>
-                            {m.label}
-                          </option>
-                        ))
-                      ) : (
-                        <>
-                          <option value="Phone">Phone</option>
-                          <option value="Email">Email</option>
-                          <option value="In-Person">In-Person</option>
-                          <option value="Video Call">Video Call</option>
-                          <option value="Text Message">Text Message</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-
-                  <div className="task-form-group">
-                    <label className="task-form-label">Disposition</label>
-                    <select
-                      value={disposition}
-                      onChange={(e) => setDisposition(e.target.value)}
-                      className="task-form-input"
-                      style={{ height: '38px', fontSize: '13px' }}
-                    >
-                      {dispositions.length > 0 ? (
-                        dispositions.map((d) => (
-                          <option key={d.value} value={d.value}>
-                            {d.label}
-                          </option>
-                        ))
-                      ) : (
-                        <>
-                          <option value="Whereabouts Verified">Whereabouts Verified</option>
-                          <option value="Whereabouts Unverified">Whereabouts Unverified</option>
-                          <option value="Left Message">Left Message / No Answer</option>
-                          <option value="Rescheduled">Rescheduled</option>
-                          <option value="Completed">Completed</option>
-                          <option value="Other">Other</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-
-                  <div className="task-form-group">
-                    <label className="task-form-label">Documentation</label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      className="task-form-textarea"
-                      rows={4}
-                      style={{ width: '100%', minHeight: '100px', fontSize: '14px', padding: '10px 12px' }}
-                    />
-                  </div>
+                  
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add notes about this whereabouts completion..."
+                    style={{ width: '100%', minHeight: '100px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px', color: '#111827', resize: 'vertical', boxSizing: 'border-box' }}
+                  />
                 </div>
               </div>
 
-              <div className="task-modal-footer">
-                <button onClick={onClose} className="task-btn-secondary" type="button" disabled={saving}>
+              {/* Footer */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '20px 24px', borderTop: '1px solid #f3f4f6', backgroundColor: '#fff', borderRadius: '0 0 12px 12px' }}>
+                <button 
+                  onClick={onClose} 
+                  type="button" 
+                  disabled={saving}
+                  style={{ padding: '8px 24px', border: '1px solid #d1d5db', borderRadius: '6px', backgroundColor: '#fff', color: '#374151', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}
+                >
                   Cancel
                 </button>
-                <button type="submit" className="task-btn-primary" disabled={saving}>
-                  <Save size={16} /> {saving ? 'Submitting...' : 'Complete Task(s)'}
+                <button 
+                  type="submit" 
+                  disabled={saving}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 24px', border: 'none', borderRadius: '6px', backgroundColor: '#5b21b6', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}
+                >
+                  <Save size={16} /> 
+                  {saving ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </form>

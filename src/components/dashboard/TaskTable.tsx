@@ -12,6 +12,8 @@ import { ViewTaskModal } from './ViewTaskModal';
 import { EditWhereaboutsModal } from './EditWhereaboutsModal';
 import { FollowupTaskModal } from './FollowupTaskModal';
 import { WhereaboutsCompleteModal } from './WhereaboutsCompleteModal';
+import { FollowupCompleteModal } from './FollowupCompleteModal';
+
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -219,9 +221,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [isEditWhereaboutsModalOpen, setIsEditWhereaboutsModalOpen] = useState(false);
   const [isFollowupModalOpen, setIsFollowupModalOpen] = useState(false);
   const [isWhereaboutsCompleteModalOpen, setIsWhereaboutsCompleteModalOpen] = useState(false);
-  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const [isFollowupCompleteModalOpen, setIsFollowupCompleteModalOpen] = useState(false);
+  const [followupCompleteTaskId, setFollowupCompleteTaskId] = useState<number | null>(null);
   const [whereaboutsCompleteIds, setWhereaboutsCompleteIds] = useState<number[]>([]);
   const [whereaboutsCompleteClientId, setWhereaboutsCompleteClientId] = useState<number>(0);
+  const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isListingFilterOpen, setIsListingFilterOpen] = useState(false);
   const filterContainerRef = useRef<HTMLDivElement>(null);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
@@ -419,10 +423,33 @@ const TaskTable: React.FC<TaskTableProps> = ({
     if (selectedIds.length === 0) return;
 
     const selectedWhereaboutsTasks = data ? data.tasks.filter(t => selectedIds.includes(t.TaskID) && Number(t.TaskTypeID) === 2) : [];
-    if (selectedWhereaboutsTasks.length > 0) {
+    const selectedFollowupTasks = data ? data.tasks.filter(t => selectedIds.includes(t.TaskID) && Number(t.TaskTypeID) === 3) : [];
+    
+    if (selectedWhereaboutsTasks.length > 0 && selectedFollowupTasks.length > 0) {
+      showToast('You cannot complete Whereabouts and Followup tasks at the same time.', 'error');
+      return;
+    }
+    
+    if (selectedWhereaboutsTasks.length > 1) {
+      showToast('You can only complete one Whereabouts task at a time.', 'error');
+      return;
+    }
+    
+    if (selectedFollowupTasks.length > 1) {
+      showToast('You can only complete one Followup task at a time.', 'error');
+      return;
+    }
+    
+    if (selectedWhereaboutsTasks.length === 1) {
       setWhereaboutsCompleteIds(selectedWhereaboutsTasks.map(t => t.TaskID));
       setWhereaboutsCompleteClientId(Number((selectedWhereaboutsTasks[0] as any)?.ClientID || 0));
       setIsWhereaboutsCompleteModalOpen(true);
+      return;
+    }
+
+    if (selectedFollowupTasks.length === 1) {
+      setFollowupCompleteTaskId(selectedFollowupTasks[0].TaskID);
+      setIsFollowupCompleteModalOpen(true);
       return;
     }
 
@@ -454,6 +481,20 @@ const TaskTable: React.FC<TaskTableProps> = ({
   };
 
   const handleMarkSingleComplete = (taskId: number, taskName: string) => {
+    const task = data?.tasks.find(t => t.TaskID === taskId);
+    if (task && Number(task.TaskTypeID) === 2) {
+      setWhereaboutsCompleteIds([taskId]);
+      setWhereaboutsCompleteClientId(Number((task as any)?.ClientID || 0));
+      setIsWhereaboutsCompleteModalOpen(true);
+      return;
+    }
+    
+    if (task && Number(task.TaskTypeID) === 3) {
+      setFollowupCompleteTaskId(taskId);
+      setIsFollowupCompleteModalOpen(true);
+      return;
+    }
+
     showConfirm(
       'Mark Task Complete',
       `Are you sure you want to mark the task "${extractTextFromHTML(taskName)}" complete?`,
@@ -1330,10 +1371,24 @@ const TaskTable: React.FC<TaskTableProps> = ({
           showToast('Whereabouts task(s) marked complete successfully.', 'success');
           setSelectedIds([]);
           if (onRefresh) onRefresh();
+          else onPageChange(page);
         }}
         selectedTaskIds={whereaboutsCompleteIds}
         selectedClientId={whereaboutsCompleteClientId}
       />
+
+      {followupCompleteTaskId !== null && (
+        <FollowupCompleteModal
+          isOpen={isFollowupCompleteModalOpen}
+          onClose={() => setIsFollowupCompleteModalOpen(false)}
+          selectedTaskId={followupCompleteTaskId}
+          onSuccess={() => {
+            setSelectedIds([]);
+            if (onRefresh) onRefresh();
+            else onPageChange(page);
+          }}
+        />
+      )}
 
     </div>
   );

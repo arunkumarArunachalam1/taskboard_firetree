@@ -35,7 +35,7 @@ export async function safeJsonParse(response: Response) {
   } catch (error) {
     // Log the actual text that failed to parse so we can see what ColdFusion sent back
     console.error("JSON Parse Error. Server responded with:", text.substring(0, 1000) + (text.length > 1000 ? "..." : ""));
-    
+
     // Return an error object instead of throwing to prevent aggressive UI popups
     return { error: true, message: 'Invalid JSON response from server or session expired.' };
   }
@@ -63,20 +63,20 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 export async function getDashboardKPIs(filters?: DashboardFilters): Promise<DashboardSummary> {
   const context = activeContext;
   let url = `/ReactTaskBoard/getDashboardKPIs?_=${Date.now()}`;
-  
+
   if (filters) {
     if (filters.assignedTo) url += `&assignedTo=${encodeURIComponent(filters.assignedTo)}`;
     if (filters.role) url += `&role=${encodeURIComponent(filters.role)}`;
     if (filters.status && filters.status !== 'all') url += `&status=${encodeURIComponent(filters.status)}`;
     if (filters.taskType) url += `&taskType=${encodeURIComponent(filters.taskType)}`;
-    
+
     const formatToCFDate = (dateStr: string) => {
       if (!dateStr) return '';
       const parts = dateStr.split('-');
       if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
       return dateStr;
     };
-    
+
     if (filters.startDate) url += `&startDate=${encodeURIComponent(formatToCFDate(filters.startDate))}`;
     if (filters.endDate) url += `&endDate=${encodeURIComponent(formatToCFDate(filters.endDate))}`;
   }
@@ -109,7 +109,7 @@ export async function getDashboardKPIs(filters?: DashboardFilters): Promise<Dash
     if (json.error) {
       console.error(`[getDashboardKPIs] API Error returned in JSON:`, json.message || 'Error fetching KPI data', json);
       // Don't throw, just use fallback data to prevent UI error message
-      json = {}; 
+      json = {};
     }
   } catch (e) {
     console.error(`[getDashboardKPIs] Failed to parse response`, e);
@@ -139,20 +139,20 @@ export async function getDashboardKPIs(filters?: DashboardFilters): Promise<Dash
 
 export async function getDashboardCharts(filters?: DashboardFilters): Promise<DashboardCharts> {
   let url = `/ReactTaskBoard/getDashboardCharts?_=${Date.now()}`;
-  
+
   if (filters) {
     if (filters.assignedTo) url += `&assignedTo=${encodeURIComponent(filters.assignedTo)}`;
     if (filters.role) url += `&role=${encodeURIComponent(filters.role)}`;
     if (filters.status && filters.status !== 'all') url += `&status=${encodeURIComponent(filters.status)}`;
     if (filters.taskType) url += `&taskType=${encodeURIComponent(filters.taskType)}`;
-    
+
     const formatToCFDate = (dateStr: string) => {
       if (!dateStr) return '';
       const parts = dateStr.split('-');
       if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
       return dateStr;
     };
-    
+
     if (filters.startDate) url += `&startDate=${encodeURIComponent(formatToCFDate(filters.startDate))}`;
     if (filters.endDate) url += `&endDate=${encodeURIComponent(formatToCFDate(filters.endDate))}`;
   }
@@ -221,7 +221,7 @@ export async function getDashboardCharts(filters?: DashboardFilters): Promise<Da
 export async function triggerHardRefresh(): Promise<boolean> {
   const url = `/ReactTaskBoard/HardRefresh?_=${Date.now()}`;
   console.log(`[triggerHardRefresh] Hitting endpoint: ${url}`);
-  
+
   const response = await fetch(url, {
     method: 'POST', // using POST for a mutative action like cache clearing
     headers: {
@@ -911,35 +911,6 @@ export async function getOptionSetPopulations(uuid: string): Promise<{ value: st
   return Array.isArray(json) ? json : parseCFQuery(json);
 }
 
-export async function getWhereaboutsReasons(): Promise<{ value: string; label: string }[]> {
-  try {
-    const list = await getOptionSetPopulations('BBF4F863-5C81-42DC-BFD3-EAE4D82C6A6C');
-    if (list && list.length > 0) return list;
-  } catch (err) {}
-  return [
-    { value: '7-day Followup', label: '7-day Followup' },
-    { value: '14-day Followup', label: '14-day Followup' },
-    { value: '30-day Followup', label: '30-day Followup' },
-    { value: '60-day Followup', label: '60-day Followup' },
-    { value: 'Other', label: 'Other' }
-  ];
-}
-
-export async function getWhereaboutsDispositions(): Promise<{ value: string; label: string }[]> {
-  try {
-    const list = await getOptionSetPopulations('3D1D9DE9-BD51-47E7-AD20-A3D663030E34');
-    if (list && list.length > 0) return list;
-  } catch (err) {}
-  return [
-    { value: 'Whereabouts Verified', label: 'Whereabouts Verified' },
-    { value: 'Whereabouts Unverified', label: 'Whereabouts Unverified' },
-    { value: 'Left Message', label: 'Left Message / No Answer' },
-    { value: 'Rescheduled', label: 'Rescheduled' },
-    { value: 'Completed', label: 'Completed' },
-    { value: 'Other', label: 'Other' }
-  ];
-}
-
 export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: number; successMessage?: string; errorMessage?: string }> {
   const formData = new FormData();
   formData.append('ClientEmploymentContactSchedule.ClientID', String(payload.clientId));
@@ -987,6 +958,8 @@ export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: nu
   }
 }
 
+
+
 export async function completeWhereaboutsTasks(payload: {
   listids: string;
   methodId: string;
@@ -997,20 +970,39 @@ export async function completeWhereaboutsTasks(payload: {
   isConsent: number;
   consentExpiration: string;
   notes: string;
+  documentationFile: File | null;
 }): Promise<{ isSuccess: number; errorMessage: string; successMessage: string }> {
   const formData = new FormData();
-  
-  formData.append('listids', payload.listids);
-  formData.append('methodId', payload.methodId);
-  formData.append('contactDate', payload.contactDate);
-  formData.append('contactTime', payload.contactTime);
-  formData.append('reasonId', payload.reasonId);
-  formData.append('dispositionId', payload.dispositionId);
+
+  formData.append('method', 'run');
+  formData.append('formName', 'Client - Accountability - New Contact');
+  formData.append('title', 'Mark Whereabouts Complete');
+  formData.append('clientStayID', '0');
+
+  // Need to format dates to ISO for legacy compatibility if required by backend, but we'll send what we have
+  const formattedDate = payload.contactDate;
+  const formattedTime = payload.contactTime;
+
+  formData.append('ContactDate', formattedDate);
+  formData.append('ContactTime', formattedTime);
+  formData.append('MethodID', payload.methodId);
+  formData.append('clientID', '0');
+  formData.append('whereabouts', '1');
+  formData.append('ReasonID', payload.reasonId);
+  formData.append('listIDs', payload.listids);
+  formData.append('readOnly', '0');
+
+  // Extra fields that were in the custom modal
+  formData.append('DispositionID', payload.dispositionId);
   formData.append('isConsent', String(payload.isConsent));
   if (payload.consentExpiration) {
     formData.append('consentExpiration', payload.consentExpiration);
   }
-  formData.append('notes', payload.notes);
+  formData.append('Notes', payload.notes);
+
+  if (payload.documentationFile) {
+    formData.append('documentationFile', payload.documentationFile);
+  }
 
   const response = await fetch('/ReactTaskBoard/CompleteWhereaboutsTasks', {
     method: 'POST',
@@ -1041,6 +1033,46 @@ export async function completeWhereaboutsTasks(payload: {
 }
 
 // ─── Modal Service Functions ─────────────────────────────────────────────
+
+
+
+export async function getWhereaboutsReasons(): Promise<any> {
+  const response = await fetch('/ReactTaskBoard/GetWhereaboutsReasons', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) return [];
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function getWhereaboutsDispositions(): Promise<any> {
+  const response = await fetch('/ReactTaskBoard/GetWhereaboutsDispositions', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) return [];
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return [];
+  }
+}
 
 export async function getTaskDetails(taskId: number): Promise<any> {
   const url = `/ReactTaskBoard/GetTaskDetails?taskID=${taskId}`;
@@ -1087,7 +1119,25 @@ export async function getWhereaboutsTaskDetails(taskId: number): Promise<any> {
 }
 
 export async function getFollowupModalData(taskId: number): Promise<any> {
-  return getTaskDetails(taskId);
+  const url = `/ReactTaskBoard/GetFollowupDetails?TaskID=${taskId}&_=${Date.now()}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch followup details: ${response.statusText}`);
+  }
+  const rawText = await response.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Failed to parse followup details response: ${rawText}`);
+  }
 }
 
 export async function saveFollowupTask(taskId: number, payload: any = {}): Promise<any> {
@@ -1097,7 +1147,7 @@ export async function saveFollowupTask(taskId: number, payload: any = {}): Promi
     formData.append(key, String(payload[key]));
   });
 
-  const response = await fetch('/ReactTaskBoard/SaveFollowupTask', {
+  const response = await fetch('/ReactTaskBoard/CompleteFollowupTasks', {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
