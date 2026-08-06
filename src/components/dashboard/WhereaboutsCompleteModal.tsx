@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ClipboardCheck, Save, Calendar, Clock, User, Phone, Paperclip, MessageSquare, Upload, Search, ChevronDown, ChevronUp } from 'lucide-react';
-import { completeWhereaboutsTasks, getContactMethods, getWhereaboutsTaskDetails, getWhereaboutsReasons, getWhereaboutsDispositions } from '../../services/dashboard.service';
+import { completeWhereaboutsTasks, getWhereaboutsContactMethods, getWhereaboutsTaskDetails, getWhereaboutsReasons, getWhereaboutsDispositions } from '../../services/dashboard.service';
 
 interface WhereaboutsCompleteModalProps {
   isOpen: boolean;
@@ -332,8 +332,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
   isOpen,
   onClose,
   onSuccess,
-  selectedTaskIds,
-  selectedClientId
+  selectedTaskIds
 }) => {
   const [saving, setSaving] = useState<boolean>(false);
   const [clientName, setClientName] = useState<string>('Quintez Hall');
@@ -341,9 +340,9 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
   const [contactDate, setContactDate] = useState<string>('');
   const [contactTime, setContactTime] = useState<string>('09:25 AM');
   const [reason, setReason] = useState<string>('');
-  const [methodId, setMethodId] = useState<string>('');
-  const [methods, setMethods] = useState<{ value: string; label: string }[]>([]);
-  const [reasons, setReasons] = useState<{ value: string; label: string }[]>([]);
+  const [reasons, setReasons] = useState<{value: string, label: string}[]>([]);
+  const [methodId, setMethodId] = useState<string>('1');
+  const [methods, setMethods] = useState<{value: string, label: string}[]>([]);
   const [dispositions, setDispositions] = useState<{ value: string; label: string }[]>([]);
   const [disposition, setDisposition] = useState<string>('');
   const [consent, setConsent] = useState<'yes' | 'no'>('no');
@@ -380,18 +379,33 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
               const cName = res.ClientName || 'Quintez Hall';
               setClientName(cName);
               setContactDisplay(res.ContactDisplay || `${cName} @ ${res.ContactPhone || '(223) 384-0113'}`);
+              
+              if (res.isConsentReadOnly) {
+                setConsent(res.isConsent || 'no');
+                setConsentExpiration(res.consentExpiration || '');
+              }
             }
           })
           .catch(() => {});
       }
 
-      getContactMethods()
+      getWhereaboutsContactMethods()
         .then((methodList) => {
           if (methodList && Array.isArray(methodList)) {
-            setMethods(methodList.map((m: any) => ({
+            const allMethods = methodList.map((m: any) => ({
               value: String(m.value ?? m.VALUE ?? m.Value ?? ''),
               label: String(m.label ?? m.LABEL ?? m.Label ?? '')
-            })));
+            }));
+            
+            // Legacy behavior: only allow Phone method for Whereabouts Complete
+            const phoneMethods = allMethods.filter(m => m.value === '1' || m.label.toLowerCase().includes('phone'));
+            
+            if (phoneMethods.length > 0) {
+              setMethods(phoneMethods);
+              setMethodId(phoneMethods[0].value);
+            } else {
+              setMethods(allMethods);
+            }
           }
         })
         .catch(() => {});
@@ -481,110 +495,94 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="task-modal-wrapper"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          style={{ zIndex: 10005, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)', position: 'fixed', inset: 0 }}
+          className="task-modal-wrapper wc-modal-overlay"
         >
-          <div onClick={onClose} className="task-modal-backdrop" style={{ position: 'absolute', inset: 0 }} />
+          <div onClick={onClose} className="task-modal-backdrop wc-modal-backdrop" />
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="task-modal-content"
-            style={{ 
-              position: 'relative',
-              backgroundColor: '#fff', 
-              borderRadius: '12px', 
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              maxWidth: '1140px', 
-              width: '95%',
-              display: 'flex',
-              flexDirection: 'column',
-              maxHeight: '90vh'
-            }}
+            className="task-modal-content wc-modal-content"
           >
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid #f3f4f6' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f3e8ff', color: '#6d28d9' }}>
+            <div className="wc-header">
+              <div className="wc-header-left">
+                <div className="wc-header-icon-wrap">
                   <ClipboardCheck size={22} />
                 </div>
-                <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#111827', margin: 0 }}>Mark Whereabouts Complete</h2>
+                <h2 className="wc-header-title">Mark Whereabouts Complete</h2>
               </div>
               <button 
                 onClick={onClose} 
                 type="button"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '50%', border: '1px solid #e5e7eb', backgroundColor: '#fff', color: '#6b7280', cursor: 'pointer' }}
+                className="wc-close-btn"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              <div className="task-modal-body" style={{ padding: '24px', overflowY: 'auto' }}>
+            <form onSubmit={handleSubmit} className="wc-form">
+              <div className="task-modal-body wc-body">
                 {error && (
-                  <div className="task-alert-error" style={{ marginBottom: '16px', padding: '12px', backgroundColor: '#fee2e2', color: '#b91c1c', borderRadius: '6px', fontSize: '14px' }}>
+                  <div className="task-alert-error wc-error">
                     {error}
                   </div>
                 )}
 
                 {/* Client and Contact Read-only display */}
-                <div style={{ display: 'flex', gap: '24px', padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px', marginBottom: '32px' }}>
-                  <div style={{ flex: 1, display: 'flex', gap: '12px', alignItems: 'center', borderRight: '1px solid #e5e7eb', paddingRight: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#f3e8ff', color: '#6d28d9', flexShrink: 0 }}>
+                <div className="wc-client-card">
+                  <div className="wc-client-col-left">
+                    <div className="wc-icon-wrap">
                       <User size={20} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '2px' }}>Client</div>
-                      <div style={{ fontSize: '15px', fontWeight: 500, color: '#111827' }}>{clientName}</div>
+                      <div className="wc-label">Client</div>
+                      <div className="wc-value">{clientName}</div>
                     </div>
                   </div>
-                  <div style={{ flex: 1, display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '8px', backgroundColor: '#f3e8ff', color: '#6d28d9', flexShrink: 0 }}>
+                  <div className="wc-client-col-right">
+                    <div className="wc-icon-wrap">
                       <Phone size={20} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', marginBottom: '2px' }}>Contact</div>
-                      <div style={{ fontSize: '15px', fontWeight: 500, color: '#111827' }}>{contactDisplay}</div>
+                      <div className="wc-label">Contact</div>
+                      <div className="wc-value">{contactDisplay}</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Whereabouts Details */}
-                <div style={{ marginBottom: '32px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <div className="wc-section-container">
+                  <div className="wc-section-header">
                     <Calendar size={18} color="#6d28d9" />
-                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0 }}>Whereabouts Details</h3>
+                    <h3 className="wc-section-title">Whereabouts Details</h3>
                   </div>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563' }}>Date <span style={{color: '#ef4444'}}>*</span></label>
-                      <div style={{ position: 'relative' }}>
+                  <div className="wc-grid-row">
+                    <div className="wc-grid-col">
+                      <label className="wc-input-label">Date <span style={{color: '#ef4444'}}>*</span></label>
+                      <div className="wc-input-wrapper">
                         <input
                           type="date"
                           value={contactDate}
                           onChange={(e) => setContactDate(e.target.value)}
-                          style={{ width: '100%', height: '38px', padding: '0 12px 0 36px', border: '1px solid #d1d5db', borderRadius: '6px', fontSize: '13px', color: '#111827', boxSizing: 'border-box' }}
+                          className="wc-input-date"
                         />
-                        <Calendar size={14} color="#6b7280" style={{ position: 'absolute', left: '12px', top: '12px', pointerEvents: 'none' }} />
+                        <Calendar size={14} color="#6b7280" className="wc-input-icon" />
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563' }}>Time <span style={{color: '#ef4444'}}>*</span></label>
+                    <div className="wc-grid-col">
+                      <label className="wc-input-label">Time <span style={{color: '#ef4444'}}>*</span></label>
                       <CustomTimePicker
                         value={contactTime}
                         onChange={setContactTime}
                       />
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563' }}>Reason <span style={{color: '#ef4444'}}>*</span></label>
+                    <div className="wc-grid-col">
+                      <label className="wc-input-label">Reason <span style={{color: '#ef4444'}}>*</span></label>
                       <SearchableCombobox
                         options={reasons}
                         value={reason}
@@ -592,9 +590,11 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                         placeholder="Select Reason..."
                       />
                     </div>
+                  </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563' }}>Method <span style={{color: '#ef4444'}}>*</span></label>
+                  <div className="wc-grid-row">
+                    <div className="wc-grid-col">
+                      <label className="wc-input-label">Method <span style={{color: '#ef4444'}}>*</span></label>
                       <SearchableCombobox
                         options={methods}
                         value={methodId}
@@ -603,8 +603,8 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                       />
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontSize: '13px', fontWeight: 500, color: '#4b5563' }}>Disposition <span style={{color: '#ef4444'}}>*</span></label>
+                    <div className="wc-grid-col">
+                      <label className="wc-input-label">Disposition <span style={{color: '#ef4444'}}>*</span></label>
                       <SearchableCombobox
                         options={dispositions}
                         value={disposition}
@@ -613,17 +613,68 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                       />
                     </div>
                   </div>
+
+                  {String(reason) !== '10' && (
+                    <div className="wc-consent-card">
+                      <div className="wc-consent-row">
+                        <div className="wc-consent-col">
+                          <label className="wc-consent-title">Is Consent? <span style={{color: '#ef4444'}}>*</span></label>
+                          <div className="wc-consent-radios">
+                            <label className="wc-radio-label">
+                              <input
+                                type="radio"
+                                name="consent"
+                                value="yes"
+                                checked={consent === 'yes'}
+                                onChange={() => setConsent('yes')}
+                                className="wc-radio-input"
+                              />
+                              Yes
+                            </label>
+                            <label className="wc-radio-label">
+                              <input
+                                type="radio"
+                                name="consent"
+                                value="no"
+                                checked={consent === 'no'}
+                                onChange={() => {
+                                  setConsent('no');
+                                  setConsentExpiration('');
+                                }}
+                                className="wc-radio-input"
+                              />
+                              No
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="wc-divider"></div>
+
+                        <div className="wc-consent-exp-col">
+                          <label className="wc-consent-exp-label">Expiration Date</label>
+                          <div className={`wc-consent-exp-value ${consent === 'yes' ? 'active' : 'inactive'}`}>
+                            {consent === 'yes' && consentExpiration ? (
+                              (() => {
+                                const [yr, mo, da] = consentExpiration.split('-');
+                                return `${mo}/${da}/${yr}`;
+                              })()
+                            ) : ''}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Documentation Section */}
-                <div style={{ marginBottom: '32px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <div className="wc-section-container">
+                  <div className="wc-section-header">
                     <Paperclip size={18} color="#6d28d9" />
-                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0 }}>Documentation</h3>
+                    <h3 className="wc-section-title">Documentation</h3>
                   </div>
                   
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', border: '1px solid #e5e7eb', borderRadius: '6px', cursor: 'pointer', backgroundColor: '#fff', fontSize: '13px', fontWeight: 500, color: '#111827' }}>
+                  <div className="wc-upload-card">
+                    <label className="wc-upload-btn">
                       <Upload size={16} color="#6d28d9" />
                       Choose File
                       <input
@@ -632,42 +683,47 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                         style={{ display: 'none' }}
                       />
                     </label>
-                    <span style={{ fontSize: '13px', color: '#6b7280' }}>
-                      {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
-                    </span>
+                    <div className="wc-upload-info">
+                      <span className="wc-upload-filename">
+                        {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
+                      </span>
+                      {!documentationFile && (
+                        <span className="wc-upload-hint">PDF, PNG, JPG up to 10MB</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 {/* Notes Section */}
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <div className="wc-section-header">
                     <MessageSquare size={18} color="#6d28d9" />
-                    <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#111827', margin: 0 }}>Notes</h3>
+                    <h3 className="wc-section-title">Notes</h3>
                   </div>
                   
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Add notes about this whereabouts completion..."
-                    style={{ width: '100%', minHeight: '100px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '6px', fontSize: '13px', color: '#111827', resize: 'vertical', boxSizing: 'border-box' }}
+                    className="wc-textarea"
                   />
                 </div>
               </div>
 
               {/* Footer */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', padding: '20px 24px', borderTop: '1px solid #f3f4f6', backgroundColor: '#fff', borderRadius: '0 0 12px 12px' }}>
+              <div className="wc-footer">
                 <button 
                   onClick={onClose} 
                   type="button" 
                   disabled={saving}
-                  style={{ padding: '8px 24px', border: '1px solid #d1d5db', borderRadius: '6px', backgroundColor: '#fff', color: '#374151', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}
+                  className="wc-btn-cancel"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={saving}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 24px', border: 'none', borderRadius: '6px', backgroundColor: '#5b21b6', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: 'pointer' }}
+                  className="wc-btn-save"
                 >
                   <Save size={16} /> 
                   {saving ? 'Saving...' : 'Save'}

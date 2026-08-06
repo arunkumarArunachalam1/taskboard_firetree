@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Calendar, Clock, User, Phone, MapPin, Building2, Search, ChevronDown, ChevronUp, AlertCircle, FileText, ClipboardCheck, MessageSquare } from 'lucide-react';
+import { X, Save, Calendar, Clock, User, Phone, Building2, Search, ChevronDown, ChevronUp, AlertCircle, FileText, ClipboardCheck, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { getFollowupModalData, saveFollowupTask, getContactMethods, getWhereaboutsDispositions } from '../../services/dashboard.service';
 
 interface FollowupCompleteModalProps {
@@ -31,7 +31,10 @@ const SearchableCombobox: React.FC<{ options: ComboboxOption[], value: string | 
   }, []);
 
   const selectedOption = options.find(o => String(o.value) === String(value));
-  const filteredOptions = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()) || (o.secondary && o.secondary.toLowerCase().includes(search.toLowerCase())));
+  const filteredOptions = options.filter(o => 
+    (o.label || '').toString().toLowerCase().includes((search || '').toLowerCase()) || 
+    (o.secondary && (o.secondary || '').toString().toLowerCase().includes((search || '').toLowerCase()))
+  );
 
   return (
     <div ref={wrapperRef} className="combobox-container">
@@ -200,8 +203,8 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
       ]);
       
       setDetails(followupDetails);
-      setMethods(methodsList.map(m => ({ label: m.label, value: m.value })));
-      setDispositions(dispositionsList.map(m => ({ label: m.label, value: m.value })));
+      setMethods(methodsList.map((m: any) => ({ label: m.label, value: m.value })));
+      setDispositions(dispositionsList.map((m: any) => ({ label: m.label, value: m.value })));
       
       // Default Date/Time
       const now = new Date();
@@ -215,7 +218,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
       setContactTime(`${hr}:${mi}`);
       
       // Defaults
-      const phoneMethod = methodsList.find(m => m.label.toLowerCase().includes('phone'));
+      const phoneMethod = methodsList.find((m: any) => (m.label || '').toString().toLowerCase().includes('phone'));
       if (phoneMethod) setMethodId(phoneMethod.value);
       
     } catch (err: any) {
@@ -237,7 +240,8 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
     const dispStr = String(dispositionId);
     const isNoAnswerOrLeftMessage = dispStr === '2' || dispStr === '4';
     
-    if (details?.FollowupType !== 'Funding/Parole/Probation Follow up' && !isNoAnswerOrLeftMessage) {
+    const followupType = details?.FollowupType || details?.FOLLOWUPTYPE;
+    if (followupType !== 'Funding/Parole/Probation Follow up' && !isNoAnswerOrLeftMessage) {
       if (!attendedTreatment) {
         setError('Attended Treatment selection is required.');
         if (contentRef.current) contentRef.current.scrollTop = 0;
@@ -263,7 +267,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
       };
       
       const followupForm: any = {
-        FollowupType: details?.FollowupType === '7-Day Followup' ? '7-Day' : (details?.FollowupType === 'Aftercare Followup' ? 'Aftercare' : ''),
+        FollowupType: (details?.FollowupType || details?.FOLLOWUPTYPE) === '7-Day Followup' ? '7-Day' : ((details?.FollowupType || details?.FOLLOWUPTYPE) === 'Aftercare Followup' ? 'Aftercare' : ''),
         AttendedTreatment: attendedTreatment,
         TreatmentRescheduledDate: rescheduledDate,
         TreatmentRescheduledTime: rescheduledTime,
@@ -273,7 +277,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
       payload.FollowupForm = JSON.stringify(followupForm);
       
       const res = await saveFollowupTask(selectedTaskId, payload);
-      if (res.isSuccess) {
+      if (res.isSuccess || res.ISSUCCESS) {
         onSuccess();
         onClose();
       } else {
@@ -291,33 +295,162 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
 
   return createPortal(
     <AnimatePresence>
-      <div className="task-modal-overlay">
-        <motion.div 
-          className="task-modal-container"
-          style={{ maxWidth: '1000px', width: '90%' }}
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+      {isOpen && (
+        <motion.div
+          className="vt-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
         >
-          <div className="task-modal-header">
-            <h2 className="task-modal-title">
-              <ClipboardCheck size={20} className="task-modal-title-icon" />
-              Followup Completion
-            </h2>
-            <button className="task-modal-close" onClick={onClose} disabled={saving}>
-              <X size={20} />
-            </button>
-          </div>
-          
-          <div className="task-modal-content" ref={contentRef}>
-            {loading ? (
-              <div className="task-loading-state">
-                <div className="task-loading-spinner" />
-                <p>Loading followup details...</p>
+          <div onClick={onClose} className="vt-backdrop" />
+
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="vt-modal"
+            style={{ maxWidth: '1000px', width: '90%' }}
+          >
+            {/* ── HEADER ── */}
+            <div className="vt-header">
+              <div className="vt-header-left">
+                <div className="vt-header-icon-wrap">
+                  <ClipboardCheck size={20} strokeWidth={2} />
+                </div>
+                <h2 className="vt-header-title">
+                  {(details?.FollowupType || details?.FOLLOWUPTYPE) || 'Followup'} for {
+                    (() => {
+                      const ch = details?.ClientHeader || details?.CLIENTHEADER;
+                      const dataArr = ch?.DATA || ch?.data;
+                      if (!dataArr || !dataArr[0]) return '';
+                      const row = dataArr[0];
+                      let fname = '', lname = '';
+                      if (Array.isArray(row) && ch.COLUMNS) {
+                        const idxF = ch.COLUMNS.findIndex((c:string)=>c.toUpperCase()==='FIRSTNAME');
+                        const idxL = ch.COLUMNS.findIndex((c:string)=>c.toUpperCase()==='LASTNAME');
+                        if (idxF>=0) fname = row[idxF];
+                        if (idxL>=0) lname = row[idxL];
+                      } else {
+                        fname = row.FIRSTNAME || row.FirstName || '';
+                        lname = row.LASTNAME || row.LastName || '';
+                      }
+                      return (fname ? fname.charAt(0) + '. ' : '') + lname;
+                    })()
+                  }
+                </h2>
               </div>
-            ) : (
-              <form id="followupForm" onSubmit={handleSubmit} className="task-form-layout">
+              <button onClick={onClose} type="button" className="vt-close-btn" disabled={saving}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* ── BODY ── */}
+            <div className="vt-body" ref={contentRef}>
+              {loading ? (
+                <div className="vt-loading">Loading followup details...</div>
+              ) : (
+              <div>
+                {(details?.ClientHeader || details?.CLIENTHEADER) && (() => {
+                  const headerData = details?.ClientHeader || details?.CLIENTHEADER;
+                  let data: any = {};
+                  if (headerData && headerData.COLUMNS && headerData.DATA && headerData.DATA.length > 0) {
+                    const row = headerData.DATA[0];
+                    if (Array.isArray(row)) {
+                      headerData.COLUMNS.forEach((col: string, idx: number) => { data[col.toLowerCase()] = row[idx]; });
+                    } else if (typeof row === 'object') {
+                      Object.keys(row).forEach(k => { data[k.toLowerCase()] = row[k]; });
+                    }
+                  } else if (Array.isArray(headerData)) {
+                    const rawData = headerData[0];
+                    if (rawData && typeof rawData === 'object') {
+                      Object.keys(rawData).forEach(k => { data[k.toLowerCase()] = rawData[k]; });
+                    }
+                  }
+                  
+                  const getPronouns = (d: any) => {
+                    if (d.pronounfield === 'Other') return d.pronounfieldother || 'Other';
+                    if (d.pronounfield) return d.pronounfield;
+                    if (d.sex === 'Male') return 'He/Him';
+                    if (d.sex === 'Female') return 'She/Her';
+                    return '';
+                  };
+                  
+                  const pronouns = getPronouns(data);
+                  const formattedName = `${data.lastname || ''}, ${data.firstname || ''} ${pronouns ? `(${pronouns})` : ''}`.trim();
+                  
+                  const formatDate = (dateStr: string) => {
+                    if (!dateStr) return '';
+                    return new Date(dateStr).toLocaleDateString('en-US', { timeZone: 'UTC' });
+                  };
+                  
+                  const formatDateTime = (dateStr: string) => {
+                    if (!dateStr) return '';
+                    const d = new Date(dateStr);
+                    return `${d.toLocaleDateString('en-US', { timeZone: 'UTC' })} ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}`;
+                  };
+
+                  return (
+                    <div className="followup-client-header">
+                      <div className="followup-client-left">
+                        <div className="followup-client-icon-wrap">
+                          <CheckCircle2 size={32} color="#16a34a" fill="#dcfce7" />
+                        </div>
+                        <div>
+                          <h2 className="followup-client-name">{formattedName}</h2>
+                          
+                          <div className="followup-client-info-row">
+                            <span className="followup-client-info-item">Client ID: <span className="followup-client-info-value">{data.clientid}</span></span>
+                            <span className="followup-client-info-item">DOB: <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
+                            <span>SSN: <span className="followup-client-info-value">{data.ssn || ''}</span></span>
+                          </div>
+
+                          <div className="followup-client-info-row">
+                            <span className="followup-client-info-item">DOC #: <span className="followup-client-info-value">{data.docnumber || ''}</span></span>
+                            <span className="followup-client-info-item">Parole #: <span className="followup-client-info-value">{data.parolenumber || ''}</span></span>
+                            <span>MA #: <span className="followup-client-info-value">{data.manumber || ''}</span></span>
+                          </div>
+
+                          <div className="followup-client-info-row" style={{ marginBottom: 0 }}>
+                            <span className="followup-client-info-item">Admitted to Stay: <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
+                            <span>PDD: <span className="followup-client-info-value">{formatDate(data.expecteddischargedate)}</span></span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="followup-client-right">
+                        <div className="followup-client-status">
+                          <div className="followup-client-status-dot"></div>
+                          <span className="followup-client-status-text">
+                            {data.dischargedate ? 'Discharged' : 'Active Case'}
+                          </span>
+                        </div>
+
+                        <div className="followup-client-details">
+                          <div>
+                            <span className="followup-client-details-label">Program:</span>
+                            {data.programname || ''}
+                          </div>
+                          <div>
+                            <span className="followup-client-details-label">Funding Source:</span>
+                            {data.fundingsourcename || ''}
+                            <span className="followup-client-details-label-spaced">Case Manager:</span>
+                            {data.cmfirst ? `${data.cmfirst} ${data.cmlast}` : ''}
+                          </div>
+                          <div>
+                            <span className="followup-client-details-label">Room:</span>
+                            {data.roomname || 'N/A'}
+                            <span className="followup-client-details-label-spaced">Bed:</span>
+                            {data.bedname || 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                
+                <form id="followupForm" onSubmit={handleSubmit} className="task-form-layout" style={{ marginTop: 0 }}>
                 {error && (
                   <div className="task-alert task-alert-error" style={{ gridColumn: '1 / -1' }}>
                     <AlertCircle size={16} />
@@ -331,19 +464,19 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                     Contact Information
                   </h3>
                   <div className="task-form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    {details?.ContactInfo && details.ContactInfo.map((contact: any, i: number) => (
-                      <div key={i} className="followup-contact-card" style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', gridColumn: details.ContactInfo.length === 1 ? '1 / -1' : undefined }}>
-                        <div style={{ marginBottom: '12px' }}>
-                          <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', color: '#0f172a' }}>
+                    {(details?.ContactInfo || details?.CONTACTINFO) && (details?.ContactInfo || details?.CONTACTINFO).map((contact: any, i: number) => (
+                      <div key={i} className={`followup-contact-card ${(details?.ContactInfo || details?.CONTACTINFO).length === 1 ? 'full-width' : ''}`}>
+                        <div className="followup-contact-header">
+                          <h4 className="followup-contact-name">
                             {contact.FormattedName || `${contact.FirstName} ${contact.LastName}`}
                           </h4>
                           {contact.PhoneNumbers ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '14px' }}>
+                            <div className="followup-contact-phone">
                               <Phone size={14} />
-                              <span dangerouslySetInnerHTML={{ __html: contact.PhoneNumbers.replace(/,/g, '<br />') }} />
+                              <span dangerouslySetInnerHTML={{ __html: String(contact.PhoneNumbers).replace(/,/g, '<br />') }} />
                             </div>
                           ) : (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444', fontSize: '14px', fontWeight: 500 }}>
+                            <div className="followup-contact-no-phone">
                               <AlertCircle size={14} />
                               This contact does not have a phone number.
                             </div>
@@ -351,11 +484,11 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                         </div>
                         
                         {contact.OrganizationName && (
-                          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
-                            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div className="followup-contact-org-section">
+                            <h4 className="followup-contact-org-title">
                               <Building2 size={14} /> Aftercare Facility
                             </h4>
-                            <div style={{ color: '#0f172a', fontSize: '14px' }}>
+                            <div className="followup-contact-org-text">
                               <strong>{contact.OrganizationName}</strong><br />
                               {contact.StreetAddress1}<br />
                               {contact.StreetAddress2 && <>{contact.StreetAddress2}<br /></>}
@@ -365,11 +498,11 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                         )}
                         
                         {contact.AftercareAppointmentDate && (
-                          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
-                            <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#475569', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div className="followup-contact-org-section">
+                            <h4 className="followup-contact-org-title">
                               <Calendar size={14} /> Appointment Details
                             </h4>
-                            <div style={{ color: '#0f172a', fontSize: '14px' }}>
+                            <div className="followup-contact-org-text">
                               {new Date(contact.AftercareAppointmentDate).toLocaleDateString()} @ {new Date(`2000-01-01T${contact.AftercareAppointmentTime}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </div>
@@ -464,11 +597,11 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                   </div>
                 )}
 
-                {details?.AttemptHistory && details.AttemptHistory.length > 0 && (
+                {(details?.AttemptHistory || details?.ATTEMPTHISTORY) && (details?.AttemptHistory || details?.ATTEMPTHISTORY).length > 0 && (
                   <div className="task-form-section" style={{ gridColumn: '1 / -1' }}>
                     <h3 className="task-form-section-title">
                       <Clock size={16} className="task-form-section-icon" />
-                      Attempt History ({details.AttemptHistory.length})
+                      Attempt History ({(details?.AttemptHistory || details?.ATTEMPTHISTORY).length})
                     </h3>
                     <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
@@ -481,8 +614,8 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           </tr>
                         </thead>
                         <tbody>
-                          {details.AttemptHistory.map((attempt: any, i: number) => (
-                            <tr key={i} style={{ borderBottom: i < details.AttemptHistory.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                          {(details?.AttemptHistory || details?.ATTEMPTHISTORY).map((attempt: any, i: number) => (
+                            <tr key={i} style={{ borderBottom: i < (details?.AttemptHistory || details?.ATTEMPTHISTORY).length - 1 ? '1px solid #e2e8f0' : 'none' }}>
                               <td style={{ padding: '12px 16px', color: '#0f172a' }}>{attempt.CreateDate}</td>
                               <td style={{ padding: '12px 16px', color: '#0f172a' }}>{attempt.CreatedByName}</td>
                               <td style={{ padding: '12px 16px', color: '#0f172a' }}>{attempt.PhoneNumber || 'N/A'}</td>
@@ -496,10 +629,11 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                 )}
                 
               </form>
+              </div>
             )}
           </div>
           
-          <div className="task-modal-footer">
+          <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end', gap: '12px', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
             <button className="task-btn task-btn-secondary" onClick={onClose} disabled={saving}>
               Cancel
             </button>
@@ -512,7 +646,8 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
             </button>
           </div>
         </motion.div>
-      </div>
+        </motion.div>
+      )}
     </AnimatePresence>,
     document.body
   );

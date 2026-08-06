@@ -882,6 +882,20 @@ export async function getContactPhoneNumbers(destinationId: string | number): Pr
   return Array.isArray(json) ? json : parseCFQuery(json);
 }
 
+export async function getWhereaboutsContactMethods(): Promise<{ value: string; label: string }[]> {
+  const response = await fetch(`/ReactTaskBoard/GetWhereaboutsContactMethods`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  const json = await safeJsonParse(response);
+  return Array.isArray(json) ? json : parseCFQuery(json);
+}
+
 export async function getContactMethods(): Promise<{ value: string; label: string }[]> {
   const response = await fetch(`/ReactTaskBoard/GetContactMethods`, {
     method: 'GET',

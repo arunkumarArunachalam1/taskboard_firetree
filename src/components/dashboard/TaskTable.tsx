@@ -10,10 +10,9 @@ import { NewWhereaboutsTaskModal } from './NewWhereaboutsTaskModal';
 import { FilterPanel } from './FilterPanel';
 import { ViewTaskModal } from './ViewTaskModal';
 import { EditWhereaboutsModal } from './EditWhereaboutsModal';
-import { FollowupTaskModal } from './FollowupTaskModal';
-import { WhereaboutsCompleteModal } from './WhereaboutsCompleteModal';
-import { FollowupCompleteModal } from './FollowupCompleteModal';
 
+import { WhereaboutsCompleteModal } from './WhereaboutsCompleteModal';
+// import { FollowupCompleteModal } from './FollowupCompleteModal';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -219,10 +218,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [isWhereaboutsTaskModalOpen, setIsWhereaboutsTaskModalOpen] = useState(false);
   const [isViewTaskModalOpen, setIsViewTaskModalOpen] = useState(false);
   const [isEditWhereaboutsModalOpen, setIsEditWhereaboutsModalOpen] = useState(false);
-  const [isFollowupModalOpen, setIsFollowupModalOpen] = useState(false);
+  
+  
   const [isWhereaboutsCompleteModalOpen, setIsWhereaboutsCompleteModalOpen] = useState(false);
-  const [isFollowupCompleteModalOpen, setIsFollowupCompleteModalOpen] = useState(false);
-  const [followupCompleteTaskId, setFollowupCompleteTaskId] = useState<number | null>(null);
+  // const [isFollowupCompleteModalOpen, setIsFollowupCompleteModalOpen] = useState(false);
+  // const [followupCompleteTaskId, setFollowupCompleteTaskId] = useState<number | null>(null);
   const [whereaboutsCompleteIds, setWhereaboutsCompleteIds] = useState<number[]>([]);
   const [whereaboutsCompleteClientId, setWhereaboutsCompleteClientId] = useState<number>(0);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
@@ -343,8 +343,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
       return;
     }
     if (taskTypeId === 3 || typeStr.includes('follow')) {
-      setSelectedTaskId(task.TaskID);
-      setIsFollowupModalOpen(true);
+      showToast('Followup tasks will be available in a future release.', 'info');
+      // setFollowupCompleteTaskId(task.TaskID);
+      // setIsFollowupCompleteModalOpen(true);
       return;
     }
     if (taskTypeId === 1 || typeStr.includes('general') || (!typeStr.includes('whereabout') && !typeStr.includes('follow'))) {
@@ -448,8 +449,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
     }
 
     if (selectedFollowupTasks.length === 1) {
-      setFollowupCompleteTaskId(selectedFollowupTasks[0].TaskID);
-      setIsFollowupCompleteModalOpen(true);
+      showToast('Followup tasks will be available in a future release.', 'info');
+      // setFollowupCompleteTaskId(selectedFollowupTasks[0].TaskID);
+      // setIsFollowupCompleteModalOpen(true);
       return;
     }
 
@@ -490,8 +492,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
     }
     
     if (task && Number(task.TaskTypeID) === 3) {
-      setFollowupCompleteTaskId(taskId);
-      setIsFollowupCompleteModalOpen(true);
+      showToast('Followup tasks will be available in a future release.', 'info');
+      // setFollowupCompleteTaskId(taskId);
+      // setIsFollowupCompleteModalOpen(true);
       return;
     }
 
@@ -1354,15 +1357,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         showToast={showToast}
       />
 
-      <FollowupTaskModal
-        isOpen={isFollowupModalOpen}
-        onClose={() => setIsFollowupModalOpen(false)}
-        onSuccess={() => {
-          showToast('Followup Task completed successfully.', 'success');
-          if (onRefresh) onRefresh();
-        }}
-        taskId={selectedTaskId}
-      />
+
 
       <WhereaboutsCompleteModal
         isOpen={isWhereaboutsCompleteModalOpen}
@@ -1377,7 +1372,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         selectedClientId={whereaboutsCompleteClientId}
       />
 
-      {followupCompleteTaskId !== null && (
+      {/* followupCompleteTaskId !== null && (
         <FollowupCompleteModal
           isOpen={isFollowupCompleteModalOpen}
           onClose={() => setIsFollowupCompleteModalOpen(false)}
@@ -1388,7 +1383,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             else onPageChange(page);
           }}
         />
-      )}
+      ) */}
 
     </div>
   );

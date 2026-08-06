@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, User, PhoneCall, Info, Save } from 'lucide-react';
+import { X, Calendar, Clock, User, PhoneCall, Save } from 'lucide-react';
 import { getWhereaboutsTaskDetails, saveEditWhereaboutsTask } from '../../services/dashboard.service';
 
 interface EditWhereaboutsModalProps {
@@ -315,62 +315,22 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="task-modal-content"
-            style={{
-              maxWidth: '680px',
-              width: '95%',
-              background: '#FFFFFF',
-              borderRadius: '16px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
-              border: '1px solid #E5E7EB',
-              overflow: 'hidden'
-            }}
+            className="task-modal-content ew-modal-content"
           >
             {/* Header */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '20px 24px',
-                borderBottom: '1px solid #E5E7EB',
-                background: '#FFFFFF'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div
-                  style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '10px',
-                    backgroundColor: '#F5F3FF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#8B5CF6'
-                  }}
-                >
+            <div className="ew-header">
+              <div className="ew-header-left">
+                <div className="ew-header-icon-wrap">
                   <Calendar size={22} color="#8B5CF6" />
                 </div>
-                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#111827' }}>
+                <h2 className="ew-header-title">
                   Edit Whereabouts
                 </h2>
               </div>
               <button
                 onClick={onClose}
                 type="button"
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  border: '1px solid #E5E7EB',
-                  background: '#FFFFFF',
-                  color: '#6B7280',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer'
-                }}
+                className="ew-close-btn"
               >
                 <X size={18} />
               </button>
@@ -378,15 +338,15 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
 
             {/* Body */}
             <form onSubmit={handleSubmit}>
-              <div style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(85vh - 140px)' }}>
+              <div className="ew-body">
                 {loading && (
-                  <div style={{ textAlign: 'center', padding: '30px', color: '#64748b' }}>
+                  <div className="ew-loading">
                     Loading task details...
                   </div>
                 )}
 
                 {error && (
-                  <div className="task-alert-error" style={{ marginBottom: '16px' }}>
+                  <div className="task-alert-error ew-error">
                     {error}
                   </div>
                 )}
@@ -394,120 +354,38 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
                 {!loading && (
                   <div>
                     {/* Client & Contact Card */}
-                    <div
-                      style={{
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '12px',
-                        padding: '16px 20px',
-                        background: '#FFFFFF',
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '20px',
-                        marginBottom: '24px',
-                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)'
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '14px',
-                          borderRight: '1px solid #F3F4F6',
-                          paddingRight: '16px'
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '10px',
-                            backgroundColor: '#F5F3FF',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}
-                        >
+                    <div className="ew-client-card">
+                      <div className="ew-client-col-left">
+                        <div className="ew-icon-wrap">
                           <User size={20} color="#8B5CF6" />
                         </div>
                         <div>
-                          <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '2px', fontWeight: 500 }}>
-                            Client
-                          </div>
-                          <div style={{ fontSize: '15px', color: '#111827', fontWeight: 600 }}>
-                            {clientName || 'Philip Riehl'}
-                          </div>
+                          <div className="ew-label">Client</div>
+                          <div className="ew-value">{clientName || 'Philip Riehl'}</div>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                        <div
-                          style={{
-                            width: '42px',
-                            height: '42px',
-                            borderRadius: '10px',
-                            backgroundColor: '#F5F3FF',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}
-                        >
+                      <div className="ew-client-col-right">
+                        <div className="ew-icon-wrap">
                           <PhoneCall size={20} color="#8B5CF6" />
                         </div>
                         <div>
-                          <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '2px', fontWeight: 500 }}>
-                            Contact
-                          </div>
-                          <div style={{ fontSize: '15px', color: '#111827', fontWeight: 600 }}>
-                            {contactDisplay || 'Philip Riehl @ (717) 933-5729'}
-                          </div>
+                          <div className="ew-label">Contact</div>
+                          <div className="ew-value">{contactDisplay || 'Philip Riehl @ (717) 933-5729'}</div>
                         </div>
                       </div>
                     </div>
 
                     {/* Schedule Information Header */}
-                    <h3
-                      style={{
-                        fontSize: '15px',
-                        fontWeight: 700,
-                        color: '#111827',
-                        margin: '0 0 14px 0'
-                      }}
-                    >
+                    <h3 className="ew-section-title">
                       Schedule Information
                     </h3>
 
                     {/* Schedule Information 2x2 Grid */}
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '16px',
-                        marginBottom: '24px'
-                      }}
-                    >
+                    <div className="ew-schedule-grid">
                       {/* Expected Start Date */}
-                      <div
-                        style={{
-                          border: '1px solid #E5E7EB',
-                          borderRadius: '12px',
-                          padding: '14px 16px',
-                          background: '#FFFFFF',
-                          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)'
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '10px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            color: '#374151'
-                          }}
-                        >
+                      <div className="ew-schedule-card">
+                        <div className="ew-schedule-title">
                           <Calendar size={15} color="#8B5CF6" />
                           Expected Start Date <span style={{ color: '#DC2626' }}>*</span>
                         </div>
@@ -527,26 +405,8 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
                       </div>
 
                       {/* Expected Start Time */}
-                      <div
-                        style={{
-                          border: '1px solid #E5E7EB',
-                          borderRadius: '12px',
-                          padding: '14px 16px',
-                          background: '#FFFFFF',
-                          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)'
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '10px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            color: '#374151'
-                          }}
-                        >
+                      <div className="ew-schedule-card">
+                        <div className="ew-schedule-title">
                           <Clock size={15} color="#8B5CF6" />
                           Expected Start Time <span style={{ color: '#DC2626' }}>*</span>
                         </div>
@@ -558,26 +418,8 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
                       </div>
 
                       {/* Expected Due Date */}
-                      <div
-                        style={{
-                          border: '1px solid #E5E7EB',
-                          borderRadius: '12px',
-                          padding: '14px 16px',
-                          background: '#FFFFFF',
-                          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)'
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '10px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            color: '#374151'
-                          }}
-                        >
+                      <div className="ew-schedule-card">
+                        <div className="ew-schedule-title">
                           <Calendar size={15} color="#8B5CF6" />
                           Expected Due Date <span style={{ color: '#DC2626' }}>*</span>
                         </div>
@@ -597,26 +439,8 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
                       </div>
 
                       {/* Expected Due Time */}
-                      <div
-                        style={{
-                          border: '1px solid #E5E7EB',
-                          borderRadius: '12px',
-                          padding: '14px 16px',
-                          background: '#FFFFFF',
-                          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)'
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginBottom: '10px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            color: '#374151'
-                          }}
-                        >
+                      <div className="ew-schedule-card">
+                        <div className="ew-schedule-title">
                           <Clock size={15} color="#8B5CF6" />
                           Expected Due Time <span style={{ color: '#DC2626' }}>*</span>
                         </div>
@@ -633,51 +457,19 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
               </div>
 
               {/* Footer */}
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '16px 24px',
-                  borderTop: '1px solid #E5E7EB',
-                  background: '#FFFFFF'
-                }}
-              >
+              <div className="ew-footer">
                 <button
                   onClick={onClose}
                   type="button"
                   disabled={saving}
-                  style={{
-                    padding: '9px 20px',
-                    borderRadius: '8px',
-                    border: '1px solid #E5E7EB',
-                    background: '#FFFFFF',
-                    color: '#111827',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
+                  className="ew-btn-cancel"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || saving}
-                  style={{
-                    padding: '9px 20px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: '#7C3AED',
-                    color: '#FFFFFF',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    boxShadow: '0 2px 4px rgba(124, 58, 237, 0.25)'
-                  }}
+                  className="ew-btn-save"
                 >
                   <Save size={16} />
                   {saving ? 'Saving...' : 'Save'}
