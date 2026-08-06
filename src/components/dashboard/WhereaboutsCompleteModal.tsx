@@ -335,8 +335,8 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
   selectedTaskIds
 }) => {
   const [saving, setSaving] = useState<boolean>(false);
-  const [clientName, setClientName] = useState<string>('Quintez Hall');
-  const [contactDisplay, setContactDisplay] = useState<string>('Quintez Hall @ (223) 384-0113');
+  const [clientName, setClientName] = useState<string>('');
+  const [contactDisplay, setContactDisplay] = useState<string>('');
   const [contactDate, setContactDate] = useState<string>('');
   const [contactTime, setContactTime] = useState<string>('09:25 AM');
   const [reason, setReason] = useState<string>('');
@@ -376,9 +376,9 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
         getWhereaboutsTaskDetails(selectedTaskIds[0])
           .then((res) => {
             if (res && res.isSuccess) {
-              const cName = res.ClientName || 'Quintez Hall';
+              const cName = res.ClientName || '';
               setClientName(cName);
-              setContactDisplay(res.ContactDisplay || `${cName} @ ${res.ContactPhone || '(223) 384-0113'}`);
+              setContactDisplay(res.ContactDisplay || (cName && res.ContactPhone ? `${cName} @ ${res.ContactPhone}` : ''));
               
               if (res.isConsentReadOnly) {
                 setConsent(res.isConsent || 'no');

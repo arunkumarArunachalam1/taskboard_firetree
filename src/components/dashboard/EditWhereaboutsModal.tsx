@@ -221,10 +221,10 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
   const [saving, setSaving] = useState<boolean>(false);
   const [clientName, setClientName] = useState<string>('');
   const [contactDisplay, setContactDisplay] = useState<string>('');
-  const [startDate, setStartDate] = useState<string>('2026-05-05');
-  const [startTime, setStartTime] = useState<string>('09:30 PM');
-  const [dueDate, setDueDate] = useState<string>('2026-05-05');
-  const [dueTime, setDueTime] = useState<string>('10:30 PM');
+  const [startDate, setStartDate] = useState<string>('');
+  const [startTime, setStartTime] = useState<string>('');
+  const [dueDate, setDueDate] = useState<string>('');
+  const [dueTime, setDueTime] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -235,9 +235,9 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
       getWhereaboutsTaskDetails(taskId)
         .then((taskRes) => {
           if (taskRes && (taskRes.isSuccess || taskRes.ISSUCCESS)) {
-            const cName = taskRes.ClientName || 'Philip Riehl';
+            const cName = taskRes.ClientName || '';
             setClientName(cName);
-            setContactDisplay(taskRes.ContactDisplay || `${cName} @ ${taskRes.ContactPhone || '(717) 933-5729'}`);
+            setContactDisplay(taskRes.ContactDisplay || (cName && taskRes.ContactPhone ? `${cName} @ ${taskRes.ContactPhone}` : ''));
 
             if (taskRes.ExpectedStartDate) setStartDate(formatToYYYYMMDD(taskRes.ExpectedStartDate));
             if (taskRes.ExpectedStartTime) setStartTime(taskRes.ExpectedStartTime);
@@ -256,10 +256,10 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
     } else {
       setClientName('');
       setContactDisplay('');
-      setStartDate('2026-05-05');
-      setStartTime('09:30 PM');
-      setDueDate('2026-05-05');
-      setDueTime('10:30 PM');
+      setStartDate('');
+      setStartTime('');
+      setDueDate('');
+      setDueTime('');
       setError(null);
     }
   }, [isOpen, taskId]);
