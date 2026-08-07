@@ -268,6 +268,24 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
     e.preventDefault();
     if (!taskId) return;
 
+    if (startDate && dueDate) {
+      if (startDate > dueDate) {
+        const errMsg = "Expected Start Date cannot be greater than Expected Due Date.";
+        setError(errMsg);
+        if (showToast) showToast(errMsg, 'error');
+        return;
+      }
+      
+      if (startDate === dueDate && startTime && dueTime) {
+        if (startTime > dueTime) {
+          const errMsg = "Expected Start Time cannot be greater than Expected Due Time on the same day.";
+          setError(errMsg);
+          if (showToast) showToast(errMsg, 'error');
+          return;
+        }
+      }
+    }
+
     setSaving(true);
     setError(null);
     try {
@@ -399,6 +417,7 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
                             onChange={(e) => setStartDate(e.target.value)}
                             onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                             required
+                            max={dueDate || undefined}
                             className="task-form-input task-form-input-with-icon-left task-form-input-h38"
                           />
                         </div>
@@ -433,6 +452,7 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
                             onChange={(e) => setDueDate(e.target.value)}
                             onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                             required
+                            min={startDate || undefined}
                             className="task-form-input task-form-input-with-icon-left task-form-input-h38"
                           />
                         </div>
