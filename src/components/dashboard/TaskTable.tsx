@@ -12,7 +12,7 @@ import { ViewTaskModal } from './ViewTaskModal';
 import { EditWhereaboutsModal } from './EditWhereaboutsModal';
 
 import { WhereaboutsCompleteModal } from './WhereaboutsCompleteModal';
-// import { FollowupCompleteModal } from './FollowupCompleteModal';
+import { FollowupCompleteModal } from './FollowupCompleteModal';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -221,8 +221,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
   
   
   const [isWhereaboutsCompleteModalOpen, setIsWhereaboutsCompleteModalOpen] = useState(false);
-  // const [isFollowupCompleteModalOpen, setIsFollowupCompleteModalOpen] = useState(false);
-  // const [followupCompleteTaskId, setFollowupCompleteTaskId] = useState<number | null>(null);
+  const [isFollowupCompleteModalOpen, setIsFollowupCompleteModalOpen] = useState(false);
+  const [followupCompleteTaskId, setFollowupCompleteTaskId] = useState<number | null>(null);
   const [whereaboutsCompleteIds, setWhereaboutsCompleteIds] = useState<number[]>([]);
   const [whereaboutsCompleteClientId, setWhereaboutsCompleteClientId] = useState<number>(0);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
@@ -343,9 +343,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
       return;
     }
     if (taskTypeId === 3 || typeStr.includes('follow')) {
-      showToast('Followup tasks will be available in a future release.', 'info');
-      // setFollowupCompleteTaskId(task.TaskID);
-      // setIsFollowupCompleteModalOpen(true);
+      setFollowupCompleteTaskId(task.TaskID);
+      setIsFollowupCompleteModalOpen(true);
       return;
     }
     if (taskTypeId === 1 || typeStr.includes('general') || (!typeStr.includes('whereabout') && !typeStr.includes('follow'))) {
@@ -425,33 +424,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
     const selectedWhereaboutsTasks = data ? data.tasks.filter(t => selectedIds.includes(t.TaskID) && Number(t.TaskTypeID) === 2) : [];
     const selectedFollowupTasks = data ? data.tasks.filter(t => selectedIds.includes(t.TaskID) && Number(t.TaskTypeID) === 3) : [];
-    
-    if (selectedWhereaboutsTasks.length > 0 && selectedFollowupTasks.length > 0) {
-      showToast('You cannot complete Whereabouts and Followup tasks at the same time.', 'error');
-      return;
-    }
-    
-    if (selectedWhereaboutsTasks.length > 1) {
-      showToast('You can only complete one Whereabouts task at a time.', 'error');
-      return;
-    }
-    
-    if (selectedFollowupTasks.length > 1) {
-      showToast('You can only complete one Followup task at a time.', 'error');
-      return;
-    }
-    
     if (selectedWhereaboutsTasks.length === 1) {
       setWhereaboutsCompleteIds(selectedWhereaboutsTasks.map(t => t.TaskID));
       setWhereaboutsCompleteClientId(Number((selectedWhereaboutsTasks[0] as any)?.ClientID || 0));
       setIsWhereaboutsCompleteModalOpen(true);
-      return;
-    }
-
-    if (selectedFollowupTasks.length === 1) {
-      showToast('Followup tasks will be available in a future release.', 'info');
-      // setFollowupCompleteTaskId(selectedFollowupTasks[0].TaskID);
-      // setIsFollowupCompleteModalOpen(true);
       return;
     }
 
@@ -488,13 +464,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
       setWhereaboutsCompleteIds([taskId]);
       setWhereaboutsCompleteClientId(Number((task as any)?.ClientID || 0));
       setIsWhereaboutsCompleteModalOpen(true);
-      return;
-    }
-    
-    if (task && Number(task.TaskTypeID) === 3) {
-      showToast('Followup tasks will be available in a future release.', 'info');
-      // setFollowupCompleteTaskId(taskId);
-      // setIsFollowupCompleteModalOpen(true);
       return;
     }
 
@@ -778,7 +747,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               )}
               {listingFilters.assignedTo && (
                 <div className="active-filter-tag">
-                  Assigned User: {staffMap[listingFilters.assignedTo] || listingFilters.assignedTo}
+                  Assigned User: {listingFilters.assignedTo === 'unassigned' ? 'Unassigned' : (staffMap[listingFilters.assignedTo] || listingFilters.assignedTo)}
                   <X size={14} className="active-filter-tag-close" onClick={() => clearFilter('assignedTo')} />
                 </div>
               )}
@@ -1372,7 +1341,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         selectedClientId={whereaboutsCompleteClientId}
       />
 
-      {/* followupCompleteTaskId !== null && (
+      {followupCompleteTaskId !== null && (
         <FollowupCompleteModal
           isOpen={isFollowupCompleteModalOpen}
           onClose={() => setIsFollowupCompleteModalOpen(false)}
@@ -1383,7 +1352,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
             else onPageChange(page);
           }}
         />
-      ) */}
+      )}
 
     </div>
   );

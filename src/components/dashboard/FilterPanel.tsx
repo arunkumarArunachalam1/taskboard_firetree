@@ -240,7 +240,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   };
 
   // Convert to generic DropdownOption lists
-  const staffOptions:     DropdownOption[] = staffList.map(s => ({ value: String(s.Value), label: s.Display }));
+  const staffOptions: DropdownOption[] = [
+    { value: 'unassigned', label: 'Unassigned' }, // Added Unassigned option
+    ...staffList.map(s => ({ value: String(s.Value), label: s.Display }))
+  ];
   const roleOptions:      DropdownOption[] = roles.map(r => ({ value: String(r.value), label: r.label }));
   const completedOptions: DropdownOption[] = [
     { value: '0', label: 'No' },

@@ -65,7 +65,10 @@ export async function getDashboardKPIs(filters?: DashboardFilters): Promise<Dash
   let url = `/ReactTaskBoard/getDashboardKPIs?_=${Date.now()}`;
 
   if (filters) {
-    if (filters.assignedTo) url += `&assignedTo=${encodeURIComponent(filters.assignedTo)}`;
+    if (filters.assignedTo) {
+      const assignedVal = filters.assignedTo === 'unassigned' ? '0' : filters.assignedTo;
+      url += `&assignedTo=${encodeURIComponent(assignedVal)}`;
+    }
     if (filters.role) url += `&role=${encodeURIComponent(filters.role)}`;
     if (filters.status && filters.status !== 'all') url += `&status=${encodeURIComponent(filters.status)}`;
     if (filters.taskType) url += `&taskType=${encodeURIComponent(filters.taskType)}`;
@@ -141,7 +144,10 @@ export async function getDashboardCharts(filters?: DashboardFilters): Promise<Da
   let url = `/ReactTaskBoard/getDashboardCharts?_=${Date.now()}`;
 
   if (filters) {
-    if (filters.assignedTo) url += `&assignedTo=${encodeURIComponent(filters.assignedTo)}`;
+    if (filters.assignedTo) {
+      const assignedVal = filters.assignedTo === 'unassigned' ? '0' : filters.assignedTo;
+      url += `&assignedTo=${encodeURIComponent(assignedVal)}`;
+    }
     if (filters.role) url += `&role=${encodeURIComponent(filters.role)}`;
     if (filters.status && filters.status !== 'all') url += `&status=${encodeURIComponent(filters.status)}`;
     if (filters.taskType) url += `&taskType=${encodeURIComponent(filters.taskType)}`;
@@ -320,7 +326,8 @@ export async function getTaskList(
 
     if (filters.assignedTo) {
       filterKeys.push('AssignedTo');
-      filterValues.push(`tableFilter.AssignedTo=${encodeURIComponent(`[0][AssignedTo][=][${filters.assignedTo}][]`)}`);
+      const assignedVal = filters.assignedTo === 'unassigned' ? '0' : filters.assignedTo;
+      filterValues.push(`tableFilter.AssignedTo=${encodeURIComponent(`[0][AssignedTo][=][${assignedVal}][]`)}`);
     }
 
     if (filters.role) {
@@ -1088,6 +1095,25 @@ export async function getWhereaboutsDispositions(): Promise<any> {
   }
 }
 
+export async function getFollowupDispositions(): Promise<any> {
+  const response = await fetch('/ReactTaskBoard/GetOptionSetPopulations?uuid=94142a49-6568-4a06-a933-c7f989fee8a6', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) return [];
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return [];
+  }
+}
+
 export async function getTaskDetails(taskId: number): Promise<any> {
   const url = `/ReactTaskBoard/GetTaskDetails?taskID=${taskId}`;
   const response = await fetch(url, {
@@ -1161,7 +1187,7 @@ export async function saveFollowupTask(taskId: number, payload: any = {}): Promi
     formData.append(key, String(payload[key]));
   });
 
-  const response = await fetch('/ReactTaskBoard/CompleteFollowupTasks', {
+  const response = await fetch('/ReactTaskBoard/SaveFollowup', {
     method: 'POST',
     headers: {
       'Accept': 'application/json',

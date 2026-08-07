@@ -345,7 +345,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
   const [methods, setMethods] = useState<{value: string, label: string}[]>([]);
   const [dispositions, setDispositions] = useState<{ value: string; label: string }[]>([]);
   const [disposition, setDisposition] = useState<string>('');
-  const [consent, setConsent] = useState<'yes' | 'no'>('no');
+  const [consent, setConsent] = useState<'yes' | 'no' | ''>('');
   const [consentExpiration, setConsentExpiration] = useState<string>('');
   const [documentationFile, setDocumentationFile] = useState<File | null>(null);
   const [notes, setNotes] = useState<string>('');
@@ -366,7 +366,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
       setReason('10');
       setMethodId('1');
       setDisposition('');
-      setConsent('no');
+      setConsent('');
       setConsentExpiration('');
       setDocumentationFile(null);
       setNotes('');
@@ -456,6 +456,11 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
 
     if (!contactDate || !contactTime || !reason || !methodId || !disposition) {
       setError('Please fill out all required fields.');
+      return;
+    }
+
+    if (String(reason) !== '10' && !consent) {
+      setError('Please specify if there is consent.');
       return;
     }
 
@@ -651,7 +656,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                         <div className="wc-divider"></div>
 
                         <div className="wc-consent-exp-col">
-                          <label className="wc-consent-exp-label">Expiration Date</label>
+                          <label className="wc-consent-exp-label">Consent Expiration</label>
                           <div className={`wc-consent-exp-value ${consent === 'yes' ? 'active' : 'inactive'}`}>
                             {consent === 'yes' && consentExpiration ? (
                               (() => {

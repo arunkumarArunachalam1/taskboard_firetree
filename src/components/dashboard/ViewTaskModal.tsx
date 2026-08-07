@@ -199,7 +199,7 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
           <div className="vt-history-body">
             <div className="vt-history-action">Assigned</div>
             <div className="vt-history-who">N/A</div>
-            <div className="vt-history-when">07/02/2026 10:32 PM</div>
+            <div className="vt-history-when">N/A</div>
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Calendar, Clock, User, Phone, Building2, Search, ChevronDown, ChevronUp, AlertCircle, FileText, ClipboardCheck, MessageSquare, CheckCircle2 } from 'lucide-react';
-import { getFollowupModalData, saveFollowupTask, getContactMethods, getWhereaboutsDispositions } from '../../services/dashboard.service';
+import { X, Save, Calendar, Clock, User, Phone, Building2, Search, ChevronDown, ChevronUp, AlertCircle, FileText, ClipboardCheck, MessageSquare, CheckCircle2, Minus, ArrowUpDown, Paperclip, Upload } from 'lucide-react';
+import { getFollowupModalData, saveFollowupTask, getContactMethods, getFollowupDispositions } from '../../services/dashboard.service';
 
 interface FollowupCompleteModalProps {
   isOpen: boolean;
@@ -31,8 +31,8 @@ const SearchableCombobox: React.FC<{ options: ComboboxOption[], value: string | 
   }, []);
 
   const selectedOption = options.find(o => String(o.value) === String(value));
-  const filteredOptions = options.filter(o => 
-    (o.label || '').toString().toLowerCase().includes((search || '').toLowerCase()) || 
+  const filteredOptions = options.filter(o =>
+    (o.label || '').toString().toLowerCase().includes((search || '').toLowerCase()) ||
     (o.secondary && (o.secondary || '').toString().toLowerCase().includes((search || '').toLowerCase()))
   );
 
@@ -123,24 +123,24 @@ const CustomTimePicker: React.FC<{ value: string, onChange: (val: string) => voi
 
   const handleBlur = () => {
     const parsed24h = formatTo24h(inputValue);
-    if (parsed24h) { onChange(parsed24h); setInputValue(formatTo12h(parsed24h)); } 
+    if (parsed24h) { onChange(parsed24h); setInputValue(formatTo12h(parsed24h)); }
     else { setInputValue(formatTo12h(value)); }
   };
 
   return (
-    <div className="custom-time-picker" ref={containerRef}>
-      <input type="text" className="task-form-input task-form-input-with-icon" value={inputValue} onChange={(e) => { setInputValue(e.target.value); const p = formatTo24h(e.target.value); if(p) onChange(p); }} onBlur={handleBlur} onFocus={() => setIsOpen(true)} onKeyDown={(e) => { if(e.key === 'Enter'){ e.preventDefault(); handleBlur(); setIsOpen(false); } if(e.key === 'Escape'){ setIsOpen(false); setInputValue(formatTo12h(value)); } }} placeholder="hh:mm AM/PM" required={required} />
-      <Clock size={16} className="task-input-icon" />
+    <div className="custom-time-picker" ref={containerRef} style={{ position: 'relative' }}>
+      <input type="text" className="task-form-input task-form-input-with-icon-right" style={{ paddingRight: '36px' }} value={inputValue} onChange={(e) => { setInputValue(e.target.value); const p = formatTo24h(e.target.value); if (p) onChange(p); }} onBlur={handleBlur} onFocus={() => setIsOpen(true)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleBlur(); setIsOpen(false); } if (e.key === 'Escape') { setIsOpen(false); setInputValue(formatTo12h(value)); } }} placeholder="hh:mm AM/PM" required={required} />
+      <Clock size={16} className="task-input-icon-right" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
       {isOpen && (
         <div className="time-picker-dropdown">
           <div className="time-picker-columns">
             <div className="time-picker-column">
-              {['12','01','02','03','04','05','06','07','08','09','10','11'].map(h => (
+              {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map(h => (
                 <div key={h} className={`time-picker-item ${formatTo12h(value).split(':')[0] === h ? 'selected' : ''}`} onMouseDown={(e) => { e.preventDefault(); const parts = formatTo12h(value).split(/[: ]/); const m = parts[1] || '00'; const a = parts[2] || 'PM'; onChange(formatTo24h(`${h}:${m} ${a}`)); setInputValue(`${h}:${m} ${a}`); }}>{h}</div>
               ))}
             </div>
             <div className="time-picker-column">
-              {['00','05','10','15','20','25','30','35','40','45','50','55'].map(m => (
+              {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
                 <div key={m} className={`time-picker-item ${formatTo12h(value).split(/[: ]/)[1] === m ? 'selected' : ''}`} onMouseDown={(e) => { e.preventDefault(); const parts = formatTo12h(value).split(/[: ]/); const h = parts[0] || '12'; const a = parts[2] || 'PM'; onChange(formatTo24h(`${h}:${m} ${a}`)); setInputValue(`${h}:${m} ${a}`); }}>{m}</div>
               ))}
             </div>
@@ -165,24 +165,28 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [details, setDetails] = useState<any>(null);
-  
+
   // Dropdown options
   const [methods, setMethods] = useState<ComboboxOption[]>([]);
+  const [rawMethods, setRawMethods] = useState<any[]>([]);
   const [dispositions, setDispositions] = useState<ComboboxOption[]>([]);
-  
+
   // Form State
   const [methodId, setMethodId] = useState<number | string>('');
   const [dispositionId, setDispositionId] = useState<number | string>('');
   const [contactDate, setContactDate] = useState('');
   const [contactTime, setContactTime] = useState('');
   const [notes, setNotes] = useState('');
-  
+
   // Followup specific state
   const [attendedTreatment, setAttendedTreatment] = useState<string>('');
+  const [interestedInReturning, setInterestedInReturning] = useState<string>('');
+  const [isSober, setIsSober] = useState<string>('');
+  const [attendingSupportMeetings, setAttendingSupportMeetings] = useState<string>('');
   const [rescheduledDate, setRescheduledDate] = useState('');
   const [rescheduledTime, setRescheduledTime] = useState('');
   const [comments, setComments] = useState('');
-  
+
   const [error, setError] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -199,28 +203,29 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
       const [followupDetails, methodsList, dispositionsList] = await Promise.all([
         getFollowupModalData(selectedTaskId),
         getContactMethods(),
-        getWhereaboutsDispositions()
+        getFollowupDispositions()
       ]);
-      
+
       setDetails(followupDetails);
       setMethods(methodsList.map((m: any) => ({ label: m.label, value: m.value })));
+      setRawMethods(methodsList);
       setDispositions(dispositionsList.map((m: any) => ({ label: m.label, value: m.value })));
-      
+
       // Default Date/Time
       const now = new Date();
       const yr = now.getFullYear();
       const mo = String(now.getMonth() + 1).padStart(2, '0');
       const da = String(now.getDate()).padStart(2, '0');
       setContactDate(`${yr}-${mo}-${da}`);
-      
+
       const hr = String(now.getHours()).padStart(2, '0');
       const mi = String(now.getMinutes()).padStart(2, '0');
       setContactTime(`${hr}:${mi}`);
-      
+
       // Defaults
       const phoneMethod = methodsList.find((m: any) => (m.label || '').toString().toLowerCase().includes('phone'));
       if (phoneMethod) setMethodId(phoneMethod.value);
-      
+
     } catch (err: any) {
       setError(err.message || 'Failed to load followup details');
     } finally {
@@ -235,15 +240,14 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
       if (contentRef.current) contentRef.current.scrollTop = 0;
       return;
     }
-    
-    // For Aftercare/7-day, if Disposition indicates successful contact (not no answer/left message), Attended Treatment is required
+
     const dispStr = String(dispositionId);
-    const isNoAnswerOrLeftMessage = dispStr === '2' || dispStr === '4';
-    
+    const hideSurvey = ['2', '4', '12'].includes(dispStr);
+
     const followupType = details?.FollowupType || details?.FOLLOWUPTYPE;
-    if (followupType !== 'Funding/Parole/Probation Follow up' && !isNoAnswerOrLeftMessage) {
+    if (followupType !== 'Funding/Parole/Probation Follow up' && !hideSurvey) {
       if (!attendedTreatment) {
-        setError('Attended Treatment selection is required.');
+        setError('Question 1 (Attended Treatment) is required.');
         if (contentRef.current) contentRef.current.scrollTop = 0;
         return;
       }
@@ -252,36 +256,68 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
         if (contentRef.current) contentRef.current.scrollTop = 0;
         return;
       }
+      if (followupType === '7-Day Followup') {
+        if (!interestedInReturning) {
+          setError('Question 2 (Interested in returning) is required.');
+          if (contentRef.current) contentRef.current.scrollTop = 0;
+          return;
+        }
+        if (!isSober) {
+          setError('Question 3 (Are you sober?) is required.');
+          if (contentRef.current) contentRef.current.scrollTop = 0;
+          return;
+        }
+        if (!attendingSupportMeetings) {
+          setError('Question 4 (Attending support meetings?) is required.');
+          if (contentRef.current) contentRef.current.scrollTop = 0;
+          return;
+        }
+      }
     }
-    
+
     setSaving(true);
     setError('');
-    
+
     try {
+      const selectedPhone = rawMethods?.find((m: any) => 
+        String(m.ClientContactPhoneNumberID) === String(methodId) || 
+        String(m.ContactPhoneNumberID) === String(methodId)
+      );
+
       const payload: any = {
-        methodId,
+        methodId: 1, // Phone by default
         dispositionId,
         contactDate,
         contactTime,
         notes
       };
-      
+
+      if (selectedPhone) {
+        if (selectedPhone.ClientContactPhoneNumberID) payload.ClientContactPhoneNumberID = selectedPhone.ClientContactPhoneNumberID;
+        if (selectedPhone.ContactPhoneNumberID) payload.ContactPhoneNumberID = selectedPhone.ContactPhoneNumberID;
+        if (selectedPhone.ContactID) payload.ContactID = selectedPhone.ContactID;
+        if (selectedPhone.ClientContactID) payload.ClientContactID = selectedPhone.ClientContactID;
+      }
+
       const followupForm: any = {
-        FollowupType: (details?.FollowupType || details?.FOLLOWUPTYPE) === '7-Day Followup' ? '7-Day' : ((details?.FollowupType || details?.FOLLOWUPTYPE) === 'Aftercare Followup' ? 'Aftercare' : ''),
+        FollowupType: followupType === '7-Day Followup' ? '7-Day' : (followupType === 'Aftercare Followup' ? 'Aftercare' : ''),
         AttendedTreatment: attendedTreatment,
+        InterestedInReturningToTreatment: interestedInReturning,
+        IsSober: isSober,
+        IsAttendingMeetings: attendingSupportMeetings,
         TreatmentRescheduledDate: rescheduledDate,
         TreatmentRescheduledTime: rescheduledTime,
         Comments: comments
       };
-      
+
       payload.FollowupForm = JSON.stringify(followupForm);
-      
+
       const res = await saveFollowupTask(selectedTaskId, payload);
       if (res.isSuccess || res.ISSUCCESS) {
         onSuccess();
         onClose();
       } else {
-        throw new Error(res.errorMessage || 'Failed to save followup task.');
+        throw new Error(res.errorMessage || res.ERRORMESSAGE || 'Failed to save followup task.');
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred while saving.');
@@ -311,13 +347,13 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.2 }}
             className="vt-modal"
-            style={{ maxWidth: '1000px', width: '90%' }}
+            style={{ maxWidth: '900px', width: '95%' }}
           >
             {/* ── HEADER ── */}
             <div className="vt-header">
               <div className="vt-header-left">
                 <div className="vt-header-icon-wrap">
-                  <ClipboardCheck size={20} strokeWidth={2} />
+                  <Calendar size={20} strokeWidth={2} />
                 </div>
                 <h2 className="vt-header-title">
                   {(details?.FollowupType || details?.FOLLOWUPTYPE) || 'Followup'} for {
@@ -328,10 +364,10 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                       const row = dataArr[0];
                       let fname = '', lname = '';
                       if (Array.isArray(row) && ch.COLUMNS) {
-                        const idxF = ch.COLUMNS.findIndex((c:string)=>c.toUpperCase()==='FIRSTNAME');
-                        const idxL = ch.COLUMNS.findIndex((c:string)=>c.toUpperCase()==='LASTNAME');
-                        if (idxF>=0) fname = row[idxF];
-                        if (idxL>=0) lname = row[idxL];
+                        const idxF = ch.COLUMNS.findIndex((c: string) => c.toUpperCase() === 'FIRSTNAME');
+                        const idxL = ch.COLUMNS.findIndex((c: string) => c.toUpperCase() === 'LASTNAME');
+                        if (idxF >= 0) fname = row[idxF];
+                        if (idxL >= 0) lname = row[idxL];
                       } else {
                         fname = row.FIRSTNAME || row.FirstName || '';
                         lname = row.LASTNAME || row.LastName || '';
@@ -345,307 +381,372 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                 <X size={20} />
               </button>
             </div>
-            
+
             {/* ── BODY ── */}
             <div className="vt-body" ref={contentRef}>
               {loading ? (
                 <div className="vt-loading">Loading followup details...</div>
               ) : (
-              <div>
-                {(details?.ClientHeader || details?.CLIENTHEADER) && (() => {
-                  const headerData = details?.ClientHeader || details?.CLIENTHEADER;
-                  let data: any = {};
-                  if (headerData && headerData.COLUMNS && headerData.DATA && headerData.DATA.length > 0) {
-                    const row = headerData.DATA[0];
-                    if (Array.isArray(row)) {
-                      headerData.COLUMNS.forEach((col: string, idx: number) => { data[col.toLowerCase()] = row[idx]; });
-                    } else if (typeof row === 'object') {
-                      Object.keys(row).forEach(k => { data[k.toLowerCase()] = row[k]; });
+                <div>
+                  {(details?.ClientHeader || details?.CLIENTHEADER) && (() => {
+                    const headerData = details?.ClientHeader || details?.CLIENTHEADER;
+                    let data: any = {};
+                    if (headerData && headerData.COLUMNS && headerData.DATA && headerData.DATA.length > 0) {
+                      const row = headerData.DATA[0];
+                      if (Array.isArray(row)) {
+                        headerData.COLUMNS.forEach((col: string, idx: number) => { data[col.toLowerCase()] = row[idx]; });
+                      } else if (typeof row === 'object') {
+                        Object.keys(row).forEach(k => { data[k.toLowerCase()] = row[k]; });
+                      }
+                    } else if (Array.isArray(headerData)) {
+                      const rawData = headerData[0];
+                      if (rawData && typeof rawData === 'object') {
+                        Object.keys(rawData).forEach(k => { data[k.toLowerCase()] = rawData[k]; });
+                      }
                     }
-                  } else if (Array.isArray(headerData)) {
-                    const rawData = headerData[0];
-                    if (rawData && typeof rawData === 'object') {
-                      Object.keys(rawData).forEach(k => { data[k.toLowerCase()] = rawData[k]; });
-                    }
-                  }
-                  
-                  const getPronouns = (d: any) => {
-                    if (d.pronounfield === 'Other') return d.pronounfieldother || 'Other';
-                    if (d.pronounfield) return d.pronounfield;
-                    if (d.sex === 'Male') return 'He/Him';
-                    if (d.sex === 'Female') return 'She/Her';
-                    return '';
-                  };
-                  
-                  const pronouns = getPronouns(data);
-                  const formattedName = `${data.lastname || ''}, ${data.firstname || ''} ${pronouns ? `(${pronouns})` : ''}`.trim();
-                  
-                  const formatDate = (dateStr: string) => {
-                    if (!dateStr) return '';
-                    return new Date(dateStr).toLocaleDateString('en-US', { timeZone: 'UTC' });
-                  };
-                  
-                  const formatDateTime = (dateStr: string) => {
-                    if (!dateStr) return '';
-                    const d = new Date(dateStr);
-                    return `${d.toLocaleDateString('en-US', { timeZone: 'UTC' })} ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}`;
-                  };
 
-                  return (
-                    <div className="followup-client-header">
-                      <div className="followup-client-left">
-                        <div className="followup-client-icon-wrap">
-                          <CheckCircle2 size={32} color="#16a34a" fill="#dcfce7" />
-                        </div>
-                        <div>
-                          <h2 className="followup-client-name">{formattedName}</h2>
-                          
-                          <div className="followup-client-info-row">
-                            <span className="followup-client-info-item">Client ID: <span className="followup-client-info-value">{data.clientid}</span></span>
-                            <span className="followup-client-info-item">DOB: <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
-                            <span>SSN: <span className="followup-client-info-value">{data.ssn || ''}</span></span>
-                          </div>
+                    const getPronouns = (d: any) => {
+                      if (d.pronounfield === 'Other') return d.pronounfieldother || 'Other';
+                      if (d.pronounfield) return d.pronounfield;
+                      if (d.sex === 'Male') return 'He/Him';
+                      if (d.sex === 'Female') return 'She/Her';
+                      return '';
+                    };
 
-                          <div className="followup-client-info-row">
-                            <span className="followup-client-info-item">DOC #: <span className="followup-client-info-value">{data.docnumber || ''}</span></span>
-                            <span className="followup-client-info-item">Parole #: <span className="followup-client-info-value">{data.parolenumber || ''}</span></span>
-                            <span>MA #: <span className="followup-client-info-value">{data.manumber || ''}</span></span>
-                          </div>
+                    const pronouns = getPronouns(data);
+                    const formattedName = `${data.lastname || ''}, ${data.firstname || ''} ${pronouns ? `(${pronouns})` : ''}`.trim();
 
-                          <div className="followup-client-info-row" style={{ marginBottom: 0 }}>
-                            <span className="followup-client-info-item">Admitted to Stay: <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
-                            <span>PDD: <span className="followup-client-info-value">{formatDate(data.expecteddischargedate)}</span></span>
-                          </div>
-                        </div>
-                      </div>
+                    const formatDate = (dateStr: string) => {
+                      if (!dateStr) return '';
+                      return new Date(dateStr).toLocaleDateString('en-US', { timeZone: 'UTC' });
+                    };
 
-                      <div className="followup-client-right">
-                        <div className="followup-client-status">
-                          <div className="followup-client-status-dot"></div>
-                          <span className="followup-client-status-text">
-                            {data.dischargedate ? 'Discharged' : 'Active Case'}
-                          </span>
-                        </div>
+                    const formatDateTime = (dateStr: string) => {
+                      if (!dateStr) return '';
+                      const d = new Date(dateStr);
+                      return `${d.toLocaleDateString('en-US', { timeZone: 'UTC' })} ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}`;
+                    };
 
-                        <div className="followup-client-details">
-                          <div>
-                            <span className="followup-client-details-label">Program:</span>
-                            {data.programname || ''}
+                    return (
+                      <div className="followup-client-header" style={{ borderLeftColor: data.dischargedate ? '#881337' : '#5b21b6' }}>
+                        <div className="followup-client-left">
+                          <div className="followup-client-icon-wrap" style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                            <User size={40} color="#94a3b8" />
+                            {data.dischargedate && (
+                              <div style={{ position: 'absolute', bottom: '0', right: '0', width: '20px', height: '20px', backgroundColor: '#dc2626', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+                                <Minus size={12} color="white" strokeWidth={3} />
+                              </div>
+                            )}
                           </div>
                           <div>
-                            <span className="followup-client-details-label">Funding Source:</span>
-                            {data.fundingsourcename || ''}
-                            <span className="followup-client-details-label-spaced">Case Manager:</span>
-                            {data.cmfirst ? `${data.cmfirst} ${data.cmlast}` : ''}
+                            <h2 className="followup-client-name" style={{ color: '#5b21b6' }}>{formattedName}</h2>
+
+                            <div className="followup-client-info-row">
+                              <span className="followup-client-info-item">Client ID: <span className="followup-client-info-value">{data.clientid}</span></span>
+                              <span className="followup-client-info-item">DOB: <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
+                              <span>SSN: <span className="followup-client-info-value">{data.ssn || ''}</span></span>
+                            </div>
+
+                            <div className="followup-client-info-row">
+                              <span className="followup-client-info-item">Parole #: <span className="followup-client-info-value">{data.parolenumber || 'N/A'}</span></span>
+                              <span>MA #: <span className="followup-client-info-value">{data.manumber || ''}</span></span>
+                            </div>
+
+                            <div className="followup-client-info-row" style={{ marginBottom: 0 }}>
+                              <span className="followup-client-info-item">Admitted to Stay: <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
+                              <span>PDD: <span className="followup-client-info-value">{formatDate(data.expecteddischargedate)}</span></span>
+                            </div>
                           </div>
-                          <div>
-                            <span className="followup-client-details-label">Room:</span>
-                            {data.roomname || 'N/A'}
-                            <span className="followup-client-details-label-spaced">Bed:</span>
-                            {data.bedname || 'N/A'}
+                        </div>
+
+                        <div className="followup-client-right">
+                          <div className="followup-client-status">
+                            <div className="followup-client-status-dot" style={{ backgroundColor: data.dischargedate ? '#dc2626' : (!data.admitdate ? '#f59e0b' : '#16a34a') }}></div>
+                            <span className="followup-client-status-text" style={{ color: '#1e293b', fontWeight: 'bold' }}>
+                              {data.dischargedate ? 'Inactive Case' : (!data.admitdate ? 'Pre-Admit' : 'Active Case')}
+                            </span>
+                          </div>
+
+                          <div className="followup-client-details">
+                            <div>
+                              <span className="followup-client-details-label">Program:</span>
+                              {data.programname || ''}
+                            </div>
+                            <div>
+                              <span className="followup-client-details-label">Funding Source:</span>
+                              {data.fundingsourcename || ''}
+                              <span className="followup-client-details-label-spaced">Case Manager:</span>
+                              {data.cmfirst ? `${data.cmfirst} ${data.cmlast}` : ''}
+                            </div>
+                            <div>
+                              <span className="followup-client-details-label">Room:</span>
+                              {data.roomname || 'N/A'}
+                              <span className="followup-client-details-label-spaced">Bed:</span>
+                              {data.bedname || 'N/A'}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })()}
-                
-                <form id="followupForm" onSubmit={handleSubmit} className="task-form-layout" style={{ marginTop: 0 }}>
-                {error && (
-                  <div className="task-alert task-alert-error" style={{ gridColumn: '1 / -1' }}>
-                    <AlertCircle size={16} />
-                    <span>{error}</span>
-                  </div>
-                )}
-                
-                <div className="task-form-section" style={{ gridColumn: '1 / -1' }}>
-                  <h3 className="task-form-section-title">
-                    <User size={16} className="task-form-section-icon" />
-                    Contact Information
-                  </h3>
-                  <div className="task-form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                    {(details?.ContactInfo || details?.CONTACTINFO) && (details?.ContactInfo || details?.CONTACTINFO).map((contact: any, i: number) => (
-                      <div key={i} className={`followup-contact-card ${(details?.ContactInfo || details?.CONTACTINFO).length === 1 ? 'full-width' : ''}`}>
-                        <div className="followup-contact-header">
-                          <h4 className="followup-contact-name">
-                            {contact.FormattedName || `${contact.FirstName} ${contact.LastName}`}
-                          </h4>
-                          {contact.PhoneNumbers ? (
-                            <div className="followup-contact-phone">
-                              <Phone size={14} />
-                              <span dangerouslySetInnerHTML={{ __html: String(contact.PhoneNumbers).replace(/,/g, '<br />') }} />
-                            </div>
-                          ) : (
-                            <div className="followup-contact-no-phone">
-                              <AlertCircle size={14} />
-                              This contact does not have a phone number.
-                            </div>
-                          )}
-                        </div>
-                        
-                        {contact.OrganizationName && (
-                          <div className="followup-contact-org-section">
-                            <h4 className="followup-contact-org-title">
-                              <Building2 size={14} /> Aftercare Facility
-                            </h4>
-                            <div className="followup-contact-org-text">
-                              <strong>{contact.OrganizationName}</strong><br />
-                              {contact.StreetAddress1}<br />
-                              {contact.StreetAddress2 && <>{contact.StreetAddress2}<br /></>}
-                              {contact.CityStateZip}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {contact.AftercareAppointmentDate && (
-                          <div className="followup-contact-org-section">
-                            <h4 className="followup-contact-org-title">
-                              <Calendar size={14} /> Appointment Details
-                            </h4>
-                            <div className="followup-contact-org-text">
-                              {new Date(contact.AftercareAppointmentDate).toLocaleDateString()} @ {new Date(`2000-01-01T${contact.AftercareAppointmentTime}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                          </div>
-                        )}
+                    );
+                  })()}
+
+                  <form id="followupForm" onSubmit={handleSubmit} className="task-form-layout" style={{ marginTop: '24px' }}>
+                    {error && (
+                      <div className="task-alert task-alert-error" style={{ gridColumn: '1 / -1' }}>
+                        <AlertCircle size={16} />
+                        <span>{error}</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="task-form-section" style={{ gridColumn: '1 / -1' }}>
-                  <h3 className="task-form-section-title">
-                    <Phone size={16} className="task-form-section-icon" />
-                    Contact Log
-                  </h3>
-                  <div className="task-form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                    <div className="task-form-group">
-                      <label className="task-form-label">Contact Method</label>
-                      <SearchableCombobox options={methods} value={methodId} onChange={(val) => setMethodId(val)} placeholder="Select Method..." icon={<Phone size={16} />} />
-                    </div>
-                    <div className="task-form-group">
-                      <label className="task-form-label">Call Disposition <span className="task-required">*</span></label>
-                      <SearchableCombobox options={dispositions} value={dispositionId} onChange={(val) => setDispositionId(val)} placeholder="Select Disposition..." required />
-                    </div>
-                    <div className="task-form-group">
-                      <label className="task-form-label">Contact Date</label>
-                      <div className="task-input-icon-wrapper">
-                        <input type="date" className="task-form-input task-form-input-with-icon" value={contactDate} onChange={(e) => setContactDate(e.target.value)} required />
-                        <Calendar size={16} className="task-input-icon" />
+                    )}
+
+
+
+                    <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '16px' }}>
+
+
+
+                      {/* Attempt Header */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '4px', height: '18px', background: '#5b21b6', borderRadius: '2px' }}></div>
+                        <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                          Attempt #{(details?.AttemptHistory || details?.ATTEMPTHISTORY || []).length + 1}
+                        </h3>
                       </div>
-                    </div>
-                    <div className="task-form-group">
-                      <label className="task-form-label">Contact Time</label>
-                      <CustomTimePicker value={contactTime} onChange={(val) => setContactTime(val)} required />
-                    </div>
-                    <div className="task-form-group" style={{ gridColumn: '1 / -1' }}>
-                      <label className="task-form-label">Contact Notes</label>
-                      <textarea className="task-form-textarea" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add any notes regarding this attempt..." />
-                    </div>
-                  </div>
-                </div>
-                
-                {String(dispositionId) !== '2' && String(dispositionId) !== '4' && details?.FollowupType !== 'Funding/Parole/Probation Follow up' && (
-                  <div className="task-form-section" style={{ gridColumn: '1 / -1', background: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                    <h3 className="task-form-section-title" style={{ marginTop: 0 }}>
-                      <FileText size={16} className="task-form-section-icon" />
-                      Followup Survey: {details?.FollowupType}
-                    </h3>
-                    
-                    <div className="task-form-grid" style={{ gridTemplateColumns: '1fr' }}>
-                      <div className="task-form-group">
-                        <label className="task-form-label">Did the client attend treatment? <span className="task-required">*</span></label>
-                        <select className="task-form-input" value={attendedTreatment} onChange={(e) => setAttendedTreatment(e.target.value)} required>
-                          <option value="">-- Select Option --</option>
-                          <option value="1">Yes</option>
-                          <option value="2">No</option>
-                          <option value="4">Rescheduled</option>
-                        </select>
-                      </div>
-                      
-                      {attendedTreatment === '4' && (
+
+                      {/* 4-column Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
                         <div className="task-form-group">
-                          <label className="task-form-label">Rescheduled Date and Time <span className="task-required">*</span></label>
-                          <div style={{ display: 'flex', gap: '16px' }}>
-                            <div className="task-input-icon-wrapper" style={{ flex: 1 }}>
-                              <input type="date" className="task-form-input task-form-input-with-icon" value={rescheduledDate} onChange={(e) => setRescheduledDate(e.target.value)} required />
-                              <Calendar size={16} className="task-input-icon" />
+                          <label className="task-form-label">Call Date <span style={{ color: '#ef4444' }}>*</span></label>
+                          <input type="date" className="task-form-input" value={contactDate} onChange={(e) => setContactDate(e.target.value)} required />
+                        </div>
+                        <div className="task-form-group">
+                          <label className="task-form-label">Call Time <span style={{ color: '#ef4444' }}>*</span></label>
+                          <CustomTimePicker value={contactTime} onChange={(val) => setContactTime(val)} required />
+                        </div>
+                        <div className="task-form-group">
+                          <label className="task-form-label">Contact Phone/Email</label>
+                          <SearchableCombobox options={methods} value={methodId} onChange={(val) => setMethodId(val)} placeholder="" />
+                        </div>
+                        <div className="task-form-group">
+                          <label className="task-form-label">Call Disposition</label>
+                          <SearchableCombobox options={dispositions} value={dispositionId} onChange={(val) => setDispositionId(val)} placeholder="" required />
+                        </div>
+                      </div>
+
+                      {/* Survey Box */}
+                      {(details?.FollowupType || details?.FOLLOWUPTYPE) !== 'Funding/Parole/Probation Follow up' && !['2', '4', '12'].includes(String(dispositionId)) && (
+                        <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 24px' }}>
+
+                            {/* Q1 */}
+                            <div className="task-form-group" style={{ gridColumn: (details?.FollowupType || details?.FOLLOWUPTYPE) === '7-Day Followup' ? 'span 1' : '1 / -1', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+                                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '22px', background: '#7c3aed', color: '#fff', fontSize: '12px', fontWeight: '600', borderRadius: '4px' }}>1</span>
+                                  <label style={{ margin: 0, fontWeight: '600', color: '#1e293b', fontSize: '14px', lineHeight: '22px' }}>Did you attend your aftercare appointment? <span style={{ color: '#ef4444' }}>*</span></label>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div style={{ display: 'flex', gap: '20px', marginLeft: '34px' }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+                                    <input type="radio" name="q1" value="1" checked={attendedTreatment === '1'} onChange={(e) => setAttendedTreatment(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                    Yes
+                                  </label>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+                                    <input type="radio" name="q1" value="2" checked={attendedTreatment === '2'} onChange={(e) => setAttendedTreatment(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                    No
+                                  </label>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+                                    <input type="radio" name="q1" value="4" checked={attendedTreatment === '4'} onChange={(e) => setAttendedTreatment(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                    No, but rescheduled it for
+                                  </label>
+                                </div>
+                                {attendedTreatment === '4' && (
+                                  <div style={{ display: 'flex', gap: '16px', marginLeft: '34px' }}>
+                                    <div className="task-input-icon-wrapper" style={{ flex: 1 }}>
+                                      <input type="date" className="task-form-input task-form-input-with-icon-right" style={{ paddingRight: '36px', background: '#fff' }} value={rescheduledDate} onChange={(e) => setRescheduledDate(e.target.value)} required />
+                                      <Calendar size={16} className="task-input-icon-right" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                      <CustomTimePicker value={rescheduledTime} onChange={(val) => setRescheduledTime(val)} required />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div style={{ flex: 1 }}>
-                              <CustomTimePicker value={rescheduledTime} onChange={(val) => setRescheduledTime(val)} required />
-                            </div>
+
+                            {(details?.FollowupType || details?.FOLLOWUPTYPE) === '7-Day Followup' && (
+                              <>
+                                {/* Q2 */}
+                                <div className="task-form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                                  <div>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+                                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '22px', background: '#7c3aed', color: '#fff', fontSize: '12px', fontWeight: '600', borderRadius: '4px' }}>2</span>
+                                      <label style={{ margin: 0, fontWeight: '600', color: '#1e293b', fontSize: '14px', lineHeight: '22px' }}>Are you interested in returning to treatment at this time? <span style={{ color: '#ef4444' }}>*</span></label>
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '20px', marginLeft: '34px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+                                      <input type="radio" name="q2" value="Yes" checked={interestedInReturning === 'Yes'} onChange={(e) => setInterestedInReturning(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                      Yes
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+                                      <input type="radio" name="q2" value="No" checked={interestedInReturning === 'No'} onChange={(e) => setInterestedInReturning(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                      No
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+                                      <input type="radio" name="q2" value="Undecided" checked={interestedInReturning === 'Undecided'} onChange={(e) => setInterestedInReturning(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                      Undecided
+                                    </label>
+                                  </div>
+                                </div>
+
+                                {/* Q3 */}
+                                <div className="task-form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                                  <div>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+                                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '22px', background: '#7c3aed', color: '#fff', fontSize: '12px', fontWeight: '600', borderRadius: '4px' }}>3</span>
+                                      <label style={{ margin: 0, fontWeight: '600', color: '#1e293b', fontSize: '14px', lineHeight: '22px' }}>Are you sober? <span style={{ color: '#ef4444' }}>*</span></label>
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '20px', marginLeft: '34px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+                                      <input type="radio" name="q3" value="Yes" checked={isSober === 'Yes'} onChange={(e) => setIsSober(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                      Yes
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+                                      <input type="radio" name="q3" value="No" checked={isSober === 'No'} onChange={(e) => setIsSober(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                      No
+                                    </label>
+                                  </div>
+                                </div>
+
+                                {/* Q4 */}
+                                <div className="task-form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                                  <div>
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
+                                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '22px', background: '#7c3aed', color: '#fff', fontSize: '12px', fontWeight: '600', borderRadius: '4px' }}>4</span>
+                                      <label style={{ margin: 0, fontWeight: '600', color: '#1e293b', fontSize: '14px', lineHeight: '22px' }}>Are you attending support/12 step meetings? <span style={{ color: '#ef4444' }}>*</span></label>
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '20px', marginLeft: '34px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+                                      <input type="radio" name="q4" value="Yes" checked={attendingSupportMeetings === 'Yes'} onChange={(e) => setAttendingSupportMeetings(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                      Yes
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
+                                      <input type="radio" name="q4" value="No" checked={attendingSupportMeetings === 'No'} onChange={(e) => setAttendingSupportMeetings(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                      No
+                                    </label>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+
                           </div>
                         </div>
                       )}
-                      
-                      <div className="task-form-group">
-                        <label className="task-form-label">Comments</label>
-                        <textarea className="task-form-textarea" rows={3} value={comments} onChange={(e) => setComments(e.target.value)} placeholder="Additional followup comments..." />
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {details?.FollowupType === 'Funding/Parole/Probation Follow up' && (
-                  <div className="task-form-section" style={{ gridColumn: '1 / -1' }}>
-                    <h3 className="task-form-section-title">
-                      <MessageSquare size={16} className="task-form-section-icon" />
-                      Followup Comments
-                    </h3>
-                    <div className="task-form-group">
-                      <textarea className="task-form-textarea" rows={4} value={comments} onChange={(e) => setComments(e.target.value)} placeholder="Notes for Funding/Parole/Probation Follow up..." required />
-                    </div>
-                  </div>
-                )}
 
-                {(details?.AttemptHistory || details?.ATTEMPTHISTORY) && (details?.AttemptHistory || details?.ATTEMPTHISTORY).length > 0 && (
-                  <div className="task-form-section" style={{ gridColumn: '1 / -1' }}>
-                    <h3 className="task-form-section-title">
-                      <Clock size={16} className="task-form-section-icon" />
-                      Attempt History ({(details?.AttemptHistory || details?.ATTEMPTHISTORY).length})
-                    </h3>
-                    <div style={{ overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-                        <thead>
-                          <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #e2e8f0' }}>
-                            <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Date/Time</th>
-                            <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Staff</th>
-                            <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Phone</th>
-                            <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Disposition</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(details?.AttemptHistory || details?.ATTEMPTHISTORY).map((attempt: any, i: number) => (
-                            <tr key={i} style={{ borderBottom: i < (details?.AttemptHistory || details?.ATTEMPTHISTORY).length - 1 ? '1px solid #e2e8f0' : 'none' }}>
-                              <td style={{ padding: '12px 16px', color: '#0f172a' }}>{attempt.CreateDate}</td>
-                              <td style={{ padding: '12px 16px', color: '#0f172a' }}>{attempt.CreatedByName}</td>
-                              <td style={{ padding: '12px 16px', color: '#0f172a' }}>{attempt.PhoneNumber || 'N/A'}</td>
-                              <td style={{ padding: '12px 16px', color: '#0f172a' }}>{attempt.Disposition}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      {/* Comments & Documentation */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                        
+                        {/* Comments */}
+                        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#fff' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600', marginBottom: '12px' }}>
+                            <MessageSquare size={16} color="#7c3aed" />
+                            <span style={{ fontSize: '14px' }}>Comments</span>
+                          </div>
+                          <textarea
+                            className="task-form-textarea"
+                            rows={3}
+                            value={comments}
+                            onChange={(e) => setComments(e.target.value)}
+                            placeholder="Add any additional notes..."
+                            style={{ resize: 'none', border: '1px solid #e2e8f0', width: '100%', height: 'calc(100% - 34px)' }}
+                          />
+                        </div>
+
+                        {/* Documentation */}
+                        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#fff' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600', marginBottom: '12px' }}>
+                            <Paperclip size={16} color="#7c3aed" />
+                            <span style={{ fontSize: '14px' }}>Documentation <span style={{ color: '#64748b', fontWeight: '400' }}>(Optional)</span></span>
+                          </div>
+                          <div style={{ border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', background: '#f8fafc', height: 'calc(100% - 34px)' }}>
+                            <button type="button" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#7c3aed', fontWeight: '600', fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                              <Upload size={16} /> Choose File
+                            </button>
+                            <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.4' }}>
+                              Upload supporting documents, images or files<br />
+                              PDF, PNG, JPG up to 10MB
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+
                     </div>
-                  </div>
-                )}
-                
-              </form>
-              </div>
-            )}
-          </div>
-          
-          <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end', gap: '12px', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
-            <button className="task-btn task-btn-secondary" onClick={onClose} disabled={saving}>
-              Cancel
-            </button>
-            <button className="task-btn task-btn-primary" type="submit" form="followupForm" disabled={saving || loading}>
-              {saving ? (
-                <>Saving... <div className="task-btn-spinner" /></>
-              ) : (
-                <><Save size={16} /> Save Followup</>
+
+                    {details?.FollowupType === 'Funding/Parole/Probation Follow up' && (
+                      <div className="task-form-section" style={{ gridColumn: '1 / -1' }}>
+                        <h3 className="task-form-section-title">
+                          <MessageSquare size={16} className="task-form-section-icon" />
+                          Followup Comments
+                        </h3>
+                        <div className="task-form-group">
+                          <textarea className="task-form-textarea" rows={4} value={comments} onChange={(e) => setComments(e.target.value)} placeholder="Notes for Funding/Parole/Probation Follow up..." required />
+                        </div>
+                      </div>
+                    )}
+
+                    {(details?.AttemptHistory || details?.ATTEMPTHISTORY) && (details?.AttemptHistory || details?.ATTEMPTHISTORY).length > 0 && (
+                      <div className="task-form-section" style={{ gridColumn: '1 / -1', marginTop: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600', marginBottom: '16px' }}>
+                          <Clock size={16} color="#7c3aed" />
+                          <span>Attempt History</span>
+                        </div>
+                        <div style={{ overflowX: 'auto' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                            <thead>
+                              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Attempt Date <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
+                                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Attempted By <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
+                                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Contact Number <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
+                                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Call Disposition <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(details?.AttemptHistory || details?.ATTEMPTHISTORY).map((attempt: any, i: number) => (
+                                <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                  <td style={{ padding: '12px 0', color: '#1e293b', fontWeight: '500' }}>{attempt.ContactDate} {attempt.ContactTime}</td>
+                                  <td style={{ padding: '12px 0', color: '#1e293b', fontWeight: '500' }}>{attempt.CreatedByName}</td>
+                                  <td style={{ padding: '12px 0', color: '#1e293b', fontWeight: '500' }}>{attempt.ContactMethod || ''}</td>
+                                  <td style={{ padding: '12px 0', color: '#1e293b', fontWeight: '500' }}>{attempt.Disposition}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                  </form>
+                </div>
               )}
-            </button>
-          </div>
-        </motion.div>
+            </div>
+
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#ffffff', display: 'flex', justifyContent: 'flex-end', gap: '12px', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
+              <button type="button" onClick={onClose} disabled={saving} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#1e293b', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button type="submit" form="followupForm" disabled={saving || loading} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#7c3aed', color: '#ffffff', fontWeight: '500', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {saving ? (
+                  <>Saving... <div className="task-btn-spinner" /></>
+                ) : (
+                  <><Save size={16} /> Save</>
+                )}
+              </button>
+            </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>,
