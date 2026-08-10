@@ -356,7 +356,7 @@ export async function getTaskList(
 
     if (filters.endDate) {
       filterKeys.push('EndDate');
-      filterValues.push(`tableFilter.EndDate=${encodeURIComponent(`[6][End Date][<=][${formatToCFDate(filters.endDate)}][]`)}`);
+      filterValues.push(`tableFilter.EndDate=${encodeURIComponent(`[6][Due Date][<=][${formatToCFDate(filters.endDate)}][]`)}`);
     }
   } else {
     // Default filter for backwards compatibility

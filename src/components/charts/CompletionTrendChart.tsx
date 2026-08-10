@@ -40,7 +40,7 @@ const CompletionTrendChart: React.FC<Props> = ({ data, chartRef }) => {
           backgroundColor: '#22C55E',
           borderWidth: 2,
           stepped: 'before' as const,
-          pointRadius: 3,
+          pointRadius: finalData.length > 30 ? 0 : 3,
           pointHoverRadius: 5,
         },
       ],
@@ -88,23 +88,35 @@ const CompletionTrendChart: React.FC<Props> = ({ data, chartRef }) => {
       chart.data.datasets.forEach((dataset: { data: unknown[] }, i: number) => {
         const meta = chart.getDatasetMeta(i);
         if (meta.hidden) return;
-        meta.data.forEach((element: { x: number; y: number }, index: number) => {
+        
+        let lastDrawnX = 9999;
+        
+        for (let index = meta.data.length - 1; index >= 0; index--) {
+          const element = meta.data[index] as { x: number; y: number };
           const val = dataset.data[index];
-          if (val === null || val === undefined || Number(val) === 0) return;
+          if (val === null || val === undefined || Number(val) === 0) continue;
+          
           const prevVal = index > 0 ? Number(dataset.data[index - 1] || 0) : 0;
           const jump = Number(val) - prevVal;
           const isLatest = index === dataset.data.length - 1;
           const isMajorJump = jump >= 15 || (index === 0 && Number(val) > 0);
-          if (!isLatest && !isMajorJump) return;
-          ctx.save();
-          ctx.font = 'bold 10px Helvetica, Arial, sans-serif';
-          ctx.fillStyle = '#166534';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'bottom';
-          const formatted = Number(val).toLocaleString();
-          ctx.fillText(formatted, element.x, element.y - 4);
-          ctx.restore();
-        });
+          
+          if (isLatest || isMajorJump) {
+            // Prevent overlap by enforcing a minimum horizontal distance (e.g., 35px)
+            if (!isLatest && (lastDrawnX - element.x < 35)) continue;
+            
+            ctx.save();
+            ctx.font = 'bold 10px Helvetica, Arial, sans-serif';
+            ctx.fillStyle = '#166534';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            const formatted = Number(val).toLocaleString();
+            ctx.fillText(formatted, element.x, element.y - 4);
+            ctx.restore();
+            
+            lastDrawnX = element.x;
+          }
+        }
       });
     },
   }), []);

@@ -442,7 +442,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
         try {
           const response = await markTasksCompleted(selectedIds);
           if (response.isSuccess === 1) {
-            showToast(response.successMessage || 'Tasks marked complete successfully!', 'success');
+            const successMsg = selectedIds.length === 1 
+              ? 'Task marked complete successfully!' 
+              : 'Tasks marked complete successfully!';
+            showToast(successMsg, 'success');
             setSelectedIds([]);
             if (onRefresh) onRefresh();
             else onPageChange(page);
@@ -474,7 +477,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         try {
           const response = await markTasksCompleted([taskId]);
           if (response.isSuccess === 1) {
-            showToast(response.successMessage || 'Task marked complete successfully!', 'success');
+            showToast('Task marked complete successfully!', 'success');
             setSelectedIds(prev => prev.filter(id => id !== taskId));
             if (onRefresh) onRefresh();
             else onPageChange(page);
@@ -1332,7 +1335,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
         isOpen={isWhereaboutsCompleteModalOpen}
         onClose={() => setIsWhereaboutsCompleteModalOpen(false)}
         onSuccess={() => {
-          showToast('Whereabouts task(s) marked complete successfully.', 'success');
+          const successMsg = whereaboutsCompleteIds.length === 1 
+            ? 'Whereabouts task marked complete successfully.' 
+            : 'Whereabouts tasks marked complete successfully.';
+          showToast(successMsg, 'success');
           setSelectedIds([]);
           if (onRefresh) onRefresh();
           else onPageChange(page);
@@ -1347,6 +1353,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onClose={() => setIsFollowupCompleteModalOpen(false)}
           selectedTaskId={followupCompleteTaskId}
           onSuccess={() => {
+            showToast('Followup task marked complete successfully.', 'success');
             setSelectedIds([]);
             if (onRefresh) onRefresh();
             else onPageChange(page);
