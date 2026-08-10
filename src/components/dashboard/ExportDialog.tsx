@@ -97,6 +97,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({
       ]).then(([staffList, rolesList, taskTypesList]) => {
         const getName = (list: any[], val: any) => {
           if (!val || val === 'all') return 'All';
+          if (val === 'unassigned') return 'Unassigned';
           const found = list.find((x: any) => String(x.value) === String(val) || String(x.id) === String(val));
           return found ? (found.label || found.name || found.Display || val) : val;
         };

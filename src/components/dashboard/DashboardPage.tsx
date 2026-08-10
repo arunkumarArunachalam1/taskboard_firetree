@@ -161,13 +161,16 @@ const DashboardPage: React.FC = () => {
       taskType: kpiFilters.taskType || listingFilters.taskType || '',
     };
 
+    const kpiStart = kpiFilters.startDate || '';
+    const kpiEnd = kpiFilters.endDate || '';
+
     let newFilters: DashboardFilters = { ...baseFilters };
     if (kpiType === 'completed') {
       newFilters = {
         ...baseFilters,
         status: '1',
-        startDate: '',
-        endDate: ''
+        startDate: kpiStart,
+        endDate: kpiEnd
       };
     } else if (kpiType === 'dueToday') {
       newFilters = {
@@ -177,18 +180,26 @@ const DashboardPage: React.FC = () => {
         endDate: todayStr
       };
     } else if (kpiType === 'overdue') {
+      let finalEndDate = yesterdayStr;
+      if (kpiEnd && new Date(kpiEnd) < new Date(yesterdayStr)) {
+        finalEndDate = kpiEnd;
+      }
       newFilters = {
         ...baseFilters,
         status: '0',
-        startDate: '',
-        endDate: yesterdayStr
+        startDate: kpiStart,
+        endDate: finalEndDate
       };
     } else if (kpiType === 'pending') {
+      let finalStartDate = tomorrowStr;
+      if (kpiStart && new Date(kpiStart) > new Date(tomorrowStr)) {
+        finalStartDate = kpiStart;
+      }
       newFilters = {
         ...baseFilters,
         status: '0',
-        startDate: tomorrowStr,
-        endDate: ''
+        startDate: finalStartDate,
+        endDate: kpiEnd
       };
     }
     await handleListingApplyFilters(newFilters);

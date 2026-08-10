@@ -35,7 +35,7 @@ export async function safeJsonParse(response: Response) {
   } catch (error) {
     // Log the actual text that failed to parse so we can see what ColdFusion sent back
     console.error("JSON Parse Error. Server responded with:", text.substring(0, 1000) + (text.length > 1000 ? "..." : ""));
-    
+
     // Return an error object instead of throwing to prevent aggressive UI popups
     return { error: true, message: 'Invalid JSON response from server or session expired.' };
   }
@@ -63,20 +63,23 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
 export async function getDashboardKPIs(filters?: DashboardFilters): Promise<DashboardSummary> {
   const context = activeContext;
   let url = `/ReactTaskBoard/getDashboardKPIs?_=${Date.now()}`;
-  
+
   if (filters) {
-    if (filters.assignedTo) url += `&assignedTo=${encodeURIComponent(filters.assignedTo)}`;
+    if (filters.assignedTo) {
+      const assignedVal = filters.assignedTo === 'unassigned' ? '0' : filters.assignedTo;
+      url += `&assignedTo=${encodeURIComponent(assignedVal)}`;
+    }
     if (filters.role) url += `&role=${encodeURIComponent(filters.role)}`;
     if (filters.status && filters.status !== 'all') url += `&status=${encodeURIComponent(filters.status)}`;
     if (filters.taskType) url += `&taskType=${encodeURIComponent(filters.taskType)}`;
-    
+
     const formatToCFDate = (dateStr: string) => {
       if (!dateStr) return '';
       const parts = dateStr.split('-');
       if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
       return dateStr;
     };
-    
+
     if (filters.startDate) url += `&startDate=${encodeURIComponent(formatToCFDate(filters.startDate))}`;
     if (filters.endDate) url += `&endDate=${encodeURIComponent(formatToCFDate(filters.endDate))}`;
   }
@@ -109,7 +112,7 @@ export async function getDashboardKPIs(filters?: DashboardFilters): Promise<Dash
     if (json.error) {
       console.error(`[getDashboardKPIs] API Error returned in JSON:`, json.message || 'Error fetching KPI data', json);
       // Don't throw, just use fallback data to prevent UI error message
-      json = {}; 
+      json = {};
     }
   } catch (e) {
     console.error(`[getDashboardKPIs] Failed to parse response`, e);
@@ -139,20 +142,23 @@ export async function getDashboardKPIs(filters?: DashboardFilters): Promise<Dash
 
 export async function getDashboardCharts(filters?: DashboardFilters): Promise<DashboardCharts> {
   let url = `/ReactTaskBoard/getDashboardCharts?_=${Date.now()}`;
-  
+
   if (filters) {
-    if (filters.assignedTo) url += `&assignedTo=${encodeURIComponent(filters.assignedTo)}`;
+    if (filters.assignedTo) {
+      const assignedVal = filters.assignedTo === 'unassigned' ? '0' : filters.assignedTo;
+      url += `&assignedTo=${encodeURIComponent(assignedVal)}`;
+    }
     if (filters.role) url += `&role=${encodeURIComponent(filters.role)}`;
     if (filters.status && filters.status !== 'all') url += `&status=${encodeURIComponent(filters.status)}`;
     if (filters.taskType) url += `&taskType=${encodeURIComponent(filters.taskType)}`;
-    
+
     const formatToCFDate = (dateStr: string) => {
       if (!dateStr) return '';
       const parts = dateStr.split('-');
       if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
       return dateStr;
     };
-    
+
     if (filters.startDate) url += `&startDate=${encodeURIComponent(formatToCFDate(filters.startDate))}`;
     if (filters.endDate) url += `&endDate=${encodeURIComponent(formatToCFDate(filters.endDate))}`;
   }
@@ -221,7 +227,7 @@ export async function getDashboardCharts(filters?: DashboardFilters): Promise<Da
 export async function triggerHardRefresh(): Promise<boolean> {
   const url = `/ReactTaskBoard/HardRefresh?_=${Date.now()}`;
   console.log(`[triggerHardRefresh] Hitting endpoint: ${url}`);
-  
+
   const response = await fetch(url, {
     method: 'POST', // using POST for a mutative action like cache clearing
     headers: {
@@ -320,7 +326,8 @@ export async function getTaskList(
 
     if (filters.assignedTo) {
       filterKeys.push('AssignedTo');
-      filterValues.push(`tableFilter.AssignedTo=${encodeURIComponent(`[0][AssignedTo][=][${filters.assignedTo}][]`)}`);
+      const assignedVal = filters.assignedTo === 'unassigned' ? '0' : filters.assignedTo;
+      filterValues.push(`tableFilter.AssignedTo=${encodeURIComponent(`[0][AssignedTo][=][${assignedVal}][]`)}`);
     }
 
     if (filters.role) {
@@ -349,7 +356,7 @@ export async function getTaskList(
 
     if (filters.endDate) {
       filterKeys.push('EndDate');
-      filterValues.push(`tableFilter.EndDate=${encodeURIComponent(`[6][End Date][<=][${formatToCFDate(filters.endDate)}][]`)}`);
+      filterValues.push(`tableFilter.EndDate=${encodeURIComponent(`[6][Due Date][<=][${formatToCFDate(filters.endDate)}][]`)}`);
     }
   } else {
     // Default filter for backwards compatibility
@@ -412,6 +419,33 @@ export async function getTaskList(
 
     console.log("Raw tasks data from API:", rawData.slice(0, 2)); // Log first 2 rows for debugging
 
+    const parseTaskTypeID = (r: any): number => {
+      if (Array.isArray(r)) {
+        const arrVal = Number(r[15]);
+        if (!isNaN(arrVal) && arrVal > 0) return arrVal;
+        return 1;
+      }
+      const idVal = r['TaskTypeID'] ?? r['Task Type ID'] ?? r['TaskTypeId'] ?? r['TaskType_ID'] ?? r['taskTypeId'] ?? r['task_type_id'] ?? r['TaskTypeID_PK'];
+      if (idVal !== undefined && idVal !== null && idVal !== '') {
+        const num = Number(idVal);
+        if (!isNaN(num) && num > 0) return num;
+      }
+      const typeStr = String(r['Task Type'] || r['TaskType'] || r['Task Type Name'] || r['TaskTypeName'] || r['Type'] || r['type'] || r['taskType'] || '').trim().toLowerCase();
+      if (typeStr) {
+        if (typeStr.includes('whereabout')) return 2;
+        if (typeStr.includes('follow')) return 3;
+        if (typeStr.includes('general')) return 1;
+        const num = Number(typeStr);
+        if (!isNaN(num) && num > 0) return num;
+      }
+      return 1;
+    };
+
+    const parseTaskTypeLabel = (r: any): string => {
+      if (Array.isArray(r)) return '';
+      return String(r['Task Type'] || r['TaskType'] || r['Task Type Name'] || r['TaskTypeName'] || r['Type'] || r['type'] || r['taskType'] || '').trim();
+    };
+
     const tasks: Task[] = rawData.map((row: any, idx: number) => {
       // If row is an array, we try to guess indices. If it's an object, we map by Column Labels.
       if (Array.isArray(row)) {
@@ -431,7 +465,8 @@ export async function getTaskList(
           AssignedTo: row[13] || 'Unassigned',
           Facility: row[14] || 'Unknown',
           Status: arrStatus,
-          TaskTypeID: Number(row[15]) || 1,
+          TaskTypeID: parseTaskTypeID(row),
+          taskType: parseTaskTypeLabel(row),
         };
       }
 
@@ -454,7 +489,8 @@ export async function getTaskList(
         AssignedTo: row['Assigned To'] || row['AssignedTo'] || 'Unassigned',
         Facility: row['Facility'] || row['FacilityName'] || 'Unknown',
         Status: objStatus,
-        TaskTypeID: 1, // Default
+        TaskTypeID: parseTaskTypeID(row),
+        taskType: parseTaskTypeLabel(row),
       };
     });
 
@@ -853,6 +889,40 @@ export async function getContactPhoneNumbers(destinationId: string | number): Pr
   return Array.isArray(json) ? json : parseCFQuery(json);
 }
 
+export async function getWhereaboutsContactMethods(): Promise<{ value: string; label: string }[]> {
+  const response = await fetch(`/ReactTaskBoard/GetWhereaboutsContactMethods`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  const json = await safeJsonParse(response);
+  return Array.isArray(json) ? json : parseCFQuery(json);
+}
+
+export async function getFollowupContactPhoneNumbers(taskId: number | string): Promise<{ value: string; label: string }[]> {
+  const response = await fetch(`/ReactTaskBoard/GetFollowupTaskContactPhoneNumbers?taskID=${taskId}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error(`Failed to fetch followup contact phone numbers`);
+  const json = await safeJsonParse(response);
+  const data = Array.isArray(json) ? json : parseCFQuery(json);
+  
+  return data.map((item: any) => ({
+    value: item.VALUE || item.value || item.Value,
+    label: item.DISPLAY || item.display || item.Display || item.LABEL || item.label || item.Label
+  }));
+}
+
 export async function getContactMethods(): Promise<{ value: string; label: string }[]> {
   const response = await fetch(`/ReactTaskBoard/GetContactMethods`, {
     method: 'GET',
@@ -863,7 +933,21 @@ export async function getContactMethods(): Promise<{ value: string; label: strin
     },
     credentials: 'include'
   });
-  if (!response.ok) throw new Error(`Failed to fetch contact methods`);
+  const json = await safeJsonParse(response);
+  return Array.isArray(json) ? json : parseCFQuery(json);
+}
+
+export async function getOptionSetPopulations(uuid: string): Promise<{ value: string; label: string }[]> {
+  const response = await fetch(`/ReactTaskBoard/GetOptionSetPopulations?uuid=${encodeURIComponent(uuid)}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error(`Failed to fetch option set for ${uuid}`);
   const json = await safeJsonParse(response);
   return Array.isArray(json) ? json : parseCFQuery(json);
 }
@@ -912,5 +996,271 @@ export async function saveWhereaboutsTask(payload: any): Promise<{ isSuccess: nu
     };
   } catch (e) {
     throw new Error(`Failed to parse server response: ${rawText}`);
+  }
+}
+
+
+
+export async function completeWhereaboutsTasks(payload: {
+  listids: string;
+  methodId: string;
+  contactDate: string;
+  contactTime: string;
+  reasonId: string;
+  dispositionId: string;
+  isConsent: number;
+  consentExpiration: string;
+  notes: string;
+  documentationFile: File | null;
+}): Promise<{ isSuccess: number; errorMessage: string; successMessage: string }> {
+  const formData = new FormData();
+
+  formData.append('method', 'run');
+  formData.append('formName', 'Client - Accountability - New Contact');
+  formData.append('title', 'Mark Whereabouts Complete');
+  formData.append('clientStayID', '0');
+
+  // Need to format dates to ISO for legacy compatibility if required by backend, but we'll send what we have
+  const formattedDate = payload.contactDate;
+  const formattedTime = payload.contactTime;
+
+  formData.append('ContactDate', formattedDate);
+  formData.append('ContactTime', formattedTime);
+  formData.append('MethodID', payload.methodId);
+  formData.append('clientID', '0');
+  formData.append('whereabouts', '1');
+  formData.append('ReasonID', payload.reasonId);
+  formData.append('listIDs', payload.listids);
+  formData.append('readOnly', '0');
+
+  // Extra fields that were in the custom modal
+  formData.append('DispositionID', payload.dispositionId);
+  formData.append('isConsent', String(payload.isConsent));
+  if (payload.consentExpiration) {
+    formData.append('consentExpiration', payload.consentExpiration);
+  }
+  formData.append('Notes', payload.notes);
+
+  if (payload.documentationFile) {
+    formData.append('documentationFile', payload.documentationFile);
+  }
+
+  const response = await fetch('/ReactTaskBoard/CompleteWhereaboutsTasks', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include',
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status ${response.status}: ${response.statusText}`);
+  }
+
+  const rawText = await response.text();
+  try {
+    const json = JSON.parse(rawText);
+    return {
+      isSuccess: json.isSuccess !== undefined ? Number(json.isSuccess) : (json.ISSUCCESS !== undefined ? Number(json.ISSUCCESS) : 0),
+      errorMessage: json.errorMessage || json.ERRORMESSAGE || (json.ERRORS && Array.isArray(json.ERRORS) ? json.ERRORS.join(', ') : undefined),
+      successMessage: json.successMessage || json.SUCCESSMESSAGE || ''
+    };
+  } catch (e) {
+    throw new Error(`Failed to parse complete whereabouts response: ${rawText}`);
+  }
+}
+
+// ─── Modal Service Functions ─────────────────────────────────────────────
+
+
+
+export async function getWhereaboutsReasons(): Promise<any> {
+  const response = await fetch('/ReactTaskBoard/GetWhereaboutsReasons', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) return [];
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function getWhereaboutsDispositions(): Promise<any> {
+  const response = await fetch('/ReactTaskBoard/GetWhereaboutsDispositions', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) return [];
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function getFollowupDispositions(): Promise<any> {
+  const response = await fetch('/ReactTaskBoard/GetOptionSetPopulations?uuid=94142a49-6568-4a06-a933-c7f989fee8a6', {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) return [];
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function getTaskDetails(taskId: number): Promise<any> {
+  const url = `/ReactTaskBoard/GetTaskDetails?taskID=${taskId}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch task details: ${response.statusText}`);
+  }
+  const rawText = await response.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Failed to parse task details response: ${rawText}`);
+  }
+}
+
+export async function getWhereaboutsTaskDetails(taskId: number): Promise<any> {
+  const url = `/ReactTaskBoard/GetEditWhereaboutsTask?taskID=${taskId}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch whereabouts task details: ${response.statusText}`);
+  }
+  const rawText = await response.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Failed to parse whereabouts task details response: ${rawText}`);
+  }
+}
+
+export async function getFollowupModalData(taskId: number): Promise<any> {
+  const url = `/ReactTaskBoard/GetFollowupDetails?TaskID=${taskId}&_=${Date.now()}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch followup details: ${response.statusText}`);
+  }
+  const rawText = await response.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Failed to parse followup details response: ${rawText}`);
+  }
+}
+
+export async function saveFollowupTask(taskId: number, payload: any = {}): Promise<any> {
+  const formData = new FormData();
+  formData.append('taskID', String(taskId));
+  Object.keys(payload).forEach(key => {
+    formData.append(key, String(payload[key]));
+  });
+
+  const response = await fetch('/ReactTaskBoard/SaveFollowup', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include',
+    body: formData
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to save followup task: ${response.statusText}`);
+  }
+  const rawText = await response.text();
+  try {
+    return JSON.parse(rawText);
+  } catch (e) {
+    throw new Error(`Failed to parse save followup response: ${rawText}`);
+  }
+}
+
+export async function saveEditWhereaboutsTask(taskId: number, payload: any = {}): Promise<any> {
+  const formData = new FormData();
+  formData.append('ListIDs', String(taskId));
+  formData.append('Task.TaskID', String(taskId));
+  formData.append('taskID', String(taskId));
+  formData.append('key', String(taskId));
+  Object.keys(payload).forEach(key => {
+    formData.append(key, String(payload[key]));
+  });
+
+  const response = await fetch('/ReactTaskBoard/SaveEditWhereaboutsTask', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include',
+    body: formData
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to save edit whereabouts task: ${response.statusText}`);
+  }
+  const rawText = await response.text();
+  try {
+    const json = JSON.parse(rawText);
+    return {
+      isSuccess: json.isSuccess !== undefined ? Number(json.isSuccess) : (json.ISSUCCESS !== undefined ? Number(json.ISSUCCESS) : 0),
+      successMessage: json.successMessage || json.SUCCESSMESSAGE,
+      errorMessage: json.errorMessage || json.ERRORMESSAGE || (json.ERRORS && Array.isArray(json.ERRORS) ? json.ERRORS.join(', ') : undefined),
+      ...json
+    };
+  } catch (e) {
+    throw new Error(`Failed to parse save edit whereabouts response: ${rawText}`);
   }
 }
