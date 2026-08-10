@@ -345,7 +345,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.2 }}
             className="vt-modal"
-            style={{ maxWidth: '900px', width: '95%' }}
+            style={{ maxWidth: '1100px', width: '95%' }}
           >
             {/* ── HEADER ── */}
             <div className="vt-header">
@@ -440,19 +440,19 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                             <h2 className="followup-client-name" style={{ color: '#5b21b6' }}>{formattedName}</h2>
 
                             <div className="followup-client-info-row">
-                              <span className="followup-client-info-item">Client ID: <span className="followup-client-info-value">{data.clientid}</span></span>
-                              <span className="followup-client-info-item">DOB: <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
-                              <span>SSN: <span className="followup-client-info-value">{data.ssn || ''}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">Client ID:</span> <span className="followup-client-info-value">{data.clientid}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">DOB:</span> <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">SSN:</span> <span className="followup-client-info-value">{data.ssn || ''}</span></span>
                             </div>
 
                             <div className="followup-client-info-row">
-                              <span className="followup-client-info-item">Parole #: <span className="followup-client-info-value">{data.parolenumber || 'N/A'}</span></span>
-                              <span>MA #: <span className="followup-client-info-value">{data.manumber || ''}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">Parole #:</span> <span className="followup-client-info-value">{data.parolenumber || 'N/A'}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">MA #:</span> <span className="followup-client-info-value">{data.manumber || ''}</span></span>
                             </div>
 
                             <div className="followup-client-info-row" style={{ marginBottom: 0 }}>
-                              <span className="followup-client-info-item">Admitted to Stay: <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
-                              <span>PDD: <span className="followup-client-info-value">{formatDate(data.expecteddischargedate)}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">Admitted to Stay:</span> <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">PDD:</span> <span className="followup-client-info-value">{formatDate(data.expecteddischargedate)}</span></span>
                             </div>
                           </div>
                         </div>
@@ -466,21 +466,33 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           </div>
 
                           <div className="followup-client-details">
-                            <div>
-                              <span className="followup-client-details-label">Program:</span>
-                              {data.programname || ''}
+                            <div className="followup-client-details-row">
+                              <div className="followup-client-details-item">
+                                <span className="followup-client-details-label">Program:</span>
+                                <span className="followup-client-info-value">{data.programname || ''}</span>
+                              </div>
                             </div>
-                            <div>
-                              <span className="followup-client-details-label">Funding Source:</span>
-                              {data.fundingsourcename || ''}
-                              <span className="followup-client-details-label-spaced">Case Manager:</span>
-                              {data.cmfirst ? `${data.cmfirst} ${data.cmlast}` : ''}
+                            <div className="followup-client-details-row">
+                              <div className="followup-client-details-item">
+                                <span className="followup-client-details-label">Funding Source:</span>
+                                <span className="followup-client-info-value">{data.fundingsourcename || ''}</span>
+                              </div>
                             </div>
-                            <div>
-                              <span className="followup-client-details-label">Room:</span>
-                              {data.roomname || 'N/A'}
-                              <span className="followup-client-details-label-spaced">Bed:</span>
-                              {data.bedname || 'N/A'}
+                            <div className="followup-client-details-row">
+                              <div className="followup-client-details-item">
+                                <span className="followup-client-details-label">Case Manager:</span>
+                                <span className="followup-client-info-value">{data.cmfirst ? `${data.cmfirst} ${data.cmlast}` : ''}</span>
+                              </div>
+                            </div>
+                            <div className="followup-client-details-row">
+                              <div className="followup-client-details-item">
+                                <span className="followup-client-details-label">Room:</span>
+                                <span className="followup-client-info-value">{data.roomname || 'N/A'}</span>
+                              </div>
+                              <div className="followup-client-details-item">
+                                <span className="followup-client-details-label">Bed:</span>
+                                <span className="followup-client-info-value">{data.bedname || 'N/A'}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -533,7 +545,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                       {/* Survey Box */}
                       {(details?.FollowupType || details?.FOLLOWUPTYPE) !== 'Funding/Parole/Probation Follow up' && !['2', '4', '12'].includes(String(dispositionId)) && (
                         <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 24px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
 
                             {/* Q1 */}
                             <div className="task-form-group" style={{ gridColumn: (details?.FollowupType || details?.FOLLOWUPTYPE) === '7-Day Followup' ? 'span 1' : '1 / -1', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>

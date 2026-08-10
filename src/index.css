@@ -4143,7 +4143,7 @@ h1.page-title {
   display: flex;
   border: 1px solid #e2e8f0;
   border-left: 4px solid #881337;
-  padding: 16px;
+  padding: 20px 24px;
   margin-bottom: 24px;
   background: #ffffff;
   border-radius: 0 4px 4px 0;
@@ -4151,29 +4151,34 @@ h1.page-title {
 
 .followup-client-left {
   flex: 1 1 50%;
-  padding-right: 20px;
+  padding-right: 24px;
   border-right: 1px solid #e2e8f0;
   display: flex;
   align-items: flex-start;
-  gap: 20px;
+  gap: 16px;
 }
 
 .followup-client-icon-wrap {
   margin-top: 4px;
+  flex-shrink: 0;
 }
 
 .followup-client-name {
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 700;
   color: #881337;
-  margin: 0 0 12px 0;
+  margin: 0 0 14px 0;
+  line-height: 1.2;
 }
 
 .followup-client-info-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
   font-size: 13px;
   font-weight: 600;
   color: #0f172a;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .followup-client-info-row:last-child {
@@ -4181,27 +4186,35 @@ h1.page-title {
 }
 
 .followup-client-info-item {
-  margin-right: 16px;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
 }
 
-.followup-client-info-item:last-child {
-  margin-right: 0;
+.followup-client-info-label {
+  color: #475569;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .followup-client-info-value {
-  font-weight: 400;
+  font-weight: 500;
+  color: #0f172a;
+  line-height: 1.4;
 }
 
 .followup-client-right {
   flex: 1 1 50%;
-  padding-left: 20px;
+  padding-left: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .followup-client-status {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
 .followup-client-status-dot {
@@ -4212,28 +4225,34 @@ h1.page-title {
 }
 
 .followup-client-status-text {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
   color: #0f172a;
 }
 
 .followup-client-details {
-  font-size: 12px;
-  color: #0f172a;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.followup-client-details-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.followup-client-details-item {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
 }
 
 .followup-client-details-label {
   font-weight: 600;
-  margin-right: 6px;
-}
-
-.followup-client-details-label-spaced {
-  font-weight: 600;
-  margin-left: 16px;
-  margin-right: 6px;
+  color: #475569;
+  flex-shrink: 0;
 }
 
 /* ── Followup Contact Card ── */
@@ -4524,7 +4543,7 @@ h1.page-title {
   background-color: #fff;
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  max-width: 800px;
+  max-width: 1100px;
   width: 95%;
   display: flex;
   flex-direction: column;
