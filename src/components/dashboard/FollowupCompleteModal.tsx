@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Calendar, Clock, User, Phone, Building2, Search, ChevronDown, ChevronUp, AlertCircle, FileText, ClipboardCheck, MessageSquare, CheckCircle2, Minus, ArrowUpDown, Paperclip, Upload } from 'lucide-react';
-import { getFollowupModalData, saveFollowupTask, getContactMethods, getFollowupDispositions } from '../../services/dashboard.service';
+import { X, Save, Calendar, Clock, User, Search, ChevronDown, ChevronUp, AlertCircle, MessageSquare, Minus, ArrowUpDown, Paperclip, Upload } from 'lucide-react';
+import { getFollowupModalData, saveFollowupTask, getFollowupContactPhoneNumbers, getFollowupDispositions } from '../../services/dashboard.service';
 
 interface FollowupCompleteModalProps {
   isOpen: boolean;
@@ -168,7 +168,6 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
 
   // Dropdown options
   const [methods, setMethods] = useState<ComboboxOption[]>([]);
-  const [rawMethods, setRawMethods] = useState<any[]>([]);
   const [dispositions, setDispositions] = useState<ComboboxOption[]>([]);
 
   // Form State
@@ -176,7 +175,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
   const [dispositionId, setDispositionId] = useState<number | string>('');
   const [contactDate, setContactDate] = useState('');
   const [contactTime, setContactTime] = useState('');
-  const [notes, setNotes] = useState('');
+  const [notes] = useState('');
 
   // Followup specific state
   const [attendedTreatment, setAttendedTreatment] = useState<string>('');
@@ -202,13 +201,12 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
     try {
       const [followupDetails, methodsList, dispositionsList] = await Promise.all([
         getFollowupModalData(selectedTaskId),
-        getContactMethods(),
+        getFollowupContactPhoneNumbers(selectedTaskId),
         getFollowupDispositions()
       ]);
 
       setDetails(followupDetails);
       setMethods(methodsList.map((m: any) => ({ label: m.label, value: m.value })));
-      setRawMethods(methodsList);
       setDispositions(dispositionsList.map((m: any) => ({ label: m.label, value: m.value })));
 
       // Default Date/Time
@@ -223,8 +221,9 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
       setContactTime(`${hr}:${mi}`);
 
       // Defaults
-      const phoneMethod = methodsList.find((m: any) => (m.label || '').toString().toLowerCase().includes('phone'));
-      if (phoneMethod) setMethodId(phoneMethod.value);
+      if (methodsList && methodsList.length > 0) {
+        setMethodId(methodsList[0].value);
+      }
 
     } catch (err: any) {
       setError(err.message || 'Failed to load followup details');
@@ -279,11 +278,6 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
     setError('');
 
     try {
-      const selectedPhone = rawMethods?.find((m: any) => 
-        String(m.ClientContactPhoneNumberID) === String(methodId) || 
-        String(m.ContactPhoneNumberID) === String(methodId)
-      );
-
       const payload: any = {
         methodId: 1, // Phone by default
         dispositionId,
@@ -292,11 +286,15 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
         notes
       };
 
-      if (selectedPhone) {
-        if (selectedPhone.ClientContactPhoneNumberID) payload.ClientContactPhoneNumberID = selectedPhone.ClientContactPhoneNumberID;
-        if (selectedPhone.ContactPhoneNumberID) payload.ContactPhoneNumberID = selectedPhone.ContactPhoneNumberID;
-        if (selectedPhone.ContactID) payload.ContactID = selectedPhone.ContactID;
-        if (selectedPhone.ClientContactID) payload.ClientContactID = selectedPhone.ClientContactID;
+      if (typeof methodId === 'string' && methodId.includes('_')) {
+        const parts = methodId.split('_');
+        const prefix = parts[0];
+        const id = parts[1];
+        if (prefix === 'CC') {
+           payload.ClientContactPhoneNumberID = id;
+        } else if (prefix === 'C') {
+           payload.ContactPhoneNumberID = id;
+        }
       }
 
       const followupForm: any = {

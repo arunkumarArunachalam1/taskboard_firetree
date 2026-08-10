@@ -903,6 +903,26 @@ export async function getWhereaboutsContactMethods(): Promise<{ value: string; l
   return Array.isArray(json) ? json : parseCFQuery(json);
 }
 
+export async function getFollowupContactPhoneNumbers(taskId: number | string): Promise<{ value: string; label: string }[]> {
+  const response = await fetch(`/ReactTaskBoard/GetFollowupTaskContactPhoneNumbers?taskID=${taskId}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'X-CSRF-Token': activeContext?.csrfToken || '',
+      'X-Requested-With': 'React'
+    },
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error(`Failed to fetch followup contact phone numbers`);
+  const json = await safeJsonParse(response);
+  const data = Array.isArray(json) ? json : parseCFQuery(json);
+  
+  return data.map((item: any) => ({
+    value: item.VALUE || item.value || item.Value,
+    label: item.DISPLAY || item.display || item.Display || item.LABEL || item.label || item.Label
+  }));
+}
+
 export async function getContactMethods(): Promise<{ value: string; label: string }[]> {
   const response = await fetch(`/ReactTaskBoard/GetContactMethods`, {
     method: 'GET',
