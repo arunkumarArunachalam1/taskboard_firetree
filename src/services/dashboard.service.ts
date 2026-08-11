@@ -1204,7 +1204,11 @@ export async function saveFollowupTask(taskId: number, payload: any = {}): Promi
   const formData = new FormData();
   formData.append('taskID', String(taskId));
   Object.keys(payload).forEach(key => {
-    formData.append(key, String(payload[key]));
+    if (payload[key] instanceof File || payload[key] instanceof Blob) {
+      formData.append(key, payload[key]);
+    } else {
+      formData.append(key, String(payload[key]));
+    }
   });
 
   const response = await fetch('/ReactTaskBoard/SaveFollowup', {

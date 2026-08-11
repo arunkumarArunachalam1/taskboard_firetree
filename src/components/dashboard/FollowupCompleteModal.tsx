@@ -106,49 +106,146 @@ const formatTo24h = (timeStr: string): string => {
   return '';
 };
 
-const CustomTimePicker: React.FC<{ value: string, onChange: (val: string) => void, required?: boolean }> = ({ value, onChange, required }) => {
+interface CustomTimePickerProps {
+  value: string;
+  onChange: (val: string) => void;
+  required?: boolean;
+}
+
+const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, required }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setInputValue(formatTo12h(value)); }, [value]);
+  useEffect(() => {
+    setInputValue(formatTo12h(value));
+  }, [value]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) setIsOpen(false);
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleBlur = () => {
-    const parsed24h = formatTo24h(inputValue);
-    if (parsed24h) { onChange(parsed24h); setInputValue(formatTo12h(parsed24h)); }
-    else { setInputValue(formatTo12h(value)); }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputValue(val);
+    const parsed24h = formatTo24h(val);
+    if (parsed24h) {
+      onChange(parsed24h);
+    }
   };
 
+  const handleBlur = () => {
+    const parsed24h = formatTo24h(inputValue);
+    if (parsed24h) {
+      onChange(parsed24h);
+      setInputValue(formatTo12h(parsed24h));
+    } else {
+      setInputValue(formatTo12h(value));
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleBlur();
+      setIsOpen(false);
+    }
+    if (e.key === 'Escape') {
+      setIsOpen(false);
+      setInputValue(formatTo12h(value));
+    }
+  };
+
+  const handleSelectTime = (h: string, m: string, a: string) => {
+    const time12 = `${h}:${m} ${a}`;
+    const time24 = formatTo24h(time12);
+    onChange(time24);
+    setInputValue(time12);
+  };
+
+  const time12 = formatTo12h(value) || '12:00 PM';
+  const parts = time12.split(':');
+  const currentHour = parts[0];
+  const subParts = parts[1].split(' ');
+  const currentMinute = subParts[0];
+  const currentAmpm = subParts[1] || 'PM';
+
+  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1));
+  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
   return (
-    <div className="custom-time-picker" ref={containerRef} style={{ position: 'relative' }}>
-      <input type="text" className="task-form-input task-form-input-with-icon-right" style={{ paddingRight: '36px' }} value={inputValue} onChange={(e) => { setInputValue(e.target.value); const p = formatTo24h(e.target.value); if (p) onChange(p); }} onBlur={handleBlur} onFocus={() => setIsOpen(true)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleBlur(); setIsOpen(false); } if (e.key === 'Escape') { setIsOpen(false); setInputValue(formatTo12h(value)); } }} placeholder="hh:mm AM/PM" required={required} />
-      <Clock size={16} className="task-input-icon-right" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+    <div ref={containerRef} className="timepicker-wrapper">
+      <input
+        type="text"
+        value={inputValue}
+        onChange={handleInputChange}
+        onBlur={handleBlur}
+        onFocus={() => setIsOpen(true)}
+        onKeyDown={handleKeyDown}
+        placeholder="--:--"
+        required={required}
+        className="task-form-input timepicker-input"
+      />
+      <div className="timepicker-icon-right">
+        <Clock size={15} />
+      </div>
+
       {isOpen && (
-        <div className="time-picker-dropdown">
-          <div className="time-picker-columns">
-            <div className="time-picker-column">
-              {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map(h => (
-                <div key={h} className={`time-picker-item ${formatTo12h(value).split(':')[0] === h ? 'selected' : ''}`} onMouseDown={(e) => { e.preventDefault(); const parts = formatTo12h(value).split(/[: ]/); const m = parts[1] || '00'; const a = parts[2] || 'PM'; onChange(formatTo24h(`${h}:${m} ${a}`)); setInputValue(`${h}:${m} ${a}`); }}>{h}</div>
-              ))}
-            </div>
-            <div className="time-picker-column">
-              {['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'].map(m => (
-                <div key={m} className={`time-picker-item ${formatTo12h(value).split(/[: ]/)[1] === m ? 'selected' : ''}`} onMouseDown={(e) => { e.preventDefault(); const parts = formatTo12h(value).split(/[: ]/); const h = parts[0] || '12'; const a = parts[2] || 'PM'; onChange(formatTo24h(`${h}:${m} ${a}`)); setInputValue(`${h}:${m} ${a}`); }}>{m}</div>
-              ))}
-            </div>
-            <div className="time-picker-column">
-              {['AM', 'PM'].map(a => (
-                <div key={a} className={`time-picker-item ${formatTo12h(value).split(' ')[1] === a ? 'selected' : ''}`} onMouseDown={(e) => { e.preventDefault(); const parts = formatTo12h(value).split(/[: ]/); const h = parts[0] || '12'; const m = parts[1] || '00'; onChange(formatTo24h(`${h}:${m} ${a}`)); setInputValue(`${h}:${m} ${a}`); setIsOpen(false); }}>{a}</div>
-              ))}
-            </div>
+        <div className="combobox-panel timepicker-dropdown-panel">
+          <div className="custom-time-col timepicker-column">
+            <div className="timepicker-column-header">HH</div>
+            {hours.map(h => {
+              const isSelected = String(h) === String(parseInt(currentHour, 10));
+              return (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); handleSelectTime(h, currentMinute, currentAmpm); }}
+                  className={`timepicker-item-btn ${isSelected ? 'active' : ''}`}
+                >
+                  {h}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="custom-time-col timepicker-column timepicker-column-bordered">
+            <div className="timepicker-column-header">MM</div>
+            {minutes.map(m => {
+              const isSelected = m === currentMinute;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); handleSelectTime(currentHour, m, currentAmpm); }}
+                  className={`timepicker-item-btn ${isSelected ? 'active' : ''}`}
+                >
+                  {m}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="timepicker-ampm-col">
+            {['AM', 'PM'].map(a => {
+              const isSelected = a === currentAmpm;
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); handleSelectTime(currentHour, currentMinute, a); }}
+                  className={`timepicker-ampm-btn ${isSelected ? 'active' : ''}`}
+                >
+                  {a}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -185,6 +282,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
   const [rescheduledDate, setRescheduledDate] = useState('');
   const [rescheduledTime, setRescheduledTime] = useState('');
   const [comments, setComments] = useState('');
+  const [documentationFile, setDocumentationFile] = useState<File | null>(null);
 
   const [error, setError] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
@@ -286,6 +384,10 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
         notes
       };
 
+      if (documentationFile) {
+        payload.documentationFile = documentationFile;
+      }
+
       if (typeof methodId === 'string' && methodId.includes('_')) {
         const parts = methodId.split('_');
         const prefix = parts[0];
@@ -345,7 +447,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.2 }}
             className="vt-modal"
-            style={{ maxWidth: '900px', width: '95%' }}
+            style={{ maxWidth: '1100px', width: '95%' }}
           >
             {/* ── HEADER ── */}
             <div className="vt-header">
@@ -439,20 +541,18 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           <div>
                             <h2 className="followup-client-name" style={{ color: '#5b21b6' }}>{formattedName}</h2>
 
-                            <div className="followup-client-info-row">
-                              <span className="followup-client-info-item">Client ID: <span className="followup-client-info-value">{data.clientid}</span></span>
-                              <span className="followup-client-info-item">DOB: <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
-                              <span>SSN: <span className="followup-client-info-value">{data.ssn || ''}</span></span>
-                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'auto auto auto', gap: '8px 24px', fontSize: '13px', color: '#0f172a', fontWeight: 600 }}>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">Client ID:</span> <span className="followup-client-info-value">{data.clientid}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">DOB:</span> <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">SSN:</span> <span className="followup-client-info-value">{data.ssn || ''}</span></span>
 
-                            <div className="followup-client-info-row">
-                              <span className="followup-client-info-item">Parole #: <span className="followup-client-info-value">{data.parolenumber || 'N/A'}</span></span>
-                              <span>MA #: <span className="followup-client-info-value">{data.manumber || ''}</span></span>
-                            </div>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">Parole #:</span> <span className="followup-client-info-value">{data.parolenumber || 'N/A'}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">MA #:</span> <span className="followup-client-info-value">{data.manumber || ''}</span></span>
+                              <span />
 
-                            <div className="followup-client-info-row" style={{ marginBottom: 0 }}>
-                              <span className="followup-client-info-item">Admitted to Stay: <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
-                              <span>PDD: <span className="followup-client-info-value">{formatDate(data.expecteddischargedate)}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">Admitted to Stay:</span> <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">PDD:</span> <span className="followup-client-info-value">{formatDate(data.expecteddischargedate)}</span></span>
+                              <span />
                             </div>
                           </div>
                         </div>
@@ -466,21 +566,33 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           </div>
 
                           <div className="followup-client-details">
-                            <div>
-                              <span className="followup-client-details-label">Program:</span>
-                              {data.programname || ''}
+                            <div className="followup-client-details-row">
+                              <div className="followup-client-details-item">
+                                <span className="followup-client-details-label">Program:</span>
+                                <span className="followup-client-info-value">{data.programname || ''}</span>
+                              </div>
                             </div>
-                            <div>
-                              <span className="followup-client-details-label">Funding Source:</span>
-                              {data.fundingsourcename || ''}
-                              <span className="followup-client-details-label-spaced">Case Manager:</span>
-                              {data.cmfirst ? `${data.cmfirst} ${data.cmlast}` : ''}
+                            <div className="followup-client-details-row">
+                              <div className="followup-client-details-item">
+                                <span className="followup-client-details-label">Funding Source:</span>
+                                <span className="followup-client-info-value">{data.fundingsourcename || ''}</span>
+                              </div>
                             </div>
-                            <div>
-                              <span className="followup-client-details-label">Room:</span>
-                              {data.roomname || 'N/A'}
-                              <span className="followup-client-details-label-spaced">Bed:</span>
-                              {data.bedname || 'N/A'}
+                            <div className="followup-client-details-row">
+                              <div className="followup-client-details-item">
+                                <span className="followup-client-details-label">Case Manager:</span>
+                                <span className="followup-client-info-value">{data.cmfirst ? `${data.cmfirst} ${data.cmlast}` : ''}</span>
+                              </div>
+                            </div>
+                            <div className="followup-client-details-row">
+                              <div className="followup-client-details-item">
+                                <span className="followup-client-details-label">Room:</span>
+                                <span className="followup-client-info-value">{data.roomname || 'N/A'}</span>
+                              </div>
+                              <div className="followup-client-details-item">
+                                <span className="followup-client-details-label">Bed:</span>
+                                <span className="followup-client-info-value">{data.bedname || 'N/A'}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -533,7 +645,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                       {/* Survey Box */}
                       {(details?.FollowupType || details?.FOLLOWUPTYPE) !== 'Funding/Parole/Probation Follow up' && !['2', '4', '12'].includes(String(dispositionId)) && (
                         <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px 24px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
 
                             {/* Q1 */}
                             <div className="task-form-group" style={{ gridColumn: (details?.FollowupType || details?.FOLLOWUPTYPE) === '7-Day Followup' ? 'span 1' : '1 / -1', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
@@ -645,7 +757,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                       )}
 
                       {/* Comments & Documentation */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: (details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' ? '1fr 1fr' : '1fr', gap: '24px' }}>
                         
                         {/* Comments */}
                         <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#fff' }}>
@@ -663,22 +775,34 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           />
                         </div>
 
-                        {/* Documentation */}
-                        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#fff' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600', marginBottom: '12px' }}>
-                            <Paperclip size={16} color="#7c3aed" />
-                            <span style={{ fontSize: '14px' }}>Documentation <span style={{ color: '#64748b', fontWeight: '400' }}>(Optional)</span></span>
-                          </div>
-                          <div style={{ border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', background: '#f8fafc', height: 'calc(100% - 34px)' }}>
-                            <button type="button" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#7c3aed', fontWeight: '600', fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                              <Upload size={16} /> Choose File
-                            </button>
-                            <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.4' }}>
-                              Upload supporting documents, images or files<br />
-                              PDF, PNG, JPG up to 10MB
+                        {/* Documentation (Only for Funding/Parole/Probation Follow up) */}
+                        {(details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' && (
+                          <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#fff' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600', marginBottom: '12px' }}>
+                              <Paperclip size={16} color="#7c3aed" />
+                              <span style={{ fontSize: '14px' }}>Documentation <span style={{ color: '#64748b', fontWeight: '400' }}>(Optional)</span></span>
+                            </div>
+                            <div className="wc-upload-card" style={{ background: '#f8fafc', height: 'calc(100% - 34px)', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                              <label className="wc-upload-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#7c3aed', fontWeight: '600', fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap', margin: 0 }}>
+                                <Upload size={16} color="#7c3aed" />
+                                Choose File
+                                <input
+                                  type="file"
+                                  onChange={(e) => setDocumentationFile(e.target.files ? e.target.files[0] : null)}
+                                  style={{ display: 'none' }}
+                                />
+                              </label>
+                              <div className="wc-upload-info" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span className="wc-upload-filename" style={{ fontSize: '14px', fontWeight: '500', color: '#1e293b' }}>
+                                  {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
+                                </span>
+                                {!documentationFile && (
+                                  <span className="wc-upload-hint" style={{ fontSize: '12px', color: '#64748b' }}>PDF, PNG, JPG up to 10MB</span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        )}
 
                       </div>
 
@@ -708,7 +832,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                               <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
                                 <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Attempt Date <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
                                 <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Attempted By <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
-                                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Contact Number <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
+                                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Contact <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
                                 <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Call Disposition <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
                               </tr>
                             </thead>

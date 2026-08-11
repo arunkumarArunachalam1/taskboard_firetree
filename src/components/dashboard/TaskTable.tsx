@@ -431,6 +431,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
       return;
     }
 
+    if (selectedFollowupTasks.length === 1) {
+      setFollowupCompleteTaskId(selectedFollowupTasks[0].TaskID);
+      setIsFollowupCompleteModalOpen(true);
+      return;
+    }
+
     const confirmMessage = selectedIds.length === 1
       ? 'Are you sure you want to mark the selected task complete?'
       : `Are you sure you want to mark the ${selectedIds.length} selected tasks complete?`;
