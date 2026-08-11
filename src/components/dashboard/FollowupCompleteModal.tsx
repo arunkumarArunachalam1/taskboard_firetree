@@ -541,20 +541,18 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           <div>
                             <h2 className="followup-client-name" style={{ color: '#5b21b6' }}>{formattedName}</h2>
 
-                            <div className="followup-client-info-row">
+                            <div style={{ display: 'grid', gridTemplateColumns: 'auto auto auto', gap: '8px 24px', fontSize: '13px', color: '#0f172a', fontWeight: 600 }}>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">Client ID:</span> <span className="followup-client-info-value">{data.clientid}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">DOB:</span> <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">SSN:</span> <span className="followup-client-info-value">{data.ssn || ''}</span></span>
-                            </div>
 
-                            <div className="followup-client-info-row">
                               <span className="followup-client-info-item"><span className="followup-client-info-label">Parole #:</span> <span className="followup-client-info-value">{data.parolenumber || 'N/A'}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">MA #:</span> <span className="followup-client-info-value">{data.manumber || ''}</span></span>
-                            </div>
+                              <span />
 
-                            <div className="followup-client-info-row" style={{ marginBottom: 0 }}>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">Admitted to Stay:</span> <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">PDD:</span> <span className="followup-client-info-value">{formatDate(data.expecteddischargedate)}</span></span>
+                              <span />
                             </div>
                           </div>
                         </div>
