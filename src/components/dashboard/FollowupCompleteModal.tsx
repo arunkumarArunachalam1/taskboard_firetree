@@ -528,7 +528,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                     };
 
                     return (
-                      <div className="followup-client-header" style={{ borderLeftColor: data.dischargedate ? '#881337' : '#5b21b6' }}>
+                      <div className="followup-client-header" style={{ borderLeftColor: '#5b21b6' }}>
                         <div className="followup-client-left">
                           <div className="followup-client-icon-wrap" style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
                             <User size={40} color="#94a3b8" />
