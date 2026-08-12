@@ -110,12 +110,12 @@ export function useDashboard() {
       
       await triggerHardRefresh();
       
-      // Run in parallel for KPI and Charts
+      // Run in parallel for KPI, Charts, and Tasks
       await Promise.all([
         fetchSummary(),
-        fetchCharts()
+        fetchCharts(),
+        fetchTasks(1)
       ]);
-      await fetchTasks(1);
     } catch (err: any) {
       setError(err.message || 'Failed to perform hard refresh');
       setLoadingSummary(false);
@@ -125,12 +125,12 @@ export function useDashboard() {
 
   const handleRefresh = useCallback(async () => {
     try {
-      // Run in parallel for KPI and Charts
+      // Run in parallel for KPI, Charts, and Tasks
       await Promise.all([
         fetchSummary(),
-        fetchCharts()
+        fetchCharts(),
+        fetchTasks(page)
       ]);
-      await fetchTasks(page);
     } catch (err: any) {
       setError(err.message || 'Failed to refresh dashboard');
     }
@@ -139,12 +139,12 @@ export function useDashboard() {
   useEffect(() => {
     const initFetch = async () => {
       try {
-        // Run in parallel for KPI and Charts
+        // Run in parallel for KPI, Charts, and Tasks
         await Promise.all([
           fetchSummary(),
-          fetchCharts()
+          fetchCharts(),
+          fetchTasks(1)
         ]);
-        await fetchTasks(1);
       } catch (err: any) {
         setError(err.message || 'Failed to initialize dashboard');
       }

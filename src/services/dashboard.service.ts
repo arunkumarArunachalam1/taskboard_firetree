@@ -390,12 +390,16 @@ export async function getTaskList(
         if (!isNaN(arrVal) && arrVal > 0) return arrVal;
         return 1;
       }
-      const idVal = r['TaskTypeID'] ?? r['Task Type ID'] ?? r['TaskTypeId'] ?? r['TaskType_ID'] ?? r['taskTypeId'] ?? r['task_type_id'] ?? r['TaskTypeID_PK'];
+      // Check lowercase versions since we pass `lowerRow`
+      const idVal = r['tasktypeid'] ?? r['task type id'] ?? r['task_type_id'] ?? r['tasktypeid_pk'] ?? 
+                    r['TaskTypeID'] ?? r['Task Type ID'] ?? r['taskTypeId'] ?? r['TaskTypeId'];
+      
       if (idVal !== undefined && idVal !== null && idVal !== '') {
         const num = Number(idVal);
         if (!isNaN(num) && num > 0) return num;
       }
-      const typeStr = String(r['Task Type'] || r['TaskType'] || r['Task Type Name'] || r['TaskTypeName'] || r['Type'] || r['type'] || r['taskType'] || '').trim().toLowerCase();
+      
+      const typeStr = String(r['task type'] || r['tasktype'] || r['task type name'] || r['tasktypename'] || r['type'] || r['Task Type'] || r['TaskType'] || '').trim().toLowerCase();
       if (typeStr) {
         if (typeStr.includes('whereabout')) return 2;
         if (typeStr.includes('follow')) return 3;
@@ -408,7 +412,7 @@ export async function getTaskList(
 
     const parseTaskTypeLabel = (r: any): string => {
       if (Array.isArray(r)) return '';
-      return String(r['Task Type'] || r['TaskType'] || r['Task Type Name'] || r['TaskTypeName'] || r['Type'] || r['type'] || r['taskType'] || '').trim();
+      return String(r['task type'] || r['tasktype'] || r['task type name'] || r['tasktypename'] || r['type'] || r['Task Type'] || r['TaskType'] || '').trim();
     };
 
     const tasks: Task[] = rawData.map((row: any, idx: number) => {
