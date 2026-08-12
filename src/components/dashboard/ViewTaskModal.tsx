@@ -11,7 +11,8 @@ import {
   CircleCheck,
   ClipboardList
 } from 'lucide-react';
-import { getTaskDetails } from '../../services/dashboard.service';
+import { getTaskDetails, extractTextFromHTML } from '../../services/dashboard.service';
+import { appendOrUpdateReturnTo } from './TaskTable';
 
 interface ViewTaskModalProps {
   isOpen: boolean;
@@ -136,6 +137,49 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
     if (desc && desc !== '' && desc.toLowerCase() !== 'unassigned' && desc !== '--') return desc;
     if (comm && comm !== '' && comm.toLowerCase() !== 'unassigned' && comm !== '--') return comm;
     return '--';
+  };
+
+  const handleLinkClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const anchor = target.tagName === 'A' ? target as HTMLAnchorElement : target.closest('a');
+    if (anchor) {
+      const href = anchor.getAttribute('href');
+      if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+        e.preventDefault();
+
+        let url = href;
+        if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/')) {
+          const path = window.location.pathname;
+          const indexCFMIdx = path.toLowerCase().indexOf('index.cfm');
+          if (indexCFMIdx !== -1) {
+            const base = path.substring(0, indexCFMIdx + 9);
+            url = `${base}/${url}`;
+          } else {
+            url = `/${url}`;
+          }
+        }
+
+        const returnToUrl = window.location.pathname + window.location.search;
+        const taskNameStr = getTaskName();
+        const cleanTaskName = taskNameStr !== '--' ? extractTextFromHTML(taskNameStr) : undefined;
+
+        url = appendOrUpdateReturnTo(url, returnToUrl, cleanTaskName);
+        window.location.href = url;
+      }
+    }
+  };
+
+  const renderDescription = () => {
+    const rawDesc = getDescription();
+    if (rawDesc === '--') return '--';
+
+    if (rawDesc.includes('<a ')) {
+      let fixedDesc = rawDesc.replace(/class=["'][^"']*["']/ig, '');
+      fixedDesc = fixedDesc.replace(/<a /ig, '<br/><br/><a class="vt-btn-primary" style="display: inline-flex; width: fit-content; text-decoration: none; margin-top: 4px;" ');
+      return <div dangerouslySetInnerHTML={{ __html: fixedDesc }} onClick={handleLinkClick} />;
+    }
+
+    return <div dangerouslySetInnerHTML={{ __html: rawDesc }} onClick={handleLinkClick} />;
   };
 
   const getClientName = () => {
@@ -270,7 +314,7 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
                           </div>
                           <div className="vt-card-label">TASK DESCRIPTION</div>
                         </div>
-                        <div className="vt-card-description">{getDescription()}</div>
+                        <div className="vt-card-description">{renderDescription()}</div>
                       </div>
 
                       {/* Client Card */}
