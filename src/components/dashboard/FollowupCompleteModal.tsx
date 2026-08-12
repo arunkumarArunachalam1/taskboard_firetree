@@ -518,13 +518,13 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
 
                     const formatDate = (dateStr: string) => {
                       if (!dateStr) return '';
-                      return new Date(dateStr).toLocaleDateString('en-US', { timeZone: 'UTC' });
+                      return new Date(dateStr).toLocaleDateString('en-US');
                     };
 
                     const formatDateTime = (dateStr: string) => {
                       if (!dateStr) return '';
                       const d = new Date(dateStr);
-                      return `${d.toLocaleDateString('en-US', { timeZone: 'UTC' })} ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}`;
+                      return `${d.toLocaleDateString('en-US')} ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
                     };
 
                     return (
@@ -541,17 +541,17 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           <div>
                             <h2 className="followup-client-name" style={{ color: '#5b21b6' }}>{formattedName}</h2>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'auto auto', gap: '8px 24px', fontSize: '13px', color: '#0f172a', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'auto auto auto', gap: '8px 24px', fontSize: '13px', color: '#0f172a', fontWeight: 600, whiteSpace: 'nowrap' }}>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">Client ID:</span> <span className="followup-client-info-value">{data.clientid}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">DOB:</span> <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
-                              
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">SSN:</span> <span className="followup-client-info-value">{data.ssn || ''}</span></span>
+
+                              <span className="followup-client-info-item"><span className="followup-client-info-label">DOC #:</span> <span className="followup-client-info-value">{data.docnumber || 'N/A'}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">Parole #:</span> <span className="followup-client-info-value">{data.parolenumber || 'N/A'}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">MA #:</span> <span className="followup-client-info-value">{data.manumber || ''}</span></span>
 
-                              <span className="followup-client-info-item"><span className="followup-client-info-label">Admitted to Stay:</span> <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
+                              <span className="followup-client-info-item" style={{ gridColumn: 'span 2' }}><span className="followup-client-info-label">Admitted to Stay:</span> <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">PDD:</span> <span className="followup-client-info-value">{formatDate(data.expecteddischargedate)}</span></span>
-
-                              <span className="followup-client-info-item"><span className="followup-client-info-label">SSN:</span> <span className="followup-client-info-value">{data.ssn || ''}</span></span>
                             </div>
                           </div>
                         </div>

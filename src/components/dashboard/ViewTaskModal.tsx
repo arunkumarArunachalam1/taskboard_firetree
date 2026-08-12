@@ -138,6 +138,19 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
     return '--';
   };
 
+  const renderDescription = () => {
+    const rawDesc = getDescription();
+    if (rawDesc === '--') return '--';
+
+    if (rawDesc.includes('<a ')) {
+      let fixedDesc = rawDesc.replace(/class=["'][^"']*["']/ig, '');
+      fixedDesc = fixedDesc.replace(/<a /ig, '<br/><br/><a class="vt-btn-primary" style="display: inline-flex; width: fit-content; text-decoration: none; margin-top: 4px;" target="_blank" rel="noopener noreferrer" ');
+      return <div dangerouslySetInnerHTML={{ __html: fixedDesc }} />;
+    }
+
+    return <div dangerouslySetInnerHTML={{ __html: rawDesc }} />;
+  };
+
   const getClientName = () => {
     const c = getProp(data, 'ClientName', 'Client', 'clientName', 'client', 'ClientDisplay', 'client_name');
     if (c !== undefined && c !== null && String(c).trim() !== '' && String(c).trim().toLowerCase() !== 'unassigned') {
@@ -270,7 +283,7 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
                           </div>
                           <div className="vt-card-label">TASK DESCRIPTION</div>
                         </div>
-                        <div className="vt-card-description">{getDescription()}</div>
+                        <div className="vt-card-description">{renderDescription()}</div>
                       </div>
 
                       {/* Client Card */}

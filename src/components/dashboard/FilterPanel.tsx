@@ -203,6 +203,45 @@ const DropdownItem: React.FC<{ label: string; isSelected: boolean; onClick: () =
   );
 };
 
+// ─── Formatted Date Input ─────────────────────────────────────────────────────
+const FormattedDateInput: React.FC<{
+  value: string;
+  onChange: (val: string) => void;
+  min?: string;
+  max?: string;
+}> = ({ value, onChange, min, max }) => {
+  const [focused, setFocused] = useState(false);
+  
+  const displayValue = React.useMemo(() => {
+    if (!value) return '';
+    const parts = value.split('-');
+    if (parts.length === 3) {
+      return `${parts[1]}/${parts[2]}/${parts[0]}`; // MM/DD/YYYY
+    }
+    return value;
+  }, [value]);
+
+  return (
+    <input
+      type={focused || value === '' ? "date" : "text"}
+      value={focused || value === '' ? value : displayValue}
+      min={min}
+      max={max}
+      placeholder="MM/DD/YYYY"
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      onChange={e => onChange(e.target.value)}
+      onClick={(e) => {
+        if ('showPicker' in HTMLInputElement.prototype) {
+          try { (e.target as HTMLInputElement).showPicker(); } catch (err) {}
+        }
+      }}
+      className="filter-date-input"
+    />
+  );
+};
+
+
 // ─── FilterPanel ──────────────────────────────────────────────────────────────
 export const FilterPanel: React.FC<FilterPanelProps> = ({ 
   isOpen, filters, onApply, onClear, title = "Filters", layout = '6col', mode = 'card' 
@@ -336,17 +375,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               <div className="filter-field">
                 <label className="filter-label">Start Date</label>
                 <div className="filter-date-wrapper">
-                  <input
-                    type="date"
+                  <FormattedDateInput
                     value={localFilters.startDate}
                     max={localFilters.endDate || undefined}
-                    onChange={e => set('startDate', e.target.value)}
-                    onClick={(e) => {
-                      if ('showPicker' in HTMLInputElement.prototype) {
-                        try { (e.target as HTMLInputElement).showPicker(); } catch (err) {}
-                      }
-                    }}
-                    className="filter-date-input"
+                    onChange={v => set('startDate', v)}
                   />
                   {localFilters.startDate && (
                     <button
@@ -364,17 +396,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               <div className="filter-field">
                 <label className="filter-label">End Date</label>
                 <div className="filter-date-wrapper">
-                  <input
-                    type="date"
+                  <FormattedDateInput
                     value={localFilters.endDate}
                     min={localFilters.startDate || undefined}
-                    onChange={e => set('endDate', e.target.value)}
-                    onClick={(e) => {
-                      if ('showPicker' in HTMLInputElement.prototype) {
-                        try { (e.target as HTMLInputElement).showPicker(); } catch (err) {}
-                      }
-                    }}
-                    className="filter-date-input"
+                    onChange={v => set('endDate', v)}
                   />
                   {localFilters.endDate && (
                     <button

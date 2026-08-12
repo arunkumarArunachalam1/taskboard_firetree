@@ -74,21 +74,33 @@ const DailyCompletion30DaysChart: React.FC<Props> = ({ data, chartRef }) => {
       chart.data.datasets.forEach((dataset: { data: unknown[] }, i: number) => {
         const meta = chart.getDatasetMeta(i);
         if (meta.hidden) return;
-        meta.data.forEach((element: { x: number; y: number }, index: number) => {
+
+        let lastDrawnX = 9999;
+
+        for (let index = meta.data.length - 1; index >= 0; index--) {
+          const element = meta.data[index] as { x: number; y: number };
           const val = dataset.data[index];
-          if (val === null || val === undefined || Number(val) === 0) return;
+          if (val === null || val === undefined || Number(val) === 0) continue;
+
           const isLatest = index === data.length - 1;
           const isSignificantPeak = Number(val) >= Math.max(10, maxVal * 0.25);
-          if (!isLatest && !isSignificantPeak) return;
-          ctx.save();
-          ctx.font = 'bold 10px Helvetica, Arial, sans-serif';
-          ctx.fillStyle = '#374151';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'bottom';
-          const formatted = Number(val).toLocaleString();
-          ctx.fillText(formatted, element.x, element.y - 4);
-          ctx.restore();
-        });
+
+          if (isLatest || isSignificantPeak) {
+            // Prevent overlap by enforcing a minimum horizontal distance (e.g., 30px)
+            if (!isLatest && (lastDrawnX - element.x < 30)) continue;
+
+            ctx.save();
+            ctx.font = 'bold 10px Helvetica, Arial, sans-serif';
+            ctx.fillStyle = '#374151';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            const formatted = Number(val).toLocaleString();
+            ctx.fillText(formatted, element.x, element.y - 4);
+            ctx.restore();
+
+            lastDrawnX = element.x;
+          }
+        }
       });
     },
   }), [data]);
