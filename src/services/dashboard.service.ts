@@ -308,71 +308,36 @@ export async function getTaskList(
     dtParams += `&order[0][column]=${options.sortColumn}&order[0][dir]=${options.sortDir || 'asc'}`;
   }
 
-  let filterParams = '';
-  const filterKeys: string[] = [];
-  const filterValues: string[] = [];
-
   const filters = options.filters;
 
   if (filters) {
     if (filters.status === '0' || filters.status === '1') {
-      filterKeys.push('Completed');
-      filterValues.push(`tableFilter.Completed=${encodeURIComponent(`[0][Completed][=][${filters.status}][]`)}`);
-    } else if (filters.status === 'all') {
-      // Dummy filter to force query prepare if 'all' is selected
-      filterKeys.push('TaskID');
-      filterValues.push(`tableFilter.TaskID=${encodeURIComponent(`[0][TaskID][>][0][]`)}`);
+      dtParams += `&status=${filters.status}`;
     }
 
     if (filters.assignedTo) {
-      filterKeys.push('AssignedTo');
-      const assignedVal = filters.assignedTo === 'unassigned' ? '0' : filters.assignedTo;
-      filterValues.push(`tableFilter.AssignedTo=${encodeURIComponent(`[0][AssignedTo][=][${assignedVal}][]`)}`);
+      const assignedVal = filters.assignedTo === 'unassigned' ? 'unassigned' : filters.assignedTo;
+      dtParams += `&assignedTo=${encodeURIComponent(assignedVal)}`;
     }
 
     if (filters.role) {
-      filterKeys.push('UUID_CORE_Role_id');
-      filterValues.push(`tableFilter.UUID_CORE_Role_id=${encodeURIComponent(`[0][Role][=][${filters.role}][]`)}`);
+      dtParams += `&role=${encodeURIComponent(filters.role)}`;
     }
 
     if (filters.taskType) {
-      filterKeys.push('TaskTypeID');
-      filterValues.push(`tableFilter.TaskTypeID=${encodeURIComponent(`[0][TaskTypeID][=][${filters.taskType}][]`)}`);
+      dtParams += `&taskType=${encodeURIComponent(filters.taskType)}`;
     }
 
-    const formatToCFDate = (dateStr: string) => {
-      if (!dateStr) return '';
-      const parts = dateStr.split('-');
-      if (parts.length === 3) {
-        return `${parts[1]}/${parts[2]}/${parts[0]}`;
-      }
-      return dateStr;
-    };
-
-    if (filters.startDate) {
-      filterKeys.push('StartDate');
-      filterValues.push(`tableFilter.StartDate=${encodeURIComponent(`[5][Start Date][>=][${formatToCFDate(filters.startDate)}][]`)}`);
-    }
-
-    if (filters.endDate) {
-      filterKeys.push('EndDate');
-      filterValues.push(`tableFilter.EndDate=${encodeURIComponent(`[6][Due Date][<=][${formatToCFDate(filters.endDate)}][]`)}`);
-    }
-  } else {
-    // Default filter for backwards compatibility
-    filterKeys.push('Completed');
-    filterValues.push(`tableFilter.Completed=${encodeURIComponent(`[0][Completed][=][0][]`)}`);
+  }
+  
+  if (filters?.startDate) {
+    dtParams += `&startDate=${encodeURIComponent(filters.startDate)}`;
+  }
+  if (filters?.endDate) {
+    dtParams += `&endDate=${encodeURIComponent(filters.endDate)}`;
   }
 
-  if (filterKeys.length > 0) {
-    filterParams = `&tableFilters=${filterKeys.map(k => `tableFilter.${k}`).join(',')}&${filterValues.join('&')}`;
-  }
-
-  const tableListingInfo = await getTableListingInfo();
-  if (tableListingInfo.listColumns) {
-    dtParams += `&listColumns=${encodeURIComponent(tableListingInfo.listColumns)}`;
-  }
-  const url = `/CORE/retrieveData?tableListingID=${tableListingInfo.id}${dtParams}${filterParams}`;
+  const url = `/ReactTaskBoard/GetPaginatedTasks?${dtParams.substring(1)}`;
 
   try {
     const response = await fetch(url, {
@@ -470,27 +435,45 @@ export async function getTaskList(
         };
       }
 
-      // If row is an object, the keys are usually the ColdFusion column labels (e.g., 'Task Name', 'Client')
-      const isCompletedStr = String(row['Completed'] || row['IsCompleted'] || row['Is Completed'] || '').trim().toLowerCase();
+      // If row is an object, the keys might be uppercase (from CFML) or proper case. Normalize to lower.
+      const lowerRow: any = {};
+      Object.keys(row).forEach(k => lowerRow[k.toLowerCase()] = row[k]);
+
+      const isCompletedStr = String(lowerRow['completed'] || lowerRow['iscompleted'] || lowerRow['is completed'] || '').trim().toLowerCase();
       const isObjCompleted = isCompletedStr !== '' && isCompletedStr !== 'no' && isCompletedStr !== '0' && isCompletedStr !== 'false';
-      let objStatus = row['Status'] || 'Active';
-      if (isObjCompleted || objStatus === 'completed') {
+      let objStatus = lowerRow['status'] || lowerRow['taskstatus'] || 'Active';
+      if (isObjCompleted || objStatus.toLowerCase() === 'completed') {
         objStatus = 'Completed';
       }
 
+      const formatDisplayDate = (dStr: string) => {
+        if (!dStr) return '';
+        // Some CF formats might come as "{ts '2026-07-22 17:00:00'}" or "July, 22 2026 17:00:00"
+        let cleanStr = dStr.replace(/{ts '(.*?)'}/, '$1'); 
+        const d = new Date(cleanStr);
+        if (isNaN(d.getTime())) return dStr; // fallback if unparseable
+        
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const m = pad(d.getMonth() + 1);
+        const day = pad(d.getDate());
+        const y = d.getFullYear();
+        
+        return `${m}/${day}/${y}`;
+      };
+
       return {
-        TaskID: Number(row['Task ID'] || row['ID'] || row['DT_RowId'] || idx),
-        TaskName: row['Task Name'] || row['Task'] || row['TaskName'] || 'Unknown Task',
-        TaskDescription: row['Description'] || row['TaskDescription'] || '',
-        CreatedBy: row['Created By'] || row['CreatedBy'] || 'EM System',
-        ClientName: row['Client'] || row['Client Name'] || row['ClientName'] || 'Unknown Client',
-        ExpectedStartDate: row['Exp Start'] || row['Start Date'] || row['ExpectedStartDate'] || '',
-        ExpectedDueDate: row['Due'] || row['Due Date'] || row['ExpectedDueDate'] || '',
-        AssignedTo: row['Assigned To'] || row['AssignedTo'] || 'Unassigned',
-        Facility: row['Facility'] || row['FacilityName'] || 'Unknown',
+        TaskID: Number(lowerRow['task id'] || lowerRow['id'] || lowerRow['dt_rowid'] || lowerRow['taskid'] || idx),
+        TaskName: lowerRow['task name'] || lowerRow['task'] || lowerRow['taskname'] || 'Unknown Task',
+        TaskDescription: lowerRow['description'] || lowerRow['taskdescription'] || '',
+        CreatedBy: lowerRow['created by'] || lowerRow['createdbydisplay'] || lowerRow['createdby'] || 'EM System',
+        ClientName: lowerRow['client'] || lowerRow['client name'] || lowerRow['clientname'] || 'Unknown Client',
+        ExpectedStartDate: formatDisplayDate(lowerRow['exp start'] || lowerRow['start date'] || lowerRow['expectedstartdatetime'] || lowerRow['expectedstartdate'] || ''),
+        ExpectedDueDate: formatDisplayDate(lowerRow['due'] || lowerRow['due date'] || lowerRow['expectedduedatetime'] || lowerRow['expectedduedate'] || ''),
+        AssignedTo: lowerRow['assigned to'] || lowerRow['assignedtodisplay'] || lowerRow['assignedto'] || 'Unassigned',
+        Facility: lowerRow['facility'] || lowerRow['facilityname'] || 'Unknown',
         Status: objStatus,
-        TaskTypeID: parseTaskTypeID(row),
-        taskType: parseTaskTypeLabel(row),
+        TaskTypeID: parseTaskTypeID(lowerRow),
+        taskType: parseTaskTypeLabel(lowerRow),
       };
     });
 
