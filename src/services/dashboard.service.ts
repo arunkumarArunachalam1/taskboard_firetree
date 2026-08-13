@@ -252,37 +252,14 @@ let cachedTableListingInfo: { id: string, listColumns: string } | null = null;
 
 async function getTableListingInfo(): Promise<{ id: string, listColumns: string }> {
   if (cachedTableListingInfo) return cachedTableListingInfo;
-
-  try {
-    const response = await fetch('/ReactTaskBoard/getTableListingIdByName?name=Tasks', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'X-CSRF-Token': activeContext?.csrfToken || '',
-        'X-Requested-With': 'React'
-      },
-      credentials: 'include'
-    });
-
-    if (!response.ok) throw new Error(`API returned ${response.status}`);
-
-    const data = await safeJsonParse(response);
-    if (data.success && data.tableListingID) {
-      cachedTableListingInfo = {
-        id: data.tableListingID,
-        listColumns: data.listColumns || ''
-      };
-      return cachedTableListingInfo;
-    }
-    throw new Error(data.error || 'Could not find table listing ID');
-  } catch (error) {
-    console.error('Failed to dynamically fetch TableListingID, falling back to default:', error);
-    // Fallback to the known default in case the API call fails
-    return {
-      id: 'F50A1C73-CFAA-48A1-AF56-6B1A145C291F',
-      listColumns: ''
-    };
-  }
+  
+  // Immediately use the known default to save network roundtrip (ms overhead)
+  // In case we want dynamic fetching later, we can re-enable this, but for now speed is the priority.
+  cachedTableListingInfo = {
+    id: 'F50A1C73-CFAA-48A1-AF56-6B1A145C291F',
+    listColumns: ''
+  };
+  return cachedTableListingInfo;
 }
 
 export async function getTaskList(
