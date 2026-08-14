@@ -286,35 +286,27 @@ export async function getTaskList(
   }
 
   let filterParams = '';
-  const filterKeys: string[] = [];
-  const filterValues: string[] = [];
 
   const filters = options.filters;
 
   if (filters) {
     if (filters.status === '0' || filters.status === '1') {
-      filterKeys.push('Completed');
-      filterValues.push(`tableFilter.Completed=${encodeURIComponent(`[0][Completed][=][${filters.status}][]`)}`);
+      filterParams += `&ReactStatus=${encodeURIComponent(filters.status)}`;
     } else if (filters.status === 'all') {
-      // Dummy filter to force query prepare if 'all' is selected
-      filterKeys.push('TaskID');
-      filterValues.push(`tableFilter.TaskID=${encodeURIComponent(`[0][TaskID][>][0][]`)}`);
+      filterParams += `&ReactStatus=all`;
     }
 
     if (filters.assignedTo) {
-      filterKeys.push('AssignedTo');
       const assignedVal = filters.assignedTo === 'unassigned' ? '0' : filters.assignedTo;
-      filterValues.push(`tableFilter.AssignedTo=${encodeURIComponent(`[0][AssignedTo][=][${assignedVal}][]`)}`);
+      filterParams += `&ReactAssignedTo=${encodeURIComponent(assignedVal)}`;
     }
 
     if (filters.role) {
-      filterKeys.push('UUID_CORE_Role_id');
-      filterValues.push(`tableFilter.UUID_CORE_Role_id=${encodeURIComponent(`[0][Role][=][${filters.role}][]`)}`);
+      filterParams += `&ReactRole=${encodeURIComponent(filters.role)}`;
     }
 
     if (filters.taskType) {
-      filterKeys.push('TaskTypeID');
-      filterValues.push(`tableFilter.TaskTypeID=${encodeURIComponent(`[0][TaskTypeID][=][${filters.taskType}][]`)}`);
+      filterParams += `&ReactTaskType=${encodeURIComponent(filters.taskType)}`;
     }
 
     const formatToCFDate = (dateStr: string) => {
@@ -327,22 +319,15 @@ export async function getTaskList(
     };
 
     if (filters.startDate) {
-      filterKeys.push('StartDate');
-      filterValues.push(`tableFilter.StartDate=${encodeURIComponent(`[5][Start Date][>=][${formatToCFDate(filters.startDate)}][]`)}`);
+      filterParams += `&ReactStartDate=${encodeURIComponent(formatToCFDate(filters.startDate))}`;
     }
 
     if (filters.endDate) {
-      filterKeys.push('EndDate');
-      filterValues.push(`tableFilter.EndDate=${encodeURIComponent(`[6][Due Date][<=][${formatToCFDate(filters.endDate)}][]`)}`);
+      filterParams += `&ReactEndDate=${encodeURIComponent(formatToCFDate(filters.endDate))}`;
     }
   } else {
     // Default filter for backwards compatibility
-    filterKeys.push('Completed');
-    filterValues.push(`tableFilter.Completed=${encodeURIComponent(`[0][Completed][=][0][]`)}`);
-  }
-
-  if (filterKeys.length > 0) {
-    filterParams = `&tableFilters=${filterKeys.map(k => `tableFilter.${k}`).join(',')}&${filterValues.join('&')}`;
+    filterParams += `&ReactStatus=0`;
   }
 
   const tableListingInfo = await getTableListingInfo();
@@ -486,7 +471,11 @@ export async function getTaskList(
     }
 
     return {
-      total: json.recordsTotal || json.iTotalRecords || 0,
+      // After Step 1 pagination: SP returns TotalCount on every row = full filtered count.
+      // json.recordsTotal now reflects only the 15-row page, so we read from the data instead.
+      total: (rawData.length > 0
+        ? (Number(rawData[0]['TotalCount'] ?? rawData[0]['totalcount'] ?? rawData[0]['TOTALCOUNT'] ?? 0) || json.recordsTotal || json.iTotalRecords || 0)
+        : (json.recordsTotal || json.iTotalRecords || 0)),
       page,
       pageSize,
       tasks
