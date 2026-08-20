@@ -748,17 +748,17 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                 </div>
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                <div style={{ display: 'flex', gap: '20px', marginLeft: '34px' }}>
-                                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                                    <input type="radio" name="q1" value="1" checked={attendedTreatment === '1'} onChange={(e) => setAttendedTreatment(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                <div className="question-answers-wrapper">
+                                  <label className="radio-label">
+                                    <input type="radio" name="q1" value="1" checked={attendedTreatment === '1'} onChange={(e) => setAttendedTreatment(e.target.value)} className="custom-radio" />
                                     Yes
                                   </label>
-                                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                                    <input type="radio" name="q1" value="2" checked={attendedTreatment === '2'} onChange={(e) => setAttendedTreatment(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                  <label className="radio-label">
+                                    <input type="radio" name="q1" value="2" checked={attendedTreatment === '2'} onChange={(e) => setAttendedTreatment(e.target.value)} className="custom-radio" />
                                     No
                                   </label>
-                                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                                    <input type="radio" name="q1" value="4" checked={attendedTreatment === '4'} onChange={(e) => setAttendedTreatment(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                  <label className="radio-label">
+                                    <input type="radio" name="q1" value="4" checked={attendedTreatment === '4'} onChange={(e) => setAttendedTreatment(e.target.value)} className="custom-radio" />
                                     No, but rescheduled it for
                                   </label>
                                 </div>
@@ -787,64 +787,64 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                             {(details?.FollowupType || details?.FOLLOWUPTYPE) === '7-Day Followup' && (
                               <>
                                 {/* Q2 */}
-                                <div className="task-form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                                <div className="task-form-group task-form-group-flex">
                                   <div>
-                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
-                                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '22px', background: '#7c3aed', color: '#fff', fontSize: '12px', fontWeight: '600', borderRadius: '4px' }}>2</span>
-                                      <label style={{ margin: 0, fontWeight: '600', color: '#1e293b', fontSize: '14px', lineHeight: '22px' }}>Are you interested in returning to treatment at this time? <span style={{ color: '#ef4444' }}>*</span></label>
+                                    <div className="question-header">
+                                      <span className="question-number-badge">2</span>
+                                      <label className="question-label">Are you interested in returning to treatment at this time? <span style={{ color: '#ef4444' }}>*</span></label>
                                     </div>
                                   </div>
-                                  <div style={{ display: 'flex', gap: '20px', marginLeft: '34px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                                      <input type="radio" name="q2" value="Yes" checked={interestedInReturning === 'Yes'} onChange={(e) => setInterestedInReturning(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                  <div className="question-answers-wrapper">
+                                    <label className="radio-label">
+                                      <input type="radio" name="q2" value="Yes" checked={interestedInReturning === 'Yes'} onChange={(e) => setInterestedInReturning(e.target.value)} className="custom-radio" />
                                       Yes
                                     </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                                      <input type="radio" name="q2" value="No" checked={interestedInReturning === 'No'} onChange={(e) => setInterestedInReturning(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                    <label className="radio-label">
+                                      <input type="radio" name="q2" value="No" checked={interestedInReturning === 'No'} onChange={(e) => setInterestedInReturning(e.target.value)} className="custom-radio" />
                                       No
                                     </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                                      <input type="radio" name="q2" value="Undecided" checked={interestedInReturning === 'Undecided'} onChange={(e) => setInterestedInReturning(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                    <label className="radio-label">
+                                      <input type="radio" name="q2" value="Undecided" checked={interestedInReturning === 'Undecided'} onChange={(e) => setInterestedInReturning(e.target.value)} className="custom-radio" />
                                       Undecided
                                     </label>
                                   </div>
                                 </div>
 
                                 {/* Q3 */}
-                                <div className="task-form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                                <div className="task-form-group task-form-group-flex">
                                   <div>
-                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
-                                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '22px', background: '#7c3aed', color: '#fff', fontSize: '12px', fontWeight: '600', borderRadius: '4px' }}>3</span>
-                                      <label style={{ margin: 0, fontWeight: '600', color: '#1e293b', fontSize: '14px', lineHeight: '22px' }}>Are you sober? <span style={{ color: '#ef4444' }}>*</span></label>
+                                    <div className="question-header">
+                                      <span className="question-number-badge">3</span>
+                                      <label className="question-label">Are you sober? <span style={{ color: '#ef4444' }}>*</span></label>
                                     </div>
                                   </div>
-                                  <div style={{ display: 'flex', gap: '20px', marginLeft: '34px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                                      <input type="radio" name="q3" value="Yes" checked={isSober === 'Yes'} onChange={(e) => setIsSober(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                  <div className="question-answers-wrapper">
+                                    <label className="radio-label">
+                                      <input type="radio" name="q3" value="Yes" checked={isSober === 'Yes'} onChange={(e) => setIsSober(e.target.value)} className="custom-radio" />
                                       Yes
                                     </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                                      <input type="radio" name="q3" value="No" checked={isSober === 'No'} onChange={(e) => setIsSober(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                    <label className="radio-label">
+                                      <input type="radio" name="q3" value="No" checked={isSober === 'No'} onChange={(e) => setIsSober(e.target.value)} className="custom-radio" />
                                       No
                                     </label>
                                   </div>
                                 </div>
 
                                 {/* Q4 */}
-                                <div className="task-form-group" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                                <div className="task-form-group task-form-group-flex">
                                   <div>
-                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
-                                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '22px', background: '#7c3aed', color: '#fff', fontSize: '12px', fontWeight: '600', borderRadius: '4px' }}>4</span>
-                                      <label style={{ margin: 0, fontWeight: '600', color: '#1e293b', fontSize: '14px', lineHeight: '22px' }}>Are you attending support/12 step meetings? <span style={{ color: '#ef4444' }}>*</span></label>
+                                    <div className="question-header">
+                                      <span className="question-number-badge">4</span>
+                                      <label className="question-label">Are you attending support/12 step meetings? <span style={{ color: '#ef4444' }}>*</span></label>
                                     </div>
                                   </div>
-                                  <div style={{ display: 'flex', gap: '20px', marginLeft: '34px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                                      <input type="radio" name="q4" value="Yes" checked={attendingSupportMeetings === 'Yes'} onChange={(e) => setAttendingSupportMeetings(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                  <div className="question-answers-wrapper">
+                                    <label className="radio-label">
+                                      <input type="radio" name="q4" value="Yes" checked={attendingSupportMeetings === 'Yes'} onChange={(e) => setAttendingSupportMeetings(e.target.value)} className="custom-radio" />
                                       Yes
                                     </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                                      <input type="radio" name="q4" value="No" checked={attendingSupportMeetings === 'No'} onChange={(e) => setAttendingSupportMeetings(e.target.value)} style={{ accentColor: '#7c3aed', width: '16px', height: '16px' }} />
+                                    <label className="radio-label">
+                                      <input type="radio" name="q4" value="No" checked={attendingSupportMeetings === 'No'} onChange={(e) => setAttendingSupportMeetings(e.target.value)} className="custom-radio" />
                                       No
                                     </label>
                                   </div>
@@ -857,27 +857,27 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                       )}
 
                       {/* Comments & Documentation */}
-                      <div style={{ display: 'grid', gridTemplateColumns: (details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' ? '1fr 1fr' : '1fr', gap: '24px' }}>
+                      <div className="comments-docs-grid" style={{ gridTemplateColumns: (details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' ? '1fr 1fr' : '1fr' }}>
 
                         {/* Comments */}
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600', marginBottom: '12px' }}>
-                            <MessageSquare size={16} style={{ color: '#7c3aed' }} />
+                          <div className="section-header-title">
+                            <MessageSquare size={16} className="section-header-icon" />
                             Comments
                           </div>
                           <textarea
                             value={comments}
                             onChange={(e) => setComments(e.target.value)}
                             placeholder="Add any additional notes..."
-                            style={{ width: '100%', minHeight: '100px', padding: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '14px', resize: 'vertical' }}
+                            className="custom-textarea"
                           />
                         </div>
 
                         {/* Documentation (Only for Referral/Funding tasks) */}
                         {(details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' && (
                           <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600', marginBottom: '12px' }}>
-                              <FileText size={16} style={{ color: '#7c3aed' }} />
+                            <div className="section-header-title">
+                              <FileText size={16} className="section-header-icon" />
                               Documentation
                             </div>
                             <div style={{ position: 'relative' }}>
@@ -887,9 +887,9 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                 onChange={(e) => setDocumentationFile(e.target.files ? e.target.files[0] : null)}
                                 style={{ display: 'none' }}
                               />
-                              <label htmlFor="documentation-upload" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', border: '2px dashed #cbd5e1', borderRadius: '6px', background: '#f8fafc', cursor: 'pointer', transition: 'all 0.2s', minHeight: '100px' }}>
-                                <Upload size={20} style={{ color: '#64748b', marginBottom: '8px' }} />
-                                <span style={{ fontSize: '13px', color: '#475569', fontWeight: 500, textAlign: 'center' }}>
+                              <label htmlFor="documentation-upload" className="upload-drop-zone">
+                                <Upload size={20} className="upload-icon" />
+                                <span className="upload-drop-zone-text">
                                   {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
                                 </span>
                               </label>
@@ -919,23 +919,23 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           <Clock size={16} color="#7c3aed" />
                           <span>Attempt History</span>
                         </div>
-                        <div style={{ overflowX: 'auto' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <div className="table-responsive">
+                          <table className="attempt-history-table">
                             <thead>
-                              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Attempt Date <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
-                                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Attempted By <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
-                                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Contact <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
-                                <th style={{ padding: '8px 0', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Call Disposition <ArrowUpDown size={12} style={{ display: 'inline', marginLeft: '4px', opacity: 0.5 }} /></th>
+                              <tr className="attempt-history-th">
+                                <th className="attempt-history-th">Attempt Date <ArrowUpDown size={12} className="sort-icon" /></th>
+                                <th className="attempt-history-th">Attempted By <ArrowUpDown size={12} className="sort-icon" /></th>
+                                <th className="attempt-history-th">Contact <ArrowUpDown size={12} className="sort-icon" /></th>
+                                <th className="attempt-history-th">Call Disposition <ArrowUpDown size={12} className="sort-icon" /></th>
                               </tr>
                             </thead>
                             <tbody>
                               {(details?.AttemptHistory || details?.ATTEMPTHISTORY).map((attempt: any, i: number) => (
-                                <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                  <td style={{ padding: '12px 0', color: '#1e293b', fontWeight: '500' }}>{attempt.ContactDate} {attempt.ContactTime}</td>
-                                  <td style={{ padding: '12px 0', color: '#1e293b', fontWeight: '500' }}>{attempt.CreatedByName}</td>
-                                  <td style={{ padding: '12px 0', color: '#1e293b', fontWeight: '500' }}>{attempt.ContactMethod || ''}</td>
-                                  <td style={{ padding: '12px 0', color: '#1e293b', fontWeight: '500' }}>{attempt.Disposition}</td>
+                                <tr key={i} className="attempt-history-tr">
+                                  <td className="attempt-history-td">{attempt.ContactDate} {attempt.ContactTime}</td>
+                                  <td className="attempt-history-td">{attempt.CreatedByName}</td>
+                                  <td className="attempt-history-td">{attempt.ContactMethod || ''}</td>
+                                  <td className="attempt-history-td">{attempt.Disposition}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -949,11 +949,11 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
               )}
             </div>
 
-            <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#ffffff', display: 'flex', justifyContent: 'flex-end', gap: '12px', borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
-              <button type="button" onClick={onClose} disabled={saving} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#ffffff', color: '#1e293b', fontWeight: '500', fontSize: '14px', cursor: 'pointer' }}>
+            <div className="modal-footer-actions">
+              <button type="button" onClick={onClose} disabled={saving} className="btn-modal-cancel">
                 Cancel
               </button>
-              <button type="submit" form="followupForm" disabled={saving || loading} style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#7c3aed', color: '#ffffff', fontWeight: '500', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button type="submit" form="followupForm" disabled={saving || loading} className="btn-modal-save">
                 {saving ? (
                   <>Saving... <div className="task-btn-spinner" /></>
                 ) : (
