@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Calendar, Clock, User, Search, ChevronDown, ChevronUp, AlertCircle, MessageSquare, Minus, ArrowUpDown, Paperclip, Upload } from 'lucide-react';
+import { X, Save, Calendar, Clock, User, Search, ChevronDown, ChevronUp, AlertCircle, MessageSquare, Minus, ArrowUpDown, Paperclip, Upload, FileText } from 'lucide-react';
 import { getFollowupModalData, saveFollowupTask, getFollowupContactPhoneNumbers, getFollowupDispositions } from '../../services/dashboard.service';
 
 interface FollowupCompleteModalProps {
@@ -296,6 +296,19 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
   const loadData = async () => {
     setLoading(true);
     setError('');
+
+    // Reset form states so old data doesn't carry over between tasks
+    setDispositionId('');
+    setAttendedTreatment('');
+    setInterestedInReturning('');
+    setIsSober('');
+    setAttendingSupportMeetings('');
+    setRescheduledDate('');
+    setRescheduledTime('');
+    setComments('');
+    setDocumentationFile(null);
+    setMethodId('');
+
     try {
       const [followupDetails, methodsList, dispositionsList] = await Promise.all([
         getFollowupModalData(selectedTaskId),
@@ -393,9 +406,9 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
         const prefix = parts[0];
         const id = parts[1];
         if (prefix === 'CC') {
-           payload.ClientContactPhoneNumberID = id;
+          payload.ClientContactPhoneNumberID = id;
         } else if (prefix === 'C') {
-           payload.ContactPhoneNumberID = id;
+          payload.ContactPhoneNumberID = id;
         }
       }
 
@@ -599,6 +612,43 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                     );
                   })()}
 
+                  {((details?.FollowupType || details?.FOLLOWUPTYPE) === 'Aftercare Followup' || details?.OrganizationName || details?.ORGANIZATIONNAME || details?.AftercareAppointmentDate || details?.AFTERCAREAPPOINTMENTDATE) && (
+                    <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '24px', display: 'flex', gap: '32px' }}>
+                      {((details?.FollowupType || details?.FOLLOWUPTYPE) === 'Aftercare Followup' || details?.OrganizationName || details?.ORGANIZATIONNAME) && (
+                        <div>
+                          <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', marginBottom: '8px', marginTop: 0 }}>Aftercare Facility</h4>
+                          <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
+                            {(details?.OrganizationName || details?.ORGANIZATIONNAME) ? (
+                              <>
+                                <div>{details?.OrganizationName || details?.ORGANIZATIONNAME}</div>
+                                <div>{details?.StreetAddress1 || details?.STREETADDRESS1}</div>
+                                {(details?.StreetAddress2 || details?.STREETADDRESS2) ? <div>{details?.StreetAddress2 || details?.STREETADDRESS2}</div> : null}
+                                <div>{details?.CityStateZip || details?.CITYSTATEZIP}</div>
+                              </>
+                            ) : (
+                              <div style={{ color: '#ef4444', fontStyle: 'italic' }}>None specified</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {((details?.FollowupType || details?.FOLLOWUPTYPE) === 'Aftercare Followup' || details?.AftercareAppointmentDate || details?.AFTERCAREAPPOINTMENTDATE) && (
+                        <div>
+                          <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', marginBottom: '8px', marginTop: 0 }}>Appointment Date/Time</h4>
+                          <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
+                            {(details?.AftercareAppointmentDate || details?.AFTERCAREAPPOINTMENTDATE) ? (
+                              <>
+                                {new Date(details?.AftercareAppointmentDate || details?.AFTERCAREAPPOINTMENTDATE).toLocaleDateString('en-US')}
+                                {details?.AftercareAppointmentTime || details?.AFTERCAREAPPOINTMENTTIME ? ` @ ${details?.AftercareAppointmentTime || details?.AFTERCAREAPPOINTMENTTIME}` : ''}
+                              </>
+                            ) : (
+                              <div style={{ color: '#ef4444', fontStyle: 'italic' }}>None specified</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <form id="followupForm" onSubmit={handleSubmit} className="task-form-layout" style={{ marginTop: '24px' }}>
                     {error && (
                       <div className="task-alert task-alert-error" style={{ gridColumn: '1 / -1' }}>
@@ -614,36 +664,79 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
 
 
                       {/* Attempt Header */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '4px', height: '18px', background: '#5b21b6', borderRadius: '2px' }}></div>
-                        <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', margin: 0 }}>
+                      <div style={{ marginBottom: '8px' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#475569', margin: 0 }}>
                           Attempt #{(details?.AttemptHistory || details?.ATTEMPTHISTORY || []).length + 1}
                         </h3>
                       </div>
 
-                      {/* 4-column Grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-                        <div className="task-form-group">
-                          <label className="task-form-label">Call Date <span style={{ color: '#ef4444' }}>*</span></label>
-                          <input type="date" className="task-form-input" value={contactDate} onChange={(e) => setContactDate(e.target.value)} required />
+                      {/* Attempt Body Wrapper */}
+                      <div style={{ borderLeft: '4px solid #5b21b6', background: '#f8fafc', padding: '24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                        
+                        {/* Contact Details */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', margin: 0 }}>Contact</h4>
+                          <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            {(details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' ? (
+                              <div style={{ fontWeight: 500 }}>{details?.FormattedName || details?.FORMATTEDNAME}</div>
+                            ) : (
+                              <div style={{ fontWeight: 500 }}>
+                                {(details?.LastName || details?.LASTNAME) ? `${details?.LastName || details?.LASTNAME}, ` : ''}{details?.FirstName || details?.FIRSTNAME}
+                              </div>
+                            )}
+
+                            {(details?.PhoneNumbers || details?.PHONENUMBERS) && <span style={{ color: '#cbd5e1' }}>|</span>}
+
+                            {(details?.PhoneNumbers || details?.PHONENUMBERS) ? (
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                {(details?.PhoneNumbers || details?.PHONENUMBERS).split(',').map((p: string, i: number, arr: any[]) => (
+                                  <div key={i}>{p.trim()}{i < arr.length - 1 ? ',' : ''}</div>
+                                ))}
+                              </div>
+                            ) : (
+                              <>
+                                <span style={{ color: '#cbd5e1' }}>|</span>
+                                <div style={{ color: '#ef4444', fontWeight: 600 }}>This contact does not have a phone number.</div>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <div className="task-form-group">
-                          <label className="task-form-label">Call Time <span style={{ color: '#ef4444' }}>*</span></label>
-                          <CustomTimePicker value={contactTime} onChange={(val) => setContactTime(val)} required />
+
+                        {/* 4-column Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                          <div className="task-form-group">
+                            <label className="task-form-label">Call Date <span style={{ color: '#ef4444' }}>*</span></label>
+                            <div className="task-input-icon-wrapper" style={{ position: 'relative' }}>
+                              <input
+                                type="date"
+                                className="task-form-input task-form-input-with-icon-left"
+                                style={{ background: '#fff' }}
+                                value={contactDate}
+                                onChange={(e) => setContactDate(e.target.value)}
+                                onClick={(e) => { try { (e.target as any).showPicker?.(); } catch (err) { } }}
+                                required
+                              />
+                              <Calendar size={16} className="task-input-icon-left" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+                            </div>
+                          </div>
+                          <div className="task-form-group">
+                            <label className="task-form-label">Call Time <span style={{ color: '#ef4444' }}>*</span></label>
+                            <CustomTimePicker value={contactTime} onChange={(val) => setContactTime(val)} required />
+                          </div>
+                          <div className="task-form-group">
+                            <label className="task-form-label">Contact Phone/Email</label>
+                            <SearchableCombobox options={methods} value={methodId} onChange={(val) => setMethodId(val)} placeholder="" />
+                          </div>
+                          <div className="task-form-group">
+                            <label className="task-form-label">Call Disposition <span style={{ color: '#ef4444' }}>*</span></label>
+                            <SearchableCombobox options={dispositions} value={dispositionId} onChange={(val) => setDispositionId(val)} placeholder="" required />
+                          </div>
                         </div>
-                        <div className="task-form-group">
-                          <label className="task-form-label">Contact Phone/Email</label>
-                          <SearchableCombobox options={methods} value={methodId} onChange={(val) => setMethodId(val)} placeholder="" />
-                        </div>
-                        <div className="task-form-group">
-                          <label className="task-form-label">Call Disposition</label>
-                          <SearchableCombobox options={dispositions} value={dispositionId} onChange={(val) => setDispositionId(val)} placeholder="" required />
-                        </div>
-                      </div>
+                      </div> {/* End of Attempt Body Wrapper */}
 
                       {/* Survey Box */}
                       {(details?.FollowupType || details?.FOLLOWUPTYPE) !== 'Funding/Parole/Probation Follow up' && !['2', '4', '12'].includes(String(dispositionId)) && (
-                        <div style={{ background: '#f8fafc', padding: '24px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '24px' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
 
                             {/* Q1 */}
@@ -671,11 +764,19 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                 </div>
                                 {attendedTreatment === '4' && (
                                   <div style={{ display: 'flex', gap: '16px', marginLeft: '34px' }}>
-                                    <div className="task-input-icon-wrapper" style={{ flex: 1 }}>
-                                      <input type="date" className="task-form-input task-form-input-with-icon-right" style={{ paddingRight: '36px', background: '#fff' }} value={rescheduledDate} onChange={(e) => setRescheduledDate(e.target.value)} required />
-                                      <Calendar size={16} className="task-input-icon-right" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+                                    <div className="task-input-icon-wrapper" style={{ flex: '0 0 200px', position: 'relative' }}>
+                                      <input
+                                        type="date"
+                                        className="task-form-input task-form-input-with-icon-left"
+                                        style={{ background: '#fff' }}
+                                        value={rescheduledDate}
+                                        onChange={(e) => setRescheduledDate(e.target.value)}
+                                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch (err) { } }}
+                                        required
+                                      />
+                                      <Calendar size={16} className="task-input-icon-left" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
                                     </div>
-                                    <div style={{ flex: 1 }}>
+                                    <div style={{ flex: '0 0 200px' }}>
                                       <CustomTimePicker value={rescheduledTime} onChange={(val) => setRescheduledTime(val)} required />
                                     </div>
                                   </div>
@@ -757,55 +858,48 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
 
                       {/* Comments & Documentation */}
                       <div style={{ display: 'grid', gridTemplateColumns: (details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' ? '1fr 1fr' : '1fr', gap: '24px' }}>
-                        
+
                         {/* Comments */}
-                        <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#fff' }}>
+                        <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600', marginBottom: '12px' }}>
-                            <MessageSquare size={16} color="#7c3aed" />
-                            <span style={{ fontSize: '14px' }}>Comments</span>
+                            <MessageSquare size={16} style={{ color: '#7c3aed' }} />
+                            Comments
                           </div>
                           <textarea
-                            className="task-form-textarea"
-                            rows={3}
                             value={comments}
                             onChange={(e) => setComments(e.target.value)}
                             placeholder="Add any additional notes..."
-                            style={{ resize: 'none', border: '1px solid #e2e8f0', width: '100%', height: 'calc(100% - 34px)' }}
+                            style={{ width: '100%', minHeight: '100px', padding: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '14px', resize: 'vertical' }}
                           />
                         </div>
 
-                        {/* Documentation (Only for Funding/Parole/Probation Follow up) */}
+                        {/* Documentation (Only for Referral/Funding tasks) */}
                         {(details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' && (
-                          <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '16px', background: '#fff' }}>
+                          <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600', marginBottom: '12px' }}>
-                              <Paperclip size={16} color="#7c3aed" />
-                              <span style={{ fontSize: '14px' }}>Documentation <span style={{ color: '#64748b', fontWeight: '400' }}>(Optional)</span></span>
+                              <FileText size={16} style={{ color: '#7c3aed' }} />
+                              Documentation
                             </div>
-                            <div className="wc-upload-card" style={{ background: '#f8fafc', height: 'calc(100% - 34px)', border: '1px dashed #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                              <label className="wc-upload-btn" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', color: '#7c3aed', fontWeight: '600', fontSize: '14px', cursor: 'pointer', whiteSpace: 'nowrap', margin: 0 }}>
-                                <Upload size={16} color="#7c3aed" />
-                                Choose File
-                                <input
-                                  type="file"
-                                  onChange={(e) => setDocumentationFile(e.target.files ? e.target.files[0] : null)}
-                                  style={{ display: 'none' }}
-                                />
-                              </label>
-                              <div className="wc-upload-info" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <span className="wc-upload-filename" style={{ fontSize: '14px', fontWeight: '500', color: '#1e293b' }}>
+                            <div style={{ position: 'relative' }}>
+                              <input
+                                type="file"
+                                id="documentation-upload"
+                                onChange={(e) => setDocumentationFile(e.target.files ? e.target.files[0] : null)}
+                                style={{ display: 'none' }}
+                              />
+                              <label htmlFor="documentation-upload" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', border: '2px dashed #cbd5e1', borderRadius: '6px', background: '#f8fafc', cursor: 'pointer', transition: 'all 0.2s', minHeight: '100px' }}>
+                                <Upload size={20} style={{ color: '#64748b', marginBottom: '8px' }} />
+                                <span style={{ fontSize: '13px', color: '#475569', fontWeight: 500, textAlign: 'center' }}>
                                   {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
                                 </span>
-                                {!documentationFile && (
-                                  <span className="wc-upload-hint" style={{ fontSize: '12px', color: '#64748b' }}>PDF, PNG, JPG up to 10MB</span>
-                                )}
-                              </div>
+                              </label>
                             </div>
                           </div>
                         )}
 
                       </div>
 
-                    </div>
+                  </div> {/* End of Attempt Section */}
 
                     {details?.FollowupType === 'Funding/Parole/Probation Follow up' && (
                       <div className="task-form-section" style={{ gridColumn: '1 / -1' }}>

@@ -429,6 +429,7 @@ export async function getTaskList(
           Status: arrStatus,
           TaskTypeID: parseTaskTypeID(row),
           taskType: parseTaskTypeLabel(row),
+          CompletedDateTime: row[15] || null,
         };
       }
 
@@ -453,6 +454,7 @@ export async function getTaskList(
         Status: objStatus,
         TaskTypeID: parseTaskTypeID(row),
         taskType: parseTaskTypeLabel(row),
+        CompletedDateTime: row['CompletedDateTime'] || row['CompletedDate'] || row['Completed Date'] || row['CompletedTime'] || null,
       };
     });
 

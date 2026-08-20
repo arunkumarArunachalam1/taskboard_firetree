@@ -480,6 +480,12 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
     setIsSubmitting(true);
 
     try {
+      if (expectedStartDate && expectedEndDate && expectedEndDate < expectedStartDate) {
+        setError('Expected End Date cannot be before Expected Start Date.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const selectedClient = clients.find(c => String(c.value) === String(clientId));
       const actualClientId = selectedClient?.clientId || clientId;
 
@@ -573,7 +579,13 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                       <input
                         type="date"
                         value={expectedStartDate}
-                        onChange={e => setExpectedStartDate(e.target.value)}
+                        onChange={e => {
+                          const newStart = e.target.value;
+                          setExpectedStartDate(newStart);
+                          if (expectedEndDate && expectedEndDate < newStart) {
+                            setExpectedEndDate(newStart);
+                          }
+                        }}
                         onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                         required
                         className="task-form-input task-form-input-with-icon-left task-form-input-h38"
@@ -600,6 +612,7 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                       <input
                         type="date"
                         value={expectedEndDate}
+                        min={expectedStartDate}
                         onChange={e => setExpectedEndDate(e.target.value)}
                         onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                         required

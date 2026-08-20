@@ -18,9 +18,10 @@ interface ViewTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   taskId: number | null;
+  taskDescription?: string;
 }
 
-export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, taskId }) => {
+export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, taskId, taskDescription }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -130,6 +131,9 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
   };
 
   const getDescription = () => {
+    if (taskDescription && taskDescription !== '--') {
+      return taskDescription;
+    }
     const descVal = getProp(data, 'TaskDescription', 'Description', 'taskDescription', 'task_description');
     const commVal = getProp(data, 'Comments', 'Comment', 'comments', 'comment');
     const desc = descVal !== undefined && descVal !== null ? String(descVal).trim() : '';

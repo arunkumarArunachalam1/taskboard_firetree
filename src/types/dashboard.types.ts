@@ -53,6 +53,7 @@ export interface Task {
   TaskTypeID: number;
   taskType?: string;
   ClientID?: number;
+  CompletedDateTime?: string | null;
 }
 
 export interface TaskListResponse {

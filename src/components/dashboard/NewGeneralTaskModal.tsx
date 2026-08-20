@@ -225,9 +225,20 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
   }, [isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    
+    if (name === 'ExpectedStartDate' && formData.ExpectedDueDate < value) {
+      setFormData({
+        ...formData,
+        [name]: value,
+        ExpectedDueDate: value
+      });
+      return;
+    }
+    
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
   };
 
@@ -417,6 +428,7 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                         value={formData.ExpectedDueDate}
                         onChange={handleChange}
                         onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
+                        min={formData.ExpectedStartDate}
                         required
                         className="task-form-input task-form-input-with-icon-left"
                       />

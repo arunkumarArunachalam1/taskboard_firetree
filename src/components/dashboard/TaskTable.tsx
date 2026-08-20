@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, AlertCircle, Clock, CheckCircle2, Activity, 
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { TaskListResponse, Task, FacilityStaff, DashboardFilters } from '../../types/dashboard.types';
-import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted, getFacilityStaff, assignTasks, getRoles, getTaskTypes } from '../../services/dashboard.service';
+import { extractHrefFromHTML, extractTextFromHTML, markTasksCompleted, getFacilityStaff, assignTasks, getRoles, getTaskTypes, getTaskDetails } from '../../services/dashboard.service';
 import { NewGeneralTaskModal } from './NewGeneralTaskModal';
 import { NewWhereaboutsTaskModal } from './NewWhereaboutsTaskModal';
 import { FilterPanel } from './FilterPanel';
@@ -226,6 +226,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [whereaboutsCompleteIds, setWhereaboutsCompleteIds] = useState<number[]>([]);
   const [whereaboutsCompleteClientId, setWhereaboutsCompleteClientId] = useState<number>(0);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
+  const [selectedTaskDescription, setSelectedTaskDescription] = useState<string>('');
   const [isListingFilterOpen, setIsListingFilterOpen] = useState(false);
   const filterContainerRef = useRef<HTMLDivElement>(null);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
@@ -321,7 +322,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     }
   };
 
-  const handleRowClick = (task: Task, e: React.MouseEvent<HTMLTableRowElement>) => {
+  const handleRowClick = async (task: Task, e: React.MouseEvent<HTMLTableRowElement>) => {
     const target = e.target as HTMLElement;
     if (
       target.tagName === 'A' ||
@@ -337,6 +338,46 @@ const TaskTable: React.FC<TaskTableProps> = ({
     const taskTypeId = Number(task.TaskTypeID || 0);
     const typeStr = String(task.taskType || '').trim().toLowerCase();
 
+    // Enforce 24-hour edit limit on completed tasks
+    if (task.Status === 'Completed') {
+      let isPast24HoursCompleted = false;
+      let completedDateStr = task.CompletedDateTime;
+      
+      if (!completedDateStr) {
+        try {
+          // If completion date is not available in table data, fetch task details dynamically
+          const details = await getTaskDetails(task.TaskID);
+          completedDateStr = details.CompletedDateTime || details.CompletedDate || details.completed_date_time;
+        } catch (err) {
+          console.error("Failed to fetch task details for completion date", err);
+        }
+      }
+
+      if (completedDateStr) {
+        const completedDate = new Date(completedDateStr);
+        if (!isNaN(completedDate.getTime())) {
+          const now = new Date();
+          const diffMs = now.getTime() - completedDate.getTime();
+          if (diffMs > 24 * 60 * 60 * 1000) {
+            isPast24HoursCompleted = true;
+          }
+        } else {
+          // Unparseable date, fallback to read-only for safety
+          isPast24HoursCompleted = true;
+        }
+      } else {
+        // Missing completion date even after fetch, fallback to read-only for safety
+        isPast24HoursCompleted = true;
+      }
+
+      if (isPast24HoursCompleted) {
+        setSelectedTaskId(task.TaskID);
+        setSelectedTaskDescription(task.TaskDescription);
+        setIsViewTaskModalOpen(true);
+        return;
+      }
+    }
+
     if (taskTypeId === 2 || typeStr.includes('whereabout')) {
       setSelectedTaskId(task.TaskID);
       setIsEditWhereaboutsModalOpen(true);
@@ -349,6 +390,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     }
     if (taskTypeId === 1 || typeStr.includes('general') || (!typeStr.includes('whereabout') && !typeStr.includes('follow'))) {
       setSelectedTaskId(task.TaskID);
+      setSelectedTaskDescription(task.TaskDescription);
       setIsViewTaskModalOpen(true);
       return;
     }
@@ -424,14 +466,22 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
     const selectedWhereaboutsTasks = data ? data.tasks.filter(t => selectedIds.includes(t.TaskID) && Number(t.TaskTypeID) === 2) : [];
     const selectedFollowupTasks = data ? data.tasks.filter(t => selectedIds.includes(t.TaskID) && Number(t.TaskTypeID) === 3) : [];
-    if (selectedWhereaboutsTasks.length === 1) {
+    if (selectedWhereaboutsTasks.length > 0) {
+      if (selectedWhereaboutsTasks.length > 1 || selectedWhereaboutsTasks.length !== selectedIds.length) {
+        setToast({ message: 'Whereabouts tasks cannot be completed in bulk.', type: 'error' });
+        return;
+      }
       setWhereaboutsCompleteIds(selectedWhereaboutsTasks.map(t => t.TaskID));
       setWhereaboutsCompleteClientId(Number((selectedWhereaboutsTasks[0] as any)?.ClientID || 0));
       setIsWhereaboutsCompleteModalOpen(true);
       return;
     }
 
-    if (selectedFollowupTasks.length === 1) {
+    if (selectedFollowupTasks.length > 0) {
+      if (selectedFollowupTasks.length > 1 || selectedFollowupTasks.length !== selectedIds.length) {
+        setToast({ message: 'Followup tasks must be completed individually.', type: 'error' });
+        return;
+      }
       setFollowupCompleteTaskId(selectedFollowupTasks[0].TaskID);
       setIsFollowupCompleteModalOpen(true);
       return;
@@ -1323,6 +1373,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         isOpen={isViewTaskModalOpen}
         onClose={() => setIsViewTaskModalOpen(false)}
         taskId={selectedTaskId}
+        taskDescription={selectedTaskDescription}
       />
 
       <EditWhereaboutsModal
