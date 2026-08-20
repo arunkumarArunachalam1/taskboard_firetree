@@ -459,8 +459,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="vt-modal"
-            style={{ maxWidth: '1100px', width: '95%' }}
+            className="vt-modal followup-modal-inner"
           >
             {/* ── HEADER ── */}
             <div className="vt-header">
@@ -541,20 +540,20 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                     };
 
                     return (
-                      <div className="followup-client-header" style={{ borderLeftColor: '#5b21b6' }}>
+                      <div className="followup-client-header followup-client-header-border">
                         <div className="followup-client-left">
-                          <div className="followup-client-icon-wrap" style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                          <div className="followup-client-icon-wrap followup-client-avatar">
                             <User size={40} color="#94a3b8" />
                             {data.dischargedate && (
-                              <div style={{ position: 'absolute', bottom: '0', right: '0', width: '20px', height: '20px', backgroundColor: '#dc2626', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid white' }}>
+                              <div className="followup-discharge-badge">
                                 <Minus size={12} color="white" strokeWidth={3} />
                               </div>
                             )}
                           </div>
                           <div>
-                            <h2 className="followup-client-name" style={{ color: '#5b21b6' }}>{formattedName}</h2>
+                            <h2 className="followup-client-name followup-client-name-heading">{formattedName}</h2>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'auto auto auto', gap: '8px 24px', fontSize: '13px', color: '#0f172a', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                            <div className="followup-client-info-grid">
                               <span className="followup-client-info-item"><span className="followup-client-info-label">Client ID:</span> <span className="followup-client-info-value">{data.clientid}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">DOB:</span> <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">SSN:</span> <span className="followup-client-info-value">{data.ssn || ''}</span></span>
@@ -563,7 +562,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                               <span className="followup-client-info-item"><span className="followup-client-info-label">Parole #:</span> <span className="followup-client-info-value">{data.parolenumber || 'N/A'}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">MA #:</span> <span className="followup-client-info-value">{data.manumber || ''}</span></span>
 
-                              <span className="followup-client-info-item" style={{ gridColumn: 'span 2' }}><span className="followup-client-info-label">Admitted to Stay:</span> <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
+                              <span className="followup-client-info-item followup-span-2"><span className="followup-client-info-label">Admitted to Stay:</span> <span className="followup-client-info-value">{formatDateTime(data.admitdate)}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">PDD:</span> <span className="followup-client-info-value">{formatDate(data.expecteddischargedate)}</span></span>
                             </div>
                           </div>
@@ -572,7 +571,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                         <div className="followup-client-right">
                           <div className="followup-client-status">
                             <div className="followup-client-status-dot" style={{ backgroundColor: data.dischargedate ? '#dc2626' : (!data.admitdate ? '#f59e0b' : '#16a34a') }}></div>
-                            <span className="followup-client-status-text" style={{ color: '#1e293b', fontWeight: 'bold' }}>
+                             <span className="followup-client-status-text followup-status-text-bold">
                               {data.dischargedate ? 'Inactive Case' : (!data.admitdate ? 'Pre-Admit' : 'Active Case')}
                             </span>
                           </div>
@@ -612,46 +611,10 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                     );
                   })()}
 
-                  {((details?.FollowupType || details?.FOLLOWUPTYPE) === 'Aftercare Followup' || details?.OrganizationName || details?.ORGANIZATIONNAME || details?.AftercareAppointmentDate || details?.AFTERCAREAPPOINTMENTDATE) && (
-                    <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '24px', display: 'flex', gap: '32px' }}>
-                      {((details?.FollowupType || details?.FOLLOWUPTYPE) === 'Aftercare Followup' || details?.OrganizationName || details?.ORGANIZATIONNAME) && (
-                        <div>
-                          <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', marginBottom: '8px', marginTop: 0 }}>Aftercare Facility</h4>
-                          <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
-                            {(details?.OrganizationName || details?.ORGANIZATIONNAME) ? (
-                              <>
-                                <div>{details?.OrganizationName || details?.ORGANIZATIONNAME}</div>
-                                <div>{details?.StreetAddress1 || details?.STREETADDRESS1}</div>
-                                {(details?.StreetAddress2 || details?.STREETADDRESS2) ? <div>{details?.StreetAddress2 || details?.STREETADDRESS2}</div> : null}
-                                <div>{details?.CityStateZip || details?.CITYSTATEZIP}</div>
-                              </>
-                            ) : (
-                              <div style={{ color: '#ef4444', fontStyle: 'italic' }}>None specified</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      {((details?.FollowupType || details?.FOLLOWUPTYPE) === 'Aftercare Followup' || details?.AftercareAppointmentDate || details?.AFTERCAREAPPOINTMENTDATE) && (
-                        <div>
-                          <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', marginBottom: '8px', marginTop: 0 }}>Appointment Date/Time</h4>
-                          <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5' }}>
-                            {(details?.AftercareAppointmentDate || details?.AFTERCAREAPPOINTMENTDATE) ? (
-                              <>
-                                {new Date(details?.AftercareAppointmentDate || details?.AFTERCAREAPPOINTMENTDATE).toLocaleDateString('en-US')}
-                                {details?.AftercareAppointmentTime || details?.AFTERCAREAPPOINTMENTTIME ? ` @ ${details?.AftercareAppointmentTime || details?.AFTERCAREAPPOINTMENTTIME}` : ''}
-                              </>
-                            ) : (
-                              <div style={{ color: '#ef4444', fontStyle: 'italic' }}>None specified</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
 
-                  <form id="followupForm" onSubmit={handleSubmit} className="task-form-layout" style={{ marginTop: '24px' }}>
+                  <form id="followupForm" onSubmit={handleSubmit} className="task-form-layout followup-form-margin-top">
                     {error && (
-                      <div className="task-alert task-alert-error" style={{ gridColumn: '1 / -1' }}>
+                      <div className="task-alert task-alert-error followup-grid-full-span">
                         <AlertCircle size={16} />
                         <span>{error}</span>
                       </div>
@@ -659,68 +622,136 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
 
 
 
-                    <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '16px' }}>
+                    <div className="followup-attempt-column">
 
 
 
                       {/* Attempt Header */}
-                      <div style={{ marginBottom: '8px' }}>
-                        <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#475569', margin: 0 }}>
+                      <div className="followup-attempt-header">
+                        <h3 className="followup-attempt-heading">
                           Attempt #{(details?.AttemptHistory || details?.ATTEMPTHISTORY || []).length + 1}
                         </h3>
                       </div>
 
                       {/* Attempt Body Wrapper */}
-                      <div style={{ borderLeft: '4px solid #5b21b6', background: '#f8fafc', padding: '24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                        
-                        {/* Contact Details */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#1e293b', margin: 0 }}>Contact</h4>
-                          <div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.5', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                            {(details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' ? (
-                              <div style={{ fontWeight: 500 }}>{details?.FormattedName || details?.FORMATTEDNAME}</div>
-                            ) : (
-                              <div style={{ fontWeight: 500 }}>
-                                {(details?.LastName || details?.LASTNAME) ? `${details?.LastName || details?.LASTNAME}, ` : ''}{details?.FirstName || details?.FIRSTNAME}
-                              </div>
-                            )}
+                      <div className="followup-attempt-body">
 
-                            {(details?.PhoneNumbers || details?.PHONENUMBERS) && <span style={{ color: '#cbd5e1' }}>|</span>}
+                        {/* Aftercare info row OR regular contact row — inside attempt body */}
+                        {(() => {
+                          const ci = (details?.ContactInfo || details?.CONTACTINFO || [])[0] || {};
+                          const followupType = details?.FollowupType || details?.FOLLOWUPTYPE;
+                          const isAftercare = followupType === 'Aftercare Followup';
+                          const isFunding = followupType === 'Funding/Parole/Probation Follow up';
 
-                            {(details?.PhoneNumbers || details?.PHONENUMBERS) ? (
-                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                {(details?.PhoneNumbers || details?.PHONENUMBERS).split(',').map((p: string, i: number, arr: any[]) => (
-                                  <div key={i}>{p.trim()}{i < arr.length - 1 ? ',' : ''}</div>
-                                ))}
+                          // Format date safely — avoid UTC offset issues
+                          const formatApptDate = (d: string) => {
+                            if (!d) return '';
+                            const parts = d.split('T')[0].split('-');
+                            if (parts.length === 3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+                            return d;
+                          };
+
+                          if (isAftercare) {
+                            // ── Aftercare: 3-column info table matching legacy layout ──
+                            const orgName = ci?.OrganizationName || ci?.ORGANIZATIONNAME || '';
+                            const apptDate = ci?.AftercareAppointmentDate || ci?.AFTERCAREAPPOINTMENTDATE || '';
+                            const apptTime = ci?.AftercareAppointmentTime || ci?.AFTERCAREAPPOINTMENTTIME || '';
+                            const contactFirst = ci?.FirstName || ci?.FIRSTNAME || '';
+                            const contactLast = ci?.LastName || ci?.LASTNAME || '';
+                            const contactName = (contactLast ? `${contactLast}, ` : '') + contactFirst;
+                            const contactPhone = ci?.PhoneNumbers || ci?.PHONENUMBERS || '';
+
+                            return (
+                              <div className="followup-aftercare-info-row">
+                                <div className="followup-aftercare-info-col">
+                                  <div className="followup-aftercare-info-label">Aftercare Facility</div>
+                                  <div className="followup-aftercare-info-value">
+                                    {orgName ? (
+                                      <>
+                                        <div>{orgName}</div>
+                                        <div>{ci?.StreetAddress1 || ci?.STREETADDRESS1 || ''}</div>
+                                        {(ci?.StreetAddress2 || ci?.STREETADDRESS2) ? <div>{ci?.StreetAddress2 || ci?.STREETADDRESS2}</div> : null}
+                                        <div>{ci?.CityStateZip || ci?.CITYSTATEZIP || ''}</div>
+                                      </>
+                                    ) : <span className="followup-none-specified">None specified</span>}
+                                  </div>
+                                </div>
+                                <div className="followup-aftercare-info-col">
+                                  <div className="followup-aftercare-info-label">Appointment Date/Time</div>
+                                  <div className="followup-aftercare-info-value">
+                                    {apptDate
+                                      ? <>{formatApptDate(apptDate)}{apptTime ? ` @ ${apptTime}` : ''}</>
+                                      : <span className="followup-none-specified">None specified</span>}
+                                  </div>
+                                </div>
+                                <div className="followup-aftercare-info-col">
+                                  <div className="followup-aftercare-info-label">Contact</div>
+                                  <div className="followup-aftercare-info-value">
+                                    {(contactName.trim() || contactPhone) ? (
+                                      <>
+                                        {contactName.trim() && <div>{contactName}</div>}
+                                        {contactPhone && <div>{contactPhone}</div>}
+                                      </>
+                                    ) : <span className="followup-none-specified">None specified</span>}
+                                  </div>
+                                </div>
                               </div>
-                            ) : (
-                              <>
-                                <span style={{ color: '#cbd5e1' }}>|</span>
-                                <div style={{ color: '#ef4444', fontWeight: 600 }}>This contact does not have a phone number.</div>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                            );
+                          }
+
+                          // ── Non-aftercare: regular single contact row ──
+                          const contactName = isFunding
+                            ? (ci?.FormattedName || ci?.FORMATTEDNAME || '')
+                            : ((ci?.LastName || ci?.LASTNAME) ? `${ci?.LastName || ci?.LASTNAME}, ` : '') + (ci?.FirstName || ci?.FIRSTNAME || '');
+                          const phones = ci?.PhoneNumbers || ci?.PHONENUMBERS || '';
+                          const hasPhones = phones || methods.length > 0;
+
+                          return (
+                            <div className="followup-contact-block">
+                              <h4 className="followup-contact-heading">Contact</h4>
+                              <div className="followup-contact-info-row">
+                                <div className="followup-contact-name">{contactName}</div>
+                                {hasPhones && <span className="followup-separator">|</span>}
+                                {hasPhones ? (
+                                  <div className="followup-phones-list">
+                                    {phones
+                                      ? phones.split(',').map((p: string, i: number, arr: any[]) => (
+                                          <div key={i}>{p.trim()}{i < arr.length - 1 ? ',' : ''}</div>
+                                        ))
+                                      : methods.map((m, i) => (
+                                          <div key={i}>{m.label}{i < methods.length - 1 ? ',' : ''}</div>
+                                        ))
+                                    }
+                                  </div>
+                                ) : (
+                                  <>
+                                    <span className="followup-separator">|</span>
+                                    <div className="followup-no-phone">This contact does not have a phone number.</div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {/* 4-column Grid */}
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                        <div className="followup-call-grid">
                           <div className="task-form-group">
-                            <label className="task-form-label">Call Date <span style={{ color: '#ef4444' }}>*</span></label>
-                            <div className="task-input-icon-wrapper" style={{ position: 'relative' }}>
+                             <label className="task-form-label">Call Date <span className="followup-required-star">*</span></label>
+                             <div className="task-input-icon-wrapper followup-date-wrapper">
                               <input
                                 type="date"
-                                className="task-form-input task-form-input-with-icon-left"
-                                style={{ background: '#fff' }}
+                                className="task-form-input task-form-input-with-icon-left followup-date-input"
                                 value={contactDate}
                                 onChange={(e) => setContactDate(e.target.value)}
                                 onClick={(e) => { try { (e.target as any).showPicker?.(); } catch (err) { } }}
                                 required
                               />
-                              <Calendar size={16} className="task-input-icon-left" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+                              <Calendar size={16} className="task-input-icon-left followup-calendar-icon" />
                             </div>
                           </div>
                           <div className="task-form-group">
-                            <label className="task-form-label">Call Time <span style={{ color: '#ef4444' }}>*</span></label>
+                             <label className="task-form-label">Call Time <span className="followup-required-star">*</span></label>
                             <CustomTimePicker value={contactTime} onChange={(val) => setContactTime(val)} required />
                           </div>
                           <div className="task-form-group">
@@ -728,7 +759,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                             <SearchableCombobox options={methods} value={methodId} onChange={(val) => setMethodId(val)} placeholder="" />
                           </div>
                           <div className="task-form-group">
-                            <label className="task-form-label">Call Disposition <span style={{ color: '#ef4444' }}>*</span></label>
+                             <label className="task-form-label">Call Disposition <span className="followup-required-star">*</span></label>
                             <SearchableCombobox options={dispositions} value={dispositionId} onChange={(val) => setDispositionId(val)} placeholder="" required />
                           </div>
                         </div>
@@ -736,18 +767,18 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
 
                       {/* Survey Box */}
                       {(details?.FollowupType || details?.FOLLOWUPTYPE) !== 'Funding/Parole/Probation Follow up' && !['2', '4', '12'].includes(String(dispositionId)) && (
-                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '24px' }}>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px' }}>
+                        <div className="followup-survey-box">
+                          <div className="followup-survey-grid">
 
                             {/* Q1 */}
-                            <div className="task-form-group" style={{ gridColumn: (details?.FollowupType || details?.FOLLOWUPTYPE) === '7-Day Followup' ? 'span 1' : '1 / -1', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+                            <div className={`task-form-group ${(details?.FollowupType || details?.FOLLOWUPTYPE) === '7-Day Followup' ? 'followup-q1-span1' : 'followup-q1-full'}`}>
                               <div>
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '16px' }}>
-                                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '22px', background: '#7c3aed', color: '#fff', fontSize: '12px', fontWeight: '600', borderRadius: '4px' }}>1</span>
-                                  <label style={{ margin: 0, fontWeight: '600', color: '#1e293b', fontSize: '14px', lineHeight: '22px' }}>Did you attend your aftercare appointment? <span style={{ color: '#ef4444' }}>*</span></label>
+                                <div className="followup-question-header-row">
+                                  <span className="followup-question-badge">1</span>
+                                  <label className="followup-question-label">Did you attend your aftercare appointment? <span className="followup-required-star">*</span></label>
                                 </div>
                               </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                              <div className="followup-answers-column">
                                 <div className="question-answers-wrapper">
                                   <label className="radio-label">
                                     <input type="radio" name="q1" value="1" checked={attendedTreatment === '1'} onChange={(e) => setAttendedTreatment(e.target.value)} className="custom-radio" />
@@ -763,20 +794,19 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                   </label>
                                 </div>
                                 {attendedTreatment === '4' && (
-                                  <div style={{ display: 'flex', gap: '16px', marginLeft: '34px' }}>
-                                    <div className="task-input-icon-wrapper" style={{ flex: '0 0 200px', position: 'relative' }}>
+                                  <div className="followup-reschedule-row">
+                                    <div className="task-input-icon-wrapper followup-reschedule-date-wrapper">
                                       <input
                                         type="date"
-                                        className="task-form-input task-form-input-with-icon-left"
-                                        style={{ background: '#fff' }}
+                                        className="task-form-input task-form-input-with-icon-left followup-date-input"
                                         value={rescheduledDate}
                                         onChange={(e) => setRescheduledDate(e.target.value)}
                                         onClick={(e) => { try { (e.target as any).showPicker?.(); } catch (err) { } }}
                                         required
                                       />
-                                      <Calendar size={16} className="task-input-icon-left" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+                                      <Calendar size={16} className="task-input-icon-left followup-calendar-icon" />
                                     </div>
-                                    <div style={{ flex: '0 0 200px' }}>
+                                    <div className="followup-reschedule-time-wrapper">
                                       <CustomTimePicker value={rescheduledTime} onChange={(val) => setRescheduledTime(val)} required />
                                     </div>
                                   </div>
@@ -791,7 +821,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                   <div>
                                     <div className="question-header">
                                       <span className="question-number-badge">2</span>
-                                      <label className="question-label">Are you interested in returning to treatment at this time? <span style={{ color: '#ef4444' }}>*</span></label>
+                                      <label className="question-label">Are you interested in returning to treatment at this time? <span className="followup-required-star">*</span></label>
                                     </div>
                                   </div>
                                   <div className="question-answers-wrapper">
@@ -815,7 +845,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                   <div>
                                     <div className="question-header">
                                       <span className="question-number-badge">3</span>
-                                      <label className="question-label">Are you sober? <span style={{ color: '#ef4444' }}>*</span></label>
+                                       <label className="question-label">Are you sober? <span className="followup-required-star">*</span></label>
                                     </div>
                                   </div>
                                   <div className="question-answers-wrapper">
@@ -835,7 +865,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                   <div>
                                     <div className="question-header">
                                       <span className="question-number-badge">4</span>
-                                      <label className="question-label">Are you attending support/12 step meetings? <span style={{ color: '#ef4444' }}>*</span></label>
+                                       <label className="question-label">Are you attending support/12 step meetings? <span className="followup-required-star">*</span></label>
                                     </div>
                                   </div>
                                   <div className="question-answers-wrapper">
@@ -880,12 +910,12 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                               <FileText size={16} className="section-header-icon" />
                               Documentation
                             </div>
-                            <div style={{ position: 'relative' }}>
+                             <div className="followup-doc-wrapper">
                               <input
                                 type="file"
                                 id="documentation-upload"
                                 onChange={(e) => setDocumentationFile(e.target.files ? e.target.files[0] : null)}
-                                style={{ display: 'none' }}
+                                className="followup-file-input-hidden"
                               />
                               <label htmlFor="documentation-upload" className="upload-drop-zone">
                                 <Upload size={20} className="upload-icon" />
@@ -899,10 +929,10 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
 
                       </div>
 
-                  </div> {/* End of Attempt Section */}
+                    </div> {/* End of Attempt Section */}
 
                     {details?.FollowupType === 'Funding/Parole/Probation Follow up' && (
-                      <div className="task-form-section" style={{ gridColumn: '1 / -1' }}>
+                      <div className="task-form-section followup-funding-comments">
                         <h3 className="task-form-section-title">
                           <MessageSquare size={16} className="task-form-section-icon" />
                           Followup Comments
@@ -914,8 +944,8 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                     )}
 
                     {(details?.AttemptHistory || details?.ATTEMPTHISTORY) && (details?.AttemptHistory || details?.ATTEMPTHISTORY).length > 0 && (
-                      <div className="task-form-section" style={{ gridColumn: '1 / -1', marginTop: '16px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600', marginBottom: '16px' }}>
+                      <div className="task-form-section followup-history-section">
+                        <div className="followup-history-header">
                           <Clock size={16} color="#7c3aed" />
                           <span>Attempt History</span>
                         </div>

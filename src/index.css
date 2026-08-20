@@ -5107,3 +5107,380 @@ h1.page-title {
   opacity: 0.5;
 }
 
+
+/* ── FollowupCompleteModal extracted inline styles ── */
+
+/* Modal wrapper */
+.followup-modal-inner {
+  max-width: 1100px;
+  width: 95%;
+}
+
+/* Client header card */
+.followup-client-header-border {
+  border-left-color: #5b21b6;
+}
+
+/* Client avatar circle */
+.followup-client-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Discharge badge (red dot) */
+.followup-discharge-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20px;
+  height: 20px;
+  background-color: #dc2626;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+/* Client name heading */
+.followup-client-name-heading {
+  color: #5b21b6;
+}
+
+/* Client info grid */
+.followup-client-info-grid {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 8px 24px;
+  font-size: 13px;
+  color: #0f172a;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Span 2 columns */
+.followup-span-2 {
+  grid-column: span 2;
+}
+
+/* Status text */
+.followup-status-text-bold {
+  color: #1e293b;
+  font-weight: bold;
+}
+
+/* Aftercare info section */
+.followup-aftercare-section {
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-top: 24px;
+  display: flex;
+  gap: 32px;
+}
+
+/* Aftercare section subheadings */
+.followup-section-subheading {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+/* Aftercare detail text */
+.followup-detail-text {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+/* "None specified" text */
+.followup-none-specified {
+  color: #ef4444;
+  font-style: italic;
+}
+
+/* Form top margin */
+.followup-form-margin-top {
+  margin-top: 24px;
+}
+
+/* Full-span grid column (error alert, etc.) */
+.followup-grid-full-span {
+  grid-column: 1 / -1;
+}
+
+/* Main attempt column */
+.followup-attempt-column {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+/* Attempt header */
+.followup-attempt-header {
+  margin-bottom: 8px;
+}
+
+/* Attempt heading */
+.followup-attempt-heading {
+  font-size: 15px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+}
+
+/* Attempt body wrapper */
+.followup-attempt-body {
+  border-left: 4px solid #5b21b6;
+  background: #f8fafc;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Contact details block */
+.followup-contact-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Contact sub-heading */
+.followup-contact-heading {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+/* Contact info row */
+.followup-contact-info-row {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Contact name */
+.followup-contact-name {
+  font-weight: 500;
+}
+
+/* Separator pipe */
+.followup-separator {
+  color: #cbd5e1;
+}
+
+/* Phone numbers list */
+.followup-phones-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* No phone number warning */
+.followup-no-phone {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* 4-column call-details grid */
+.followup-call-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* Required asterisk */
+.followup-required-star {
+  color: #ef4444;
+}
+
+/* Date input wrapper */
+.followup-date-wrapper {
+  position: relative;
+}
+
+/* Date input background */
+.followup-date-input {
+  background: #fff;
+}
+
+/* Calendar icon positioned inside date input */
+.followup-calendar-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+}
+
+/* Survey box */
+.followup-survey-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+/* Survey grid */
+.followup-survey-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+/* Q1 full-span question */
+.followup-q1-full {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+/* Q1 full-span question in 7-Day layout */
+.followup-q1-span1 {
+  grid-column: span 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+/* Question header row */
+.followup-question-header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* Question number badge */
+.followup-question-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+/* Question label */
+.followup-question-label {
+  margin: 0;
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+/* Question answers column */
+.followup-answers-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Reschedule row */
+.followup-reschedule-row {
+  display: flex;
+  gap: 16px;
+  margin-left: 34px;
+}
+
+/* Reschedule date input wrapper */
+.followup-reschedule-date-wrapper {
+  flex: 0 0 200px;
+  position: relative;
+}
+
+/* Reschedule time wrapper */
+.followup-reschedule-time-wrapper {
+  flex: 0 0 200px;
+}
+
+/* Documentation wrapper */
+.followup-doc-wrapper {
+  position: relative;
+}
+
+/* Hidden file input */
+.followup-file-input-hidden {
+  display: none;
+}
+
+/* Attempt history section wrapper */
+.followup-history-section {
+  grid-column: 1 / -1;
+  margin-top: 16px;
+}
+
+/* Attempt history header row */
+.followup-history-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1e293b;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/* Funding/Parole comments section */
+.followup-funding-comments {
+  grid-column: 1 / -1;
+}
+
+/* ── Aftercare 3-column info row (inside attempt body, legacy layout) ── */
+.followup-aftercare-info-row {
+  display: flex;
+  gap: 0;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.followup-aftercare-info-col {
+  min-width: 220px;
+  padding-right: 48px;
+}
+
+.followup-aftercare-info-col:not(:last-child) {
+  border-right: 1px solid #e2e8f0;
+  margin-right: 48px;
+}
+
+.followup-aftercare-info-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.followup-aftercare-info-value {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.6;
+}
+
