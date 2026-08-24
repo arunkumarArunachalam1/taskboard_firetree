@@ -394,7 +394,7 @@
 /* 4-column call-details grid */
 .followup-call-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -519,7 +519,14 @@
 
 /* Hidden file input */
 .followup-file-input-hidden {
-  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 10;
 }
 
 /* Attempt history section wrapper */
