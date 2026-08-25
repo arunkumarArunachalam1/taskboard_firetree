@@ -527,7 +527,8 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                     };
 
                     const pronouns = getPronouns(data);
-                    const formattedName = `${data.lastname || ''}, ${data.firstname || ''} ${pronouns ? `(${pronouns})` : ''}`.trim();
+                    const middleInit = data.middlename ? ` ${data.middlename.charAt(0).toUpperCase()}.` : (data.middleinitial ? ` ${data.middleinitial.charAt(0).toUpperCase()}.` : '');
+                    const formattedName = `${data.lastname || ''}, ${data.firstname || ''}${middleInit} ${pronouns ? `(${pronouns})` : ''}`.trim();
 
                     const formatDate = (dateStr: string) => {
                       if (!dateStr) return '';
