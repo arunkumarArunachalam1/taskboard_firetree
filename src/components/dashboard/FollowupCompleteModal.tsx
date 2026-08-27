@@ -113,7 +113,7 @@ interface CustomTimePickerProps {
   required?: boolean;
 }
 
-const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, required }) => {
+export const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, required }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -573,7 +573,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                         <div className="followup-client-right">
                           <div className="followup-client-status">
                             <div className="followup-client-status-dot" style={{ backgroundColor: data.dischargedate ? '#dc2626' : (!data.admitdate ? '#f59e0b' : '#16a34a') }}></div>
-                             <span className="followup-client-status-text followup-status-text-bold">
+                            <span className="followup-client-status-text followup-status-text-bold">
                               {data.dischargedate ? 'Inactive Case' : (!data.admitdate ? 'Pre-Admit' : 'Active Case')}
                             </span>
                           </div>
@@ -718,11 +718,11 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                   <div className="followup-phones-list">
                                     {phones
                                       ? phones.split(',').map((p: string, i: number, arr: any[]) => (
-                                          <div key={i}>{p.trim()}{i < arr.length - 1 ? ',' : ''}</div>
-                                        ))
+                                        <div key={i}>{p.trim()}{i < arr.length - 1 ? ',' : ''}</div>
+                                      ))
                                       : methods.map((m, i) => (
-                                          <div key={i}>{m.label}{i < methods.length - 1 ? ',' : ''}</div>
-                                        ))
+                                        <div key={i}>{m.label}{i < methods.length - 1 ? ',' : ''}</div>
+                                      ))
                                     }
                                   </div>
                                 ) : (
@@ -739,8 +739,8 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                         {/* 4-column Grid */}
                         <div className="followup-call-grid">
                           <div className="task-form-group">
-                             <label className="task-form-label">Call Date <span className="followup-required-star">*</span></label>
-                             <div className="task-input-icon-wrapper followup-date-wrapper">
+                            <label className="task-form-label">Call Date <span className="followup-required-star">*</span></label>
+                            <div className="task-input-icon-wrapper followup-date-wrapper">
                               <input
                                 type="date"
                                 className="task-form-input task-form-input-with-icon-left followup-date-input"
@@ -753,7 +753,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                             </div>
                           </div>
                           <div className="task-form-group">
-                             <label className="task-form-label">Call Time <span className="followup-required-star">*</span></label>
+                            <label className="task-form-label">Call Time <span className="followup-required-star">*</span></label>
                             <CustomTimePicker value={contactTime} onChange={(val) => setContactTime(val)} required />
                           </div>
                           <div className="task-form-group">
@@ -761,7 +761,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                             <SearchableCombobox options={methods} value={methodId} onChange={(val) => setMethodId(val)} placeholder="" />
                           </div>
                           <div className="task-form-group">
-                             <label className="task-form-label">Call Disposition <span className="followup-required-star">*</span></label>
+                            <label className="task-form-label">Call Disposition <span className="followup-required-star">*</span></label>
                             <SearchableCombobox options={dispositions} value={dispositionId} onChange={(val) => setDispositionId(val)} placeholder="" required />
                           </div>
                         </div>
@@ -847,7 +847,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                   <div>
                                     <div className="question-header">
                                       <span className="question-number-badge">3</span>
-                                       <label className="question-label">Are you sober? <span className="followup-required-star">*</span></label>
+                                      <label className="question-label">Are you sober? <span className="followup-required-star">*</span></label>
                                     </div>
                                   </div>
                                   <div className="question-answers-wrapper">
@@ -867,7 +867,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                   <div>
                                     <div className="question-header">
                                       <span className="question-number-badge">4</span>
-                                       <label className="question-label">Are you attending support/12 step meetings? <span className="followup-required-star">*</span></label>
+                                      <label className="question-label">Are you attending support/12 step meetings? <span className="followup-required-star">*</span></label>
                                     </div>
                                   </div>
                                   <div className="question-answers-wrapper">
@@ -912,7 +912,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                               <FileText size={16} className="section-header-icon" />
                               Documentation
                             </div>
-                             <div className="followup-doc-wrapper">
+                            <div className="followup-doc-wrapper">
                               <input
                                 type="file"
                                 id="documentation-upload"

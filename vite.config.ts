@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -17,6 +18,11 @@ export default defineConfig(({ command }) => ({
         assetFileNames: 'assets/[name].[ext]',
       }
     }
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    globals: true
   },
   server: {
     host: '127.0.0.1',
