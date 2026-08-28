@@ -223,6 +223,21 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [isWhereaboutsCompleteModalOpen, setIsWhereaboutsCompleteModalOpen] = useState(false);
   const [isFollowupCompleteModalOpen, setIsFollowupCompleteModalOpen] = useState(false);
   const [followupCompleteTaskId, setFollowupCompleteTaskId] = useState<number | null>(null);
+
+  // Automatically open the Follow-up Modal if openTaskId is passed in the URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const openTaskId = params.get('openTaskId');
+    if (openTaskId) {
+      setFollowupCompleteTaskId(parseInt(openTaskId, 10));
+      setIsFollowupCompleteModalOpen(true);
+      
+      // Clean up URL so it doesn't re-open on refresh
+      const newUrl = window.location.pathname; 
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
+
   const [whereaboutsCompleteIds, setWhereaboutsCompleteIds] = useState<number[]>([]);
   const [whereaboutsCompleteClientId, setWhereaboutsCompleteClientId] = useState<number>(0);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
