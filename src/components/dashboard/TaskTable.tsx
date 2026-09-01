@@ -154,7 +154,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   sortColumn, sortDir, onSortChange, onRefresh,
   listingFilters, onApplyFilters, onClearFilters
 }) => {
-  const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'info' | 'success' | 'error' | 'warning' } | null>(null);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const [localSearch, setLocalSearch] = useState(search);
@@ -300,7 +300,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     setSelectedIds([]);
   }, [data]);
 
-  const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
+  const showToast = (message: string, type: 'info' | 'success' | 'error' | 'warning' = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
@@ -1354,7 +1354,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
             const colors = {
               info: { bg: '#EFF6FF', border: '#BFDBFE', leftBorder: '#3B82F6', text: '#1E40AF' },
               success: { bg: '#ECFDF5', border: '#A7F3D0', leftBorder: '#10B981', text: '#065F46' },
-              error: { bg: '#FEF2F2', border: '#FCA5A5', leftBorder: '#EF4444', text: '#991B1B' }
+              error: { bg: '#FEF2F2', border: '#FCA5A5', leftBorder: '#EF4444', text: '#991B1B' },
+              warning: { bg: '#FFFBEB', border: '#FDE68A', leftBorder: '#F59E0B', text: '#B45309' }
             }[toast.type] || { bg: '#EFF6FF', border: '#BFDBFE', leftBorder: '#3B82F6', text: '#1E40AF' };
 
             return (
