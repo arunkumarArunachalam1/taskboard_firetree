@@ -4910,3 +4910,69 @@ h1.page-title {
   cursor: not-allowed;
 }
 
+/* WhereaboutsCompleteModal inline styles extracted */
+
+.wc-required-star {
+  color: #ef4444;
+}
+
+.wc-file-input-hidden {
+  display: none !important;
+}
+
+.wc-upload-info-flex {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+}
+
+.wc-upload-filename-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wc-upload-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.wc-preview-btn {
+  background: #ffffff;
+  border: 1px solid #e9d5ff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6d28d9;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.wc-preview-btn:hover {
+  background: #faf5ff;
+}
+
+.wc-clear-btn {
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ef4444;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.wc-clear-btn:hover {
+  background: #fef2f2;
+}

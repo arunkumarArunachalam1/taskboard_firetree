@@ -519,7 +519,7 @@
 
 /* Hidden file input */
 .followup-file-input-hidden {
-  display: none;
+  display: none !important;
 }
 
 /* Attempt history section wrapper */
@@ -574,4 +574,76 @@
   font-size: 13px;
   color: #475569;
   line-height: 1.6;
+}
+
+/* Inline styles extracted */
+.followup-status-inactive {
+  background-color: #dc2626;
+}
+
+.followup-status-preadmit {
+  background-color: #f59e0b;
+}
+
+.followup-status-active {
+  background-color: #16a34a;
+}
+
+.comments-docs-grid-1col {
+  grid-template-columns: 1fr;
+}
+
+.comments-docs-grid-2col {
+  grid-template-columns: 1fr 1fr;
+}
+
+.followup-doc-wrapper-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.followup-doc-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.followup-doc-preview-btn {
+  background: #ffffff;
+  border: 1px solid #e9d5ff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6d28d9;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.followup-doc-preview-btn:hover {
+  background: #faf5ff;
+}
+
+.followup-doc-clear-btn {
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #ef4444;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.followup-doc-clear-btn:hover {
+  background: #fef2f2;
 }

@@ -572,7 +572,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
 
                         <div className="followup-client-right">
                           <div className="followup-client-status">
-                            <div className="followup-client-status-dot" style={{ backgroundColor: data.dischargedate ? '#dc2626' : (!data.admitdate ? '#f59e0b' : '#16a34a') }}></div>
+                            <div className={`followup-client-status-dot ${data.dischargedate ? 'followup-status-inactive' : (!data.admitdate ? 'followup-status-preadmit' : 'followup-status-active')}`}></div>
                             <span className="followup-client-status-text followup-status-text-bold">
                               {data.dischargedate ? 'Inactive Case' : (!data.admitdate ? 'Pre-Admit' : 'Active Case')}
                             </span>
@@ -889,7 +889,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                       )}
 
                       {/* Comments & Documentation */}
-                      <div className="comments-docs-grid" style={{ gridTemplateColumns: (details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' ? '1fr 1fr' : '1fr' }}>
+                      <div className={`comments-docs-grid ${(details?.FollowupType || details?.FOLLOWUPTYPE) === 'Funding/Parole/Probation Follow up' ? 'comments-docs-grid-2col' : 'comments-docs-grid-1col'}`}>
 
                         {/* Comments */}
                         <div>
@@ -912,7 +912,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                               <FileText size={16} className="section-header-icon" />
                               Documentation
                             </div>
-                            <div className="followup-doc-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div className="followup-doc-wrapper followup-doc-wrapper-flex">
                               <input
                                 type="file"
                                 id="documentation-upload"
@@ -926,27 +926,11 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                 </span>
                               </label>
                               {documentationFile && (
-                                <div style={{ display: 'flex', gap: '8px' }}>
+                                <div className="followup-doc-actions">
                                   <button
                                     type="button"
                                     onClick={() => window.open(URL.createObjectURL(documentationFile), '_blank')}
-                                    style={{
-                                      background: '#ffffff',
-                                      border: '1px solid #e9d5ff',
-                                      borderRadius: '6px',
-                                      padding: '6px 12px',
-                                      fontSize: '12px',
-                                      fontWeight: 500,
-                                      color: '#6d28d9',
-                                      cursor: 'pointer',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      alignSelf: 'flex-start',
-                                      gap: '6px',
-                                      transition: 'all 0.2s',
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = '#faf5ff'}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = '#ffffff'}
+                                    className="followup-doc-preview-btn"
                                   >
                                     <Eye size={14} />
                                     Preview
@@ -958,23 +942,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                       const fileInput = document.getElementById('documentation-upload') as HTMLInputElement;
                                       if (fileInput) fileInput.value = '';
                                     }}
-                                    style={{
-                                      background: '#ffffff',
-                                      border: '1px solid #fecaca',
-                                      borderRadius: '6px',
-                                      padding: '6px 12px',
-                                      fontSize: '12px',
-                                      fontWeight: 500,
-                                      color: '#ef4444',
-                                      cursor: 'pointer',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      alignSelf: 'flex-start',
-                                      gap: '6px',
-                                      transition: 'all 0.2s',
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = '#ffffff'}
+                                    className="followup-doc-clear-btn"
                                   >
                                     <X size={14} />
                                     Clear

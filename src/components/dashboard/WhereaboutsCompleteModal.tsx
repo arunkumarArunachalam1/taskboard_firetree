@@ -566,7 +566,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                   
                   <div className="wc-grid-row">
                     <div className="wc-grid-col">
-                      <label className="wc-input-label">Date <span style={{color: '#ef4444'}}>*</span></label>
+                      <label className="wc-input-label">Date <span className="wc-required-star">*</span></label>
                       <div className="wc-input-wrapper">
                         <input
                           type="date"
@@ -579,7 +579,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                     </div>
 
                     <div className="wc-grid-col">
-                      <label className="wc-input-label">Time <span style={{color: '#ef4444'}}>*</span></label>
+                      <label className="wc-input-label">Time <span className="wc-required-star">*</span></label>
                       <CustomTimePicker
                         value={contactTime}
                         onChange={setContactTime}
@@ -587,7 +587,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                     </div>
 
                     <div className="wc-grid-col">
-                      <label className="wc-input-label">Reason <span style={{color: '#ef4444'}}>*</span></label>
+                      <label className="wc-input-label">Reason <span className="wc-required-star">*</span></label>
                       <SearchableCombobox
                         options={reasons}
                         value={reason}
@@ -599,7 +599,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
 
                   <div className="wc-grid-row">
                     <div className="wc-grid-col">
-                      <label className="wc-input-label">Method <span style={{color: '#ef4444'}}>*</span></label>
+                      <label className="wc-input-label">Method <span className="wc-required-star">*</span></label>
                       <SearchableCombobox
                         options={methods}
                         value={methodId}
@@ -609,7 +609,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                     </div>
 
                     <div className="wc-grid-col">
-                      <label className="wc-input-label">Disposition <span style={{color: '#ef4444'}}>*</span></label>
+                      <label className="wc-input-label">Disposition <span className="wc-required-star">*</span></label>
                       <SearchableCombobox
                         options={dispositions}
                         value={disposition}
@@ -623,7 +623,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                     <div className="wc-consent-card">
                       <div className="wc-consent-row">
                         <div className="wc-consent-col">
-                          <label className="wc-consent-title">Is Consent? <span style={{color: '#ef4444'}}>*</span></label>
+                          <label className="wc-consent-title">Is Consent? <span className="wc-required-star">*</span></label>
                           <div className="wc-consent-radios">
                             <label className="wc-radio-label">
                               <input
@@ -686,11 +686,11 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                         type="file"
                         id="wc-documentation-upload"
                         onChange={(e) => setDocumentationFile(e.target.files ? e.target.files[0] : null)}
-                        style={{ display: 'none' }}
+                        className="wc-file-input-hidden"
                       />
                     </label>
-                    <div className="wc-upload-info" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '16px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div className="wc-upload-info wc-upload-info-flex">
+                      <div className="wc-upload-filename-wrapper">
                         <span className="wc-upload-filename">
                           {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
                         </span>
@@ -699,32 +699,12 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                         )}
                       </div>
                       {documentationFile && (
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div className="wc-upload-actions">
                           <button
                             type="button"
                             onClick={() => window.open(URL.createObjectURL(documentationFile), '_blank')}
                             className="wc-preview-btn"
                             title="Preview File"
-                            style={{
-                              background: '#ffffff',
-                              border: '1px solid #e9d5ff',
-                              borderRadius: '6px',
-                              padding: '6px 12px',
-                              fontSize: '12px',
-                              fontWeight: 500,
-                              color: '#6d28d9',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              transition: 'all 0.2s',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = '#faf5ff';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = '#ffffff';
-                            }}
                           >
                             <Eye size={14} />
                             Preview
@@ -737,26 +717,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                               if (fileInput) fileInput.value = '';
                             }}
                             title="Clear File"
-                            style={{
-                              background: '#ffffff',
-                              border: '1px solid #fecaca',
-                              borderRadius: '6px',
-                              padding: '6px 12px',
-                              fontSize: '12px',
-                              fontWeight: 500,
-                              color: '#ef4444',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              transition: 'all 0.2s',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = '#fef2f2';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = '#ffffff';
-                            }}
+                            className="wc-clear-btn"
                           >
                             <X size={14} />
                             Clear
