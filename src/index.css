@@ -655,6 +655,8 @@
     font-weight: 700;
     display: inline-flex;
     align-items: center;
+    gap: 8px;
+    white-space: nowrap;
     border: 1px solid #E2E8F0;
   }
 
@@ -4823,6 +4825,8 @@ h1.page-title {
   padding: 8px 16px;
   border: 1px solid #e9d5ff;
   border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
   background-color: #fff;
   font-size: 14px;

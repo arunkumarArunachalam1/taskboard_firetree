@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ClipboardCheck, Save, Calendar, Clock, User, Phone, Paperclip, MessageSquare, Upload, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ClipboardCheck, Save, Calendar, Clock, User, Phone, Paperclip, MessageSquare, Upload, Search, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { completeWhereaboutsTasks, getWhereaboutsContactMethods, getWhereaboutsTaskDetails, getWhereaboutsReasons, getWhereaboutsDispositions } from '../../services/dashboard.service';
 
 interface WhereaboutsCompleteModalProps {
@@ -684,16 +684,84 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                       Choose File
                       <input
                         type="file"
+                        id="wc-documentation-upload"
                         onChange={(e) => setDocumentationFile(e.target.files ? e.target.files[0] : null)}
                         style={{ display: 'none' }}
                       />
                     </label>
-                    <div className="wc-upload-info">
-                      <span className="wc-upload-filename">
-                        {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
-                      </span>
-                      {!documentationFile && (
-                        <span className="wc-upload-hint">PDF, PNG, JPG up to 10MB</span>
+                    <div className="wc-upload-info" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '16px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span className="wc-upload-filename">
+                          {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
+                        </span>
+                        {!documentationFile && (
+                          <span className="wc-upload-hint">PDF, PNG, JPG up to 10MB</span>
+                        )}
+                      </div>
+                      {documentationFile && (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => window.open(URL.createObjectURL(documentationFile), '_blank')}
+                            className="wc-preview-btn"
+                            title="Preview File"
+                            style={{
+                              background: '#ffffff',
+                              border: '1px solid #e9d5ff',
+                              borderRadius: '6px',
+                              padding: '6px 12px',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              color: '#6d28d9',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#faf5ff';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#ffffff';
+                            }}
+                          >
+                            <Eye size={14} />
+                            Preview
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDocumentationFile(null);
+                              const fileInput = document.getElementById('wc-documentation-upload') as HTMLInputElement;
+                              if (fileInput) fileInput.value = '';
+                            }}
+                            title="Clear File"
+                            style={{
+                              background: '#ffffff',
+                              border: '1px solid #fecaca',
+                              borderRadius: '6px',
+                              padding: '6px 12px',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = '#fef2f2';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = '#ffffff';
+                            }}
+                          >
+                            <X size={14} />
+                            Clear
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>

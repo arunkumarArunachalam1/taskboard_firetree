@@ -250,7 +250,9 @@ export async function triggerHardRefresh(): Promise<boolean> {
 // ─── Constants & Dynamic ID Fetching ──────────────────────────────────────
 declare global {
   interface Window {
+    __IS_INTEGRATED__?: boolean;
     __TASKS_TABLE_LISTING_ID__?: string;
+    __TASKS_TABLE_LISTING_COLUMNS__?: string;
   }
 }
 
@@ -262,10 +264,11 @@ async function getTableListingInfo(): Promise<{ id: string, listColumns: string 
   // Use the ID injected dynamically by ColdFusion to avoid an extra network request,
   // while no longer relying on a hardcoded GUID that could change per environment.
   const dynamicId = window.__TASKS_TABLE_LISTING_ID__ || 'F50A1C73-CFAA-48A1-AF56-6B1A145C291F';
+  const dynamicCols = window.__TASKS_TABLE_LISTING_COLUMNS__ || 'TaskName,TaskDescription,CreatedByDisplay,ClientName,ExpectedStartDateTime,ExpectedDueDateTime,AssignedToDisplay,FacilityName';
   
   cachedTableListingInfo = {
     id: dynamicId,
-    listColumns: ''
+    listColumns: dynamicCols
   };
   return cachedTableListingInfo;
 }

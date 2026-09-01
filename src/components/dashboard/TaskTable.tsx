@@ -586,6 +586,23 @@ const TaskTable: React.FC<TaskTableProps> = ({
     if (!selectedStaffId) return;
 
     const staffName = staffList.find(s => s.Value === selectedStaffId)?.Display || 'selected staff';
+    const selectedTasks = data ? data.tasks.filter(t => reassignTaskIds.includes(t.TaskID)) : [];
+    
+    // Prevent assigning to the same person (t.AssignedTo holds the display name in the frontend)
+    const isAlreadyAssigned = selectedTasks.some(t => {
+      const currentAssignee = String(t.AssignedTo).replace(/<[^>]*>?/gm, '').trim();
+      return currentAssignee === staffName.trim();
+    });
+
+    if (isAlreadyAssigned) {
+      if (selectedTasks.length === 1) {
+        showToast('The selected user is already assigned to this task.', 'warning');
+      } else {
+        showToast('One or more selected tasks are already assigned to the selected user.', 'warning');
+      }
+      return;
+    }
+
     const taskCount = reassignTaskIds.length;
     const confirmMessage = taskCount === 1
       ? `Are you sure you want to reassign the selected task to ${staffName}?`
@@ -731,27 +748,31 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   </button>
                 </div>
 
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  onClick={handleMarkSelectedComplete}
-                  className="btn-bulk-complete"
-                >
-                  <CheckCircle2 size={14} strokeWidth={2.5} />
-                  Bulk Complete
-                </motion.button>
+                {selectedIds.length > 1 && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    onClick={handleMarkSelectedComplete}
+                    className="btn-bulk-complete"
+                  >
+                    <CheckCircle2 size={14} strokeWidth={2.5} />
+                    Bulk Complete
+                  </motion.button>
+                )}
 
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  onClick={() => handleOpenReassignModal(selectedIds)}
-                  className="btn-bulk-reassign"
-                >
-                  <UserPlus size={14} strokeWidth={2.5} />
-                  Reassign
-                </motion.button>
+                {selectedIds.length > 1 && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    onClick={() => handleOpenReassignModal(selectedIds)}
+                    className="btn-bulk-reassign"
+                  >
+                    <UserPlus size={14} strokeWidth={2.5} />
+                    Bulk Reassign
+                  </motion.button>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -1069,6 +1090,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
                   transition={{ duration: 0.18 }}
                   className="taskboard-modal-panel"
+                  style={{ overflow: 'visible' }}
                 >
                   {/* Modal Header */}
                   <div className="taskboard-modal-header">
@@ -1084,7 +1106,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   </div>
 
                   {/* Modal Body */}
-                  <div className="taskboard-modal-body">
+                  <div className="taskboard-modal-body" style={{ overflow: 'visible' }}>
                     {/* Task Display */}
                     <div>
                       <label className="taskboard-field-label">
@@ -1188,7 +1210,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   </div>
 
                   {/* Modal Footer */}
-                  <div className="taskboard-modal-footer">
+                  <div className="taskboard-modal-footer" style={{ borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}>
                     <button
                       onClick={() => setIsReassignOpen(false)}
                       className="taskboard-btn-cancel"

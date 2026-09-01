@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Calendar, Clock, User, Search, ChevronDown, ChevronUp, AlertCircle, MessageSquare, Minus, ArrowUpDown, Upload, FileText } from 'lucide-react';
+import { X, Save, Calendar, Clock, User, Search, ChevronDown, ChevronUp, AlertCircle, MessageSquare, Minus, ArrowUpDown, Upload, FileText, Eye } from 'lucide-react';
 import { getFollowupModalData, saveFollowupTask, getFollowupContactPhoneNumbers, getFollowupDispositions } from '../../services/dashboard.service';
 import './FollowupCompleteModal.css';
 
@@ -912,7 +912,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                               <FileText size={16} className="section-header-icon" />
                               Documentation
                             </div>
-                            <div className="followup-doc-wrapper">
+                            <div className="followup-doc-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                               <input
                                 type="file"
                                 id="documentation-upload"
@@ -925,6 +925,62 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                   {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
                                 </span>
                               </label>
+                              {documentationFile && (
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => window.open(URL.createObjectURL(documentationFile), '_blank')}
+                                    style={{
+                                      background: '#ffffff',
+                                      border: '1px solid #e9d5ff',
+                                      borderRadius: '6px',
+                                      padding: '6px 12px',
+                                      fontSize: '12px',
+                                      fontWeight: 500,
+                                      color: '#6d28d9',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      alignSelf: 'flex-start',
+                                      gap: '6px',
+                                      transition: 'all 0.2s',
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = '#faf5ff'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = '#ffffff'}
+                                  >
+                                    <Eye size={14} />
+                                    Preview
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setDocumentationFile(null);
+                                      const fileInput = document.getElementById('documentation-upload') as HTMLInputElement;
+                                      if (fileInput) fileInput.value = '';
+                                    }}
+                                    style={{
+                                      background: '#ffffff',
+                                      border: '1px solid #fecaca',
+                                      borderRadius: '6px',
+                                      padding: '6px 12px',
+                                      fontSize: '12px',
+                                      fontWeight: 500,
+                                      color: '#ef4444',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      alignSelf: 'flex-start',
+                                      gap: '6px',
+                                      transition: 'all 0.2s',
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = '#ffffff'}
+                                  >
+                                    <X size={14} />
+                                    Clear
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
