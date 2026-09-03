@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Calendar, Clock, User, Search, ChevronDown, ChevronUp, AlertCircle, MessageSquare, Minus, ArrowUpDown, Upload, FileText, Eye } from 'lucide-react';
 import { getFollowupModalData, saveFollowupTask, getFollowupContactPhoneNumbers, getFollowupDispositions } from '../../services/dashboard.service';
+import FormattedDateInput from './FormattedDateInput';
 import './FollowupCompleteModal.css';
 
 interface FollowupCompleteModalProps {
@@ -741,13 +742,11 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           <div className="task-form-group">
                             <label className="task-form-label">Call Date <span className="followup-required-star">*</span></label>
                             <div className="task-input-icon-wrapper followup-date-wrapper">
-                              <input
-                                type="date"
-                                className="task-form-input task-form-input-with-icon-left followup-date-input"
+                              <FormattedDateInput
                                 value={contactDate}
-                                onChange={(e) => setContactDate(e.target.value)}
-                                onClick={(e) => { try { (e.target as any).showPicker?.(); } catch (err) { } }}
+                                onChange={setContactDate}
                                 required
+                                className="task-form-input task-form-input-with-icon-left followup-date-input"
                               />
                               <Calendar size={16} className="task-input-icon-left followup-calendar-icon" />
                             </div>
@@ -798,13 +797,11 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                 {attendedTreatment === '4' && (
                                   <div className="followup-reschedule-row">
                                     <div className="task-input-icon-wrapper followup-reschedule-date-wrapper">
-                                      <input
-                                        type="date"
-                                        className="task-form-input task-form-input-with-icon-left followup-date-input"
+                                      <FormattedDateInput
                                         value={rescheduledDate}
-                                        onChange={(e) => setRescheduledDate(e.target.value)}
-                                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch (err) { } }}
+                                        onChange={setRescheduledDate}
                                         required
+                                        className="task-form-input task-form-input-with-icon-left followup-date-input"
                                       />
                                       <Calendar size={16} className="task-input-icon-left followup-calendar-icon" />
                                     </div>

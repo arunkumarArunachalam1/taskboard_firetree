@@ -137,9 +137,9 @@ interface TaskTableProps {
   onPageSizeChange?: (sz: number) => void;
   search: string;
   onSearchChange: (s: string) => void;
-  sortColumn?: number;
+  sortColumn?: string;
   sortDir: 'asc' | 'desc';
-  onSortChange: (col: number, dir: 'asc' | 'desc') => void;
+  onSortChange: (col: string, dir: 'asc' | 'desc') => void;
   onRefresh?: () => void;
   listingFilters: DashboardFilters;
   onApplyFilters: (filters: DashboardFilters) => void;
@@ -213,13 +213,22 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [staffSearch, setStaffSearch] = useState('');
   const [selectedStaffId, setSelectedStaffId] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDropdownUpward, setIsDropdownUpward] = useState(false);
+  const [dropdownListMaxHeight, setDropdownListMaxHeight] = useState<number>(280);
+  const reassignTriggerRef = useRef<HTMLDivElement>(null);
+
+  const handleDropdownToggle = () => {
+    setIsDropdownUpward(false);
+    setDropdownListMaxHeight(95); // Decreased length so it fits safely inside
+    setIsDropdownOpen(prev => !prev);
+  };
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [isGeneralTaskModalOpen, setIsGeneralTaskModalOpen] = useState(false);
   const [isWhereaboutsTaskModalOpen, setIsWhereaboutsTaskModalOpen] = useState(false);
   const [isViewTaskModalOpen, setIsViewTaskModalOpen] = useState(false);
   const [isEditWhereaboutsModalOpen, setIsEditWhereaboutsModalOpen] = useState(false);
-  
-  
+
+
   const [isWhereaboutsCompleteModalOpen, setIsWhereaboutsCompleteModalOpen] = useState(false);
   const [isFollowupCompleteModalOpen, setIsFollowupCompleteModalOpen] = useState(false);
   const [followupCompleteTaskId, setFollowupCompleteTaskId] = useState<number | null>(null);
@@ -231,9 +240,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
     if (openTaskId) {
       setFollowupCompleteTaskId(parseInt(openTaskId, 10));
       setIsFollowupCompleteModalOpen(true);
-      
+
       // Clean up URL so it doesn't re-open on refresh
-      const newUrl = window.location.pathname; 
+      const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
   }, []);
@@ -357,7 +366,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     if (task.Status === 'Completed') {
       let isPast24HoursCompleted = false;
       let completedDateStr = task.CompletedDateTime;
-      
+
       if (!completedDateStr) {
         try {
           // If completion date is not available in table data, fetch task details dynamically
@@ -513,8 +522,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
         try {
           const response = await markTasksCompleted(selectedIds);
           if (response.isSuccess === 1) {
-            const successMsg = selectedIds.length === 1 
-              ? 'Task marked complete successfully!' 
+            const successMsg = selectedIds.length === 1
+              ? 'Task marked complete successfully!'
               : 'Tasks marked complete successfully!';
             showToast(successMsg, 'success');
             setSelectedIds([]);
@@ -587,7 +596,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
     const staffName = staffList.find(s => s.Value === selectedStaffId)?.Display || 'selected staff';
     const selectedTasks = data ? data.tasks.filter(t => reassignTaskIds.includes(t.TaskID)) : [];
-    
+
     // Prevent assigning to the same person (t.AssignedTo holds the display name in the frontend)
     const isAlreadyAssigned = selectedTasks.some(t => {
       const currentAssignee = String(t.AssignedTo).replace(/<[^>]*>?/gm, '').trim();
@@ -632,9 +641,9 @@ const TaskTable: React.FC<TaskTableProps> = ({
     );
   };
 
-  const handleSort = (colIndex: number) => {
-    const isAsc = sortColumn === colIndex && sortDir === 'asc';
-    onSortChange(colIndex, isAsc ? 'desc' : 'asc');
+  const handleSort = (colName: string) => {
+    const isAsc = sortColumn === colName && sortDir === 'asc';
+    onSortChange(colName, isAsc ? 'desc' : 'asc');
   };
 
   // Smart pagination: show up to 7 pages with ellipsis
@@ -699,7 +708,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     </div>
   );
 
-  const renderSortIcon = (columnId: number) => {
+  const renderSortIcon = (columnId: string) => {
     if (sortColumn === columnId) {
       return sortDir === 'asc'
         ? <ArrowUp size={14} className="sort-icon active" />
@@ -891,29 +900,29 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   title="Select All"
                 />
               </th>
-              <th className="th-sortable w-22" onClick={() => handleSort(0)}>
-                <div className="th-content">Task Name <span className="ml-6px">{renderSortIcon(0)}</span></div>
+              <th className="th-sortable w-22" onClick={() => handleSort('TaskName')}>
+                <div className="th-content">Task Name <span className="ml-6px">{renderSortIcon('TaskName')}</span></div>
               </th>
-              <th className="th-sortable w-24" onClick={() => handleSort(1)}>
-                <div className="th-content">Description <span className="ml-6px">{renderSortIcon(1)}</span></div>
+              <th className="th-sortable w-24" onClick={() => handleSort('TaskDescription')}>
+                <div className="th-content">Description <span className="ml-6px">{renderSortIcon('TaskDescription')}</span></div>
               </th>
-              {/* <th className="th-sortable text-center" onClick={() => handleSort(2)}>
-                <div className="th-content-inline">Created By <span className="ml-6px">{renderSortIcon(2)}</span></div>
+              {/* <th className="th-sortable text-center" onClick={() => handleSort('CreatedByDisplay')}>
+                <div className="th-content-inline">Created By <span className="ml-6px">{renderSortIcon('CreatedByDisplay')}</span></div>
               </th> */}
-              <th className="th-sortable text-left w-20" onClick={() => handleSort(3)}>
-                <div className="th-content">Client <span className="ml-6px">{renderSortIcon(3)}</span></div>
+              <th className="th-sortable text-left w-20" onClick={() => handleSort('Client')}>
+                <div className="th-content">Client <span className="ml-6px">{renderSortIcon('Client')}</span></div>
               </th>
-              <th className="th-sortable w-10" onClick={() => handleSort(4)}>
-                <div className="th-content">Exp Start <span className="ml-6px">{renderSortIcon(4)}</span></div>
+              <th className="th-sortable w-10" onClick={() => handleSort('ExpectedStartDate')}>
+                <div className="th-content">Exp Start <span className="ml-6px">{renderSortIcon('ExpectedStartDate')}</span></div>
               </th>
-              <th className="th-sortable w-10" onClick={() => handleSort(5)}>
-                <div className="th-content">Due <span className="ml-6px">{renderSortIcon(5)}</span></div>
+              <th className="th-sortable w-10" onClick={() => handleSort('ExpectedDueDate')}>
+                <div className="th-content">Due <span className="ml-6px">{renderSortIcon('ExpectedDueDate')}</span></div>
               </th>
-              <th className="th-sortable w-10" onClick={() => handleSort(6)}>
-                <div className="th-content">Assigned To <span className="ml-6px">{renderSortIcon(6)}</span></div>
+              <th className="th-sortable w-10" onClick={() => handleSort('AssignedToDisplay')}>
+                <div className="th-content">Assigned To <span className="ml-6px">{renderSortIcon('AssignedToDisplay')}</span></div>
               </th>
-              {/* <th className="th-sortable text-center" onClick={() => handleSort(7)}>
-                <div className="th-content-inline">Facility <span className="ml-6px">{renderSortIcon(7)}</span></div>
+              {/* <th className="th-sortable text-center" onClick={() => handleSort('Facility')}>
+                <div className="th-content-inline">Facility <span className="ml-6px">{renderSortIcon('Facility')}</span></div>
               </th> */}
               <th className="th-actions" style={{ paddingRight: '32px', width: '110px' }}>
                 Actions
@@ -1106,7 +1115,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   </div>
 
                   {/* Modal Body */}
-                  <div className="taskboard-modal-body" style={{ overflow: 'visible' }}>
+                  <div className="taskboard-modal-body" style={{ overflow: 'visible', position: 'relative', zIndex: 10 }}>
                     {/* Task Display */}
                     <div>
                       <label className="taskboard-field-label">
@@ -1135,20 +1144,21 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         New Assignee
                       </label>
                       <div
-                        onClick={() => setIsDropdownOpen(prev => !prev)}
+                        ref={reassignTriggerRef}
+                        onClick={handleDropdownToggle}
                         className={`taskboard-dropdown-trigger${isDropdownOpen ? ' open' : ''}`}
                       >
                         <span className={`trigger-text${selectedStaffId ? ' has-value' : ''}`}>
                           {selectedStaffId
                             ? staffList.find(s => s.Value === selectedStaffId)?.Display
-                            : 'Search and select assignee...'}
+                            : 'select assignee...'}
                         </span>
                         <span className={`trigger-icon${isDropdownOpen ? ' open' : ''}`}>
                           <ChevronDown size={18} />
                         </span>
                       </div>
 
-                      <div key="reassign-dropdown-panel" className="taskboard-dropdown-panel" style={{ display: isDropdownOpen ? 'flex' : 'none' }}>
+                      <div key="reassign-dropdown-panel" className={`taskboard-dropdown-panel ${isDropdownUpward ? 'open-upward' : ''}`} style={{ display: isDropdownOpen ? 'flex' : 'none' }}>
                         <div className="taskboard-dropdown-search">
                           <span className="search-icon">
                             <Search size={14} />
@@ -1164,7 +1174,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         </div>
 
                         {/* Staff List */}
-                        <div className="taskboard-dropdown-list">
+                        <div className="taskboard-dropdown-list" style={{ maxHeight: `${Math.min(280, dropdownListMaxHeight)}px` }}>
                           {loadingStaff ? (
                             <div className="taskboard-dropdown-empty">
                               Loading staff...
@@ -1430,8 +1440,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
         isOpen={isWhereaboutsCompleteModalOpen}
         onClose={() => setIsWhereaboutsCompleteModalOpen(false)}
         onSuccess={() => {
-          const successMsg = whereaboutsCompleteIds.length === 1 
-            ? 'Whereabouts task marked complete successfully.' 
+          const successMsg = whereaboutsCompleteIds.length === 1
+            ? 'Whereabouts task marked complete successfully.'
             : 'Whereabouts tasks marked complete successfully.';
           showToast(successMsg, 'success');
           setSelectedIds([]);

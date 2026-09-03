@@ -278,7 +278,7 @@ export async function getTaskList(
   pageSize = 15,
   options: {
     search?: string;
-    sortColumn?: number;
+    sortColumn?: string;
     sortDir?: 'asc' | 'desc';
     filters?: DashboardFilters;
   } = {}
@@ -287,13 +287,29 @@ export async function getTaskList(
 
   const start = (page - 1) * pageSize;
 
+  const tableListingInfo = await getTableListingInfo();
+
   // Build DataTables server-side parameters
   let dtParams = `&draw=1&start=${start}&length=${pageSize}`;
   if (options.search) {
     dtParams += `&search[value]=${encodeURIComponent(options.search)}`;
   }
   if (options.sortColumn !== undefined) {
-    dtParams += `&order[0][column]=${options.sortColumn}&order[0][dir]=${options.sortDir || 'asc'}`;
+    let finalSortIndex = 0; // default to first column if not found
+    
+    if (tableListingInfo.listColumns) {
+      const actualCols = tableListingInfo.listColumns.split(',').map(c => c.trim().toLowerCase());
+      const actualIndex = actualCols.findIndex(c => 
+        c === options.sortColumn!.toLowerCase() || 
+        c === options.sortColumn!.toLowerCase() + 'name' || 
+        c === options.sortColumn!.toLowerCase() + 'datetime'
+      );
+      if (actualIndex !== -1) {
+        finalSortIndex = actualIndex;
+      }
+    }
+
+    dtParams += `&order[0][column]=${finalSortIndex}&order[0][dir]=${options.sortDir || 'asc'}`;
   }
 
   let filterParams = '';
@@ -341,7 +357,6 @@ export async function getTaskList(
     filterParams += `&ReactStatus=0`;
   }
 
-  const tableListingInfo = await getTableListingInfo();
   if (tableListingInfo.listColumns) {
     dtParams += `&listColumns=${encodeURIComponent(tableListingInfo.listColumns)}`;
   }

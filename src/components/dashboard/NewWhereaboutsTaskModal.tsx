@@ -4,6 +4,7 @@ import { X, ChevronDown, ChevronUp, MapPin, Calendar, Info, Settings, User, Phon
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFacilityStaff, getClientList, getClientEventDestinations, getClientContacts, getContactMethods, saveWhereaboutsTask, getContactPhoneNumbers } from '../../services/dashboard.service';
 import { useAppContext } from '../../context/AppContext';
+import FormattedDateInput from './FormattedDateInput';
 
 interface NewWhereaboutsTaskModalProps {
   isOpen: boolean;
@@ -333,6 +334,8 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const todayStr = new Date().toISOString().split('T')[0];
+
   // Form State
   const [clientId, setClientId] = useState<string | number>('');
   const [methodId, setMethodId] = useState<string | number>('');
@@ -397,9 +400,8 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
       loadData().then(() => {
 
         // Defaults
-        const today = new Date().toISOString().split('T')[0];
-        setExpectedStartDate(today);
-        setExpectedEndDate(today);
+        setExpectedStartDate(todayStr);
+        setExpectedEndDate(todayStr);
       }).catch(err => {
         console.error("[NewWhereaboutsTaskModal] Promise.all completely failed:", err);
       });
@@ -576,19 +578,16 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                       <div className="task-input-icon-left">
                         <Calendar size={16} />
                       </div>
-                      <input
-                        type="date"
+                      <FormattedDateInput
                         value={expectedStartDate}
-                        onChange={e => {
-                          const newStart = e.target.value;
+                        onChange={(newStart: string) => {
                           setExpectedStartDate(newStart);
                           if (expectedEndDate && expectedEndDate < newStart) {
                             setExpectedEndDate(newStart);
                           }
                         }}
-                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
+                        min={todayStr}
                         required
-                        className="task-form-input task-form-input-with-icon-left task-form-input-h38"
                       />
                     </div>
                   </div>
@@ -609,14 +608,11 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
                       <div className="task-input-icon-left">
                         <Calendar size={16} />
                       </div>
-                      <input
-                        type="date"
+                      <FormattedDateInput
                         value={expectedEndDate}
+                        onChange={setExpectedEndDate}
                         min={expectedStartDate}
-                        onChange={e => setExpectedEndDate(e.target.value)}
-                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
                         required
-                        className="task-form-input task-form-input-with-icon-left task-form-input-h38"
                       />
                     </div>
                   </div>

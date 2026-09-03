@@ -1272,8 +1272,13 @@ h1.page-title {
   color: #94A3B8;
 }
 
+.taskboard-dropdown-panel.open-upward {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+
 .taskboard-dropdown-list {
-  max-height: 220px;
+  max-height: 280px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1298,7 +1303,7 @@ h1.page-title {
 }
 
 .taskboard-dropdown-option {
-  padding: 10px 14px;
+  padding: 8px 12px;
   cursor: pointer;
   font-size: 13px;
   border-radius: 8px;
@@ -1309,7 +1314,7 @@ h1.page-title {
   color: #334155;
   font-weight: 400;
   margin: 1px 0;
-  min-height: 40px;
+  min-height: 32px;
   background-color: transparent;
   border: none;
   width: 100%;

@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, User, PhoneCall, Save } from 'lucide-react';
 import { getWhereaboutsTaskDetails, saveEditWhereaboutsTask } from '../../services/dashboard.service';
+import FormattedDateInput from './FormattedDateInput';
 
 interface EditWhereaboutsModalProps {
   isOpen: boolean;
@@ -411,14 +412,15 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
                           <div className="task-input-icon-left">
                             <Calendar size={16} />
                           </div>
-                          <input
-                            type="date"
+                          <FormattedDateInput
                             value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
+                            onChange={(newStart) => {
+                              setStartDate(newStart);
+                              if (dueDate && dueDate < newStart) {
+                                setDueDate(newStart);
+                              }
+                            }}
                             required
-                            max={dueDate || undefined}
-                            className="task-form-input task-form-input-with-icon-left task-form-input-h38"
                           />
                         </div>
                       </div>
@@ -446,14 +448,11 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
                           <div className="task-input-icon-left">
                             <Calendar size={16} />
                           </div>
-                          <input
-                            type="date"
+                          <FormattedDateInput
                             value={dueDate}
-                            onChange={(e) => setDueDate(e.target.value)}
-                            onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
-                            required
+                            onChange={setDueDate}
                             min={startDate || undefined}
-                            className="task-form-input task-form-input-with-icon-left task-form-input-h38"
+                            required
                           />
                         </div>
                       </div>

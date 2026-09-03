@@ -37,7 +37,7 @@ export function useDashboard() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
   const [search, setSearch] = useState('');
-  const [sortColumn, setSortColumn] = useState<number | undefined>(undefined);
+  const [sortColumn, setSortColumn] = useState<string | undefined>(undefined);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [listingFilters, setListingFilters] = useState<DashboardFilters>(initialListingFilters);
   const [kpiFilters, setKpiFilters] = useState<DashboardFilters>(initialKpiFilters);
@@ -51,7 +51,7 @@ export function useDashboard() {
   const fetchTasks = useCallback(async (
     p: number = 1,
     s?: string,
-    col?: number,
+    col?: string,
     dir?: 'asc' | 'desc',
     sz?: number,
     newFilters?: DashboardFilters

@@ -6,6 +6,7 @@ import { getFacilityStaff, getClientList, saveGeneralTask } from '../../services
 import type { FacilityStaff } from '../../types/dashboard.types';
 import type { ClientOption } from '../../services/dashboard.service';
 import { useAppContext } from '../../context/AppContext';
+import FormattedDateInput from './FormattedDateInput';
 
 interface NewGeneralTaskModalProps {
   isOpen: boolean;
@@ -163,12 +164,14 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
   onClose,
   onTaskCreated
 }) => {
+  const today = new Date().toISOString().split('T')[0];
+
   const [formData, setFormData] = useState({
     ClientCaseFileID: '',
     TaskName: '',
     TaskDescription: '',
-    ExpectedStartDate: new Date().toISOString().split('T')[0],
-    ExpectedDueDate: new Date().toISOString().split('T')[0],
+    ExpectedStartDate: today,
+    ExpectedDueDate: today,
     AssignTo: ''
   });
 
@@ -401,38 +404,38 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                 <div className="task-form-row">
                   <div className="task-form-col">
                     <label className="task-form-label">Start Date <span className="task-required-asterisk">*</span></label>
-                    <div className="task-input-wrapper">
-                      <div className="task-input-icon-left">
-                        <Calendar size={16} />
+                      <div className="task-input-wrapper">
+                        <div className="task-input-icon-left">
+                          <Calendar size={16} />
+                        </div>
+                        <FormattedDateInput
+                          value={formData.ExpectedStartDate}
+                          onChange={(val) => {
+                            handleChange({ target: { name: 'ExpectedStartDate', value: val } } as React.ChangeEvent<HTMLInputElement>);
+                            if (formData.ExpectedDueDate && formData.ExpectedDueDate < val) {
+                              handleChange({ target: { name: 'ExpectedDueDate', value: val } } as React.ChangeEvent<HTMLInputElement>);
+                            }
+                          }}
+                          min={today}
+                          required
+                          className="task-form-input task-form-input-with-icon-left"
+                        />
                       </div>
-                      <input
-                        type="date"
-                        name="ExpectedStartDate"
-                        value={formData.ExpectedStartDate}
-                        onChange={handleChange}
-                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
-                        required
-                        className="task-form-input task-form-input-with-icon-left"
-                      />
-                    </div>
                   </div>
                   <div className="task-form-col">
                     <label className="task-form-label">Due Date <span className="task-required-asterisk">*</span></label>
-                    <div className="task-input-wrapper">
-                      <div className="task-input-icon-left">
-                        <Calendar size={16} />
+                      <div className="task-input-wrapper">
+                        <div className="task-input-icon-left">
+                          <Calendar size={16} />
+                        </div>
+                        <FormattedDateInput
+                          value={formData.ExpectedDueDate}
+                          onChange={(val) => handleChange({ target: { name: 'ExpectedDueDate', value: val } } as React.ChangeEvent<HTMLInputElement>)}
+                          min={formData.ExpectedStartDate}
+                          required
+                          className="task-form-input task-form-input-with-icon-left"
+                        />
                       </div>
-                      <input
-                        type="date"
-                        name="ExpectedDueDate"
-                        value={formData.ExpectedDueDate}
-                        onChange={handleChange}
-                        onClick={(e) => { try { (e.target as any).showPicker?.(); } catch(err) {} }}
-                        min={formData.ExpectedStartDate}
-                        required
-                        className="task-form-input task-form-input-with-icon-left"
-                      />
-                    </div>
                   </div>
                 </div>
 

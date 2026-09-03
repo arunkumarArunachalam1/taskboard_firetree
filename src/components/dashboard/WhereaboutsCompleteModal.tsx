@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ClipboardCheck, Save, Calendar, Clock, User, Phone, Paperclip, MessageSquare, Upload, Search, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { completeWhereaboutsTasks, getWhereaboutsContactMethods, getWhereaboutsTaskDetails, getWhereaboutsReasons, getWhereaboutsDispositions } from '../../services/dashboard.service';
+import FormattedDateInput from './FormattedDateInput';
 
 interface WhereaboutsCompleteModalProps {
   isOpen: boolean;
@@ -568,10 +569,10 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                     <div className="wc-grid-col">
                       <label className="wc-input-label">Date <span className="wc-required-star">*</span></label>
                       <div className="wc-input-wrapper">
-                        <input
-                          type="date"
+                        <FormattedDateInput
                           value={contactDate}
-                          onChange={(e) => setContactDate(e.target.value)}
+                          onChange={setContactDate}
+                          required
                           className="wc-input-date"
                         />
                         <Calendar size={14} color="#6b7280" className="wc-input-icon" />
