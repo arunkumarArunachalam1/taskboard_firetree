@@ -519,6 +519,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                       }
                     }
 
+                    const followupType = details?.FollowupType || details?.FOLLOWUPTYPE;
                     const getPronouns = (d: any) => {
                       if (d.pronounfield === 'Other') return d.pronounfieldother || 'Other';
                       if (d.pronounfield) return d.pronounfield;
@@ -561,7 +562,9 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                               <span className="followup-client-info-item"><span className="followup-client-info-label">DOB:</span> <span className="followup-client-info-value">{formatDate(data.birthdate)}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">SSN:</span> <span className="followup-client-info-value">{data.ssn || ''}</span></span>
 
-                              <span className="followup-client-info-item"><span className="followup-client-info-label">DOC #:</span> <span className="followup-client-info-value">{data.docnumber || 'N/A'}</span></span>
+                              {followupType !== 'Funding/Parole/Probation Follow up' && (
+                                <span className="followup-client-info-item"><span className="followup-client-info-label">DOC #:</span> <span className="followup-client-info-value">{data.docnumber || 'N/A'}</span></span>
+                              )}
                               <span className="followup-client-info-item"><span className="followup-client-info-label">Parole #:</span> <span className="followup-client-info-value">{data.parolenumber || 'N/A'}</span></span>
                               <span className="followup-client-info-item"><span className="followup-client-info-label">MA #:</span> <span className="followup-client-info-value">{data.manumber || ''}</span></span>
 

@@ -314,6 +314,20 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
     }
   };
 
+  const minAllowedDate = React.useMemo(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const yesterday = `${yyyy}-${mm}-${dd}`;
+    
+    if (startDate && startDate < yesterday) {
+      return startDate;
+    }
+    return yesterday;
+  }, [startDate]);
+
   if (!isOpen) return null;
   if (typeof document === 'undefined') return null;
 
@@ -420,6 +434,7 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
                                 setDueDate(newStart);
                               }
                             }}
+                            min={minAllowedDate}
                             required
                           />
                         </div>
