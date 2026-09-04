@@ -23,6 +23,7 @@ const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
   className = 'task-form-input task-form-input-with-icon-left task-form-input-h38',
 }) => {
   const [focused, setFocused] = useState(false);
+  const isMouseDown = React.useRef(false);
 
   const displayValue = React.useMemo(() => {
     if (!value) return '';
@@ -41,15 +42,34 @@ const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
       max={max}
       required={required}
       placeholder="MM/DD/YYYY"
-      onFocus={() => setFocused(true)}
+      onMouseDown={() => {
+        isMouseDown.current = true;
+      }}
+      onMouseUp={() => {
+        isMouseDown.current = false;
+      }}
+      onFocus={() => {
+        if (!isMouseDown.current) {
+          setFocused(true);
+        }
+      }}
       onBlur={() => setFocused(false)}
       onChange={(e) => onChange(e.target.value)}
       onClick={(e) => {
+        setFocused(true);
+        const el = e.currentTarget;
+        if (el.type !== 'date') {
+          try {
+            el.type = 'date';
+            el.value = value || '';
+          } catch (err) {}
+        }
         if ('showPicker' in HTMLInputElement.prototype) {
-          try { (e.target as HTMLInputElement).showPicker(); } catch (err) {}
+          try { el.showPicker(); } catch (err) {}
         }
       }}
       className={className}
+      style={{ cursor: 'pointer' }}
     />
   );
 };
