@@ -272,8 +272,8 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
     if (startDate && dueDate) {
       if (startDate > dueDate) {
         const errMsg = "Expected Start Date cannot be greater than Expected Due Date.";
-        setError(errMsg);
         if (showToast) showToast(errMsg, 'error');
+        else setError(errMsg);
         return;
       }
       
@@ -282,8 +282,8 @@ export const EditWhereaboutsModal: React.FC<EditWhereaboutsModalProps> = ({
         const dTime24 = formatTo24h(dueTime) || dueTime;
         if (sTime24 > dTime24) {
           const errMsg = "Expected Start Time cannot be greater than Expected Due Time on the same day.";
-          setError(errMsg);
           if (showToast) showToast(errMsg, 'error');
+          else setError(errMsg);
           return;
         }
       }

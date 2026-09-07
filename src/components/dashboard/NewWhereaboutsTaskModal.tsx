@@ -10,6 +10,7 @@ interface NewWhereaboutsTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTaskCreated: () => void;
+  showToast?: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
 // Reusable Combobox component
@@ -330,7 +331,7 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
   );
 };
 
-export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = ({ isOpen, onClose, onTaskCreated }) => {
+export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = ({ isOpen, onClose, onTaskCreated, showToast }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -483,7 +484,9 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
 
     try {
       if (expectedStartDate && expectedEndDate && expectedEndDate < expectedStartDate) {
-        setError('Expected End Date cannot be before Expected Start Date.');
+        const errMsg = 'Expected End Date cannot be before Expected Start Date.';
+        if (showToast) showToast(errMsg, 'error');
+        else setError(errMsg);
         setIsSubmitting(false);
         return;
       }
@@ -492,7 +495,9 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
         const sTime24 = formatTo24h(expectedStartTime) || expectedStartTime;
         const eTime24 = formatTo24h(expectedEndTime) || expectedEndTime;
         if (sTime24 > eTime24) {
-          setError('Expected Start Time cannot be greater than Expected End Time on the same day.');
+          const errMsg = 'Expected Start Time cannot be greater than Expected End Time on the same day.';
+          if (showToast) showToast(errMsg, 'error');
+          else setError(errMsg);
           setIsSubmitting(false);
           return;
         }
