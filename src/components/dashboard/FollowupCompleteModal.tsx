@@ -274,7 +274,6 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
   const [dispositionId, setDispositionId] = useState<number | string>('');
   const [contactDate, setContactDate] = useState('');
   const [contactTime, setContactTime] = useState('');
-  const [notes] = useState('');
 
   // Followup specific state
   const [attendedTreatment, setAttendedTreatment] = useState<string>('');
@@ -396,7 +395,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
         dispositionId,
         contactDate,
         contactTime,
-        notes
+        notes: comments
       };
 
       if (documentationFile) {
