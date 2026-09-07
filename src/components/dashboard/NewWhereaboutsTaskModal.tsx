@@ -488,6 +488,16 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
         return;
       }
 
+      if (expectedStartDate === expectedEndDate && expectedStartTime && expectedEndTime) {
+        const sTime24 = formatTo24h(expectedStartTime) || expectedStartTime;
+        const eTime24 = formatTo24h(expectedEndTime) || expectedEndTime;
+        if (sTime24 > eTime24) {
+          setError('Expected Start Time cannot be greater than Expected End Time on the same day.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const selectedClient = clients.find(c => String(c.value) === String(clientId));
       const actualClientId = selectedClient?.clientId || clientId;
 
