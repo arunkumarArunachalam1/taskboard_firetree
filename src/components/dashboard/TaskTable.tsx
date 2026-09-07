@@ -1411,6 +1411,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
       <NewWhereaboutsTaskModal
         isOpen={isWhereaboutsTaskModalOpen}
         onClose={() => setIsWhereaboutsTaskModalOpen(false)}
+        showToast={showToast}
         onTaskCreated={() => {
           showToast('Whereabouts Task created successfully.', 'success');
           if (onRefresh) onRefresh();
