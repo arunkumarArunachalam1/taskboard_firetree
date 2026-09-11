@@ -4117,6 +4117,7 @@ h1.page-title {
 
 .vt-btn-primary:hover {
   background: #5B21B6;
+  color: #FFFFFF !important;
 }
 
 /* ── Loading / Error ── */

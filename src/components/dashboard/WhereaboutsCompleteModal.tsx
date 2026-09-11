@@ -686,7 +686,27 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                       <input
                         type="file"
                         id="wc-documentation-upload"
-                        onChange={(e) => setDocumentationFile(e.target.files ? e.target.files[0] : null)}
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        onChange={(e) => {
+                          const file = e.target.files ? e.target.files[0] : null;
+                          if (file) {
+                            if (file.size > 10 * 1024 * 1024) {
+                              setError('File size exceeds the 10MB limit.');
+                              e.target.value = '';
+                              setDocumentationFile(null);
+                              return;
+                            }
+                            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+                            if (!allowedTypes.includes(file.type)) {
+                              setError('Invalid file type. Only PDF, PNG, and JPG are allowed.');
+                              e.target.value = '';
+                              setDocumentationFile(null);
+                              return;
+                            }
+                            setError(null);
+                          }
+                          setDocumentationFile(file);
+                        }}
                         className="wc-file-input-hidden"
                       />
                     </label>

@@ -321,19 +321,42 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
       setMethods(methodsList.map((m: any) => ({ label: m.label, value: m.value })));
       setDispositions(dispositionsList.map((m: any) => ({ label: m.label, value: m.value })));
 
-      // Default Date/Time
-      const now = new Date();
-      const yr = now.getFullYear();
-      const mo = String(now.getMonth() + 1).padStart(2, '0');
-      const da = String(now.getDate()).padStart(2, '0');
-      setContactDate(`${yr}-${mo}-${da}`);
+      // Pre-fill existing data if it's a completed/edited task
+      if (followupDetails) {
+        setDispositionId(followupDetails.DispositionID || followupDetails.DispositionId || followupDetails.dispositionId || '');
+        setAttendedTreatment(followupDetails.AttendedTreatment || followupDetails.ATTENDEDTREATMENT || '');
+        setInterestedInReturning(followupDetails.InterestedInReturningToTreatment || followupDetails.INTERESTEDINRETURNINGTOTREATMENT || '');
+        setIsSober(followupDetails.IsSober || followupDetails.ISSOBER || '');
+        setAttendingSupportMeetings(followupDetails.IsAttendingMeetings || followupDetails.ISATTENDINGMEETINGS || '');
+        setRescheduledDate(followupDetails.TreatmentRescheduledDate || followupDetails.TREATMENTRESCHEDULEDDATE || '');
+        setRescheduledTime(followupDetails.TreatmentRescheduledTime || followupDetails.TREATMENTRESCHEDULEDTIME || '');
+        setComments(followupDetails.Comments || followupDetails.COMMENTS || followupDetails.notes || followupDetails.NOTES || '');
+      }
 
-      const hr = String(now.getHours()).padStart(2, '0');
-      const mi = String(now.getMinutes()).padStart(2, '0');
-      setContactTime(`${hr}:${mi}`);
+      // Default Date/Time (Use existing if available, otherwise current)
+      if (followupDetails && (followupDetails.ContactDate || followupDetails.CONTACTDATE)) {
+        setContactDate(followupDetails.ContactDate || followupDetails.CONTACTDATE);
+      } else {
+        const now = new Date();
+        const yr = now.getFullYear();
+        const mo = String(now.getMonth() + 1).padStart(2, '0');
+        const da = String(now.getDate()).padStart(2, '0');
+        setContactDate(`${yr}-${mo}-${da}`);
+      }
 
-      // Defaults
-      if (methodsList && methodsList.length > 0) {
+      if (followupDetails && (followupDetails.ContactTime || followupDetails.CONTACTTIME)) {
+        setContactTime(followupDetails.ContactTime || followupDetails.CONTACTTIME);
+      } else {
+        const now = new Date();
+        const hr = String(now.getHours()).padStart(2, '0');
+        const mi = String(now.getMinutes()).padStart(2, '0');
+        setContactTime(`${hr}:${mi}`);
+      }
+
+      // Defaults for method
+      if (followupDetails && (followupDetails.MethodID || followupDetails.methodId || followupDetails.MethodId)) {
+        setMethodId(followupDetails.MethodID || followupDetails.methodId || followupDetails.MethodId);
+      } else if (methodsList && methodsList.length > 0) {
         setMethodId(methodsList[0].value);
       }
 
@@ -424,6 +447,8 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
         Comments: comments
       };
 
+      // Ensure form fields are sent individually as well as in the JSON string
+      Object.assign(payload, followupForm);
       payload.FollowupForm = JSON.stringify(followupForm);
 
       const res = await saveFollowupTask(selectedTaskId, payload);
@@ -915,14 +940,41 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                               <input
                                 type="file"
                                 id="documentation-upload"
-                                onChange={(e) => setDocumentationFile(e.target.files ? e.target.files[0] : null)}
+                                accept=".pdf,.png,.jpg,.jpeg"
+                                onChange={(e) => {
+                                  const file = e.target.files ? e.target.files[0] : null;
+                                  if (file) {
+                                    if (file.size > 10 * 1024 * 1024) {
+                                      setError('File size exceeds the 10MB limit.');
+                                      if (contentRef.current) contentRef.current.scrollTop = 0;
+                                      e.target.value = '';
+                                      setDocumentationFile(null);
+                                      return;
+                                    }
+                                    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+                                    if (!allowedTypes.includes(file.type)) {
+                                      setError('Invalid file type. Only PDF, PNG, and JPG are allowed.');
+                                      if (contentRef.current) contentRef.current.scrollTop = 0;
+                                      e.target.value = '';
+                                      setDocumentationFile(null);
+                                      return;
+                                    }
+                                    setError(null);
+                                  }
+                                  setDocumentationFile(file);
+                                }}
                                 className="followup-file-input-hidden"
                               />
                               <label htmlFor="documentation-upload" className="upload-drop-zone">
                                 <Upload size={20} className="upload-icon" />
-                                <span className="upload-drop-zone-text">
-                                  {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
-                                </span>
+                                <div className="upload-drop-zone-text-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                  <span className="upload-drop-zone-text">
+                                    {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
+                                  </span>
+                                  {!documentationFile && (
+                                    <span style={{ fontSize: '12px', color: '#6B7280' }}>PDF, PNG, JPG up to 10MB</span>
+                                  )}
+                                </div>
                               </label>
                               {documentationFile && (
                                 <div className="followup-doc-actions">

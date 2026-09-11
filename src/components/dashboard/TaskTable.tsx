@@ -614,26 +614,26 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
     const taskCount = reassignTaskIds.length;
     const confirmMessage = taskCount === 1
-      ? `Are you sure you want to reassign the selected task to ${staffName}?`
-      : `Are you sure you want to reassign the ${taskCount} selected tasks to ${staffName}?`;
+      ? `Are you sure you want to re-assign the selected task to ${staffName}?`
+      : `Are you sure you want to re-assign the ${taskCount} selected tasks to ${staffName}?`;
 
     showConfirm(
-      'Reassign Tasks',
+      'Re-assign Tasks',
       confirmMessage,
       async () => {
         try {
           const response = await assignTasks(reassignTaskIds, selectedStaffId);
           if (response.isSuccess === 1) {
-            showToast(response.successMessage || 'Tasks reassigned successfully!', 'success');
+            showToast(response.successMessage || 'Tasks re-assigned successfully!', 'success');
             setIsReassignOpen(false);
             setSelectedIds([]);
             if (onRefresh) onRefresh();
             else onPageChange(page);
           } else {
-            showToast(response.errorMessage || 'Failed to reassign tasks.', 'error');
+            showToast(response.errorMessage || 'Failed to re-assign tasks.', 'error');
           }
         } catch (err: any) {
-          showToast(err.message || 'An error occurred while reassigning tasks.', 'error');
+          showToast(err.message || 'An error occurred while re-assigning tasks.', 'error');
         }
       },
       'reassign',
@@ -779,7 +779,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     className="btn-bulk-reassign"
                   >
                     <UserPlus size={14} strokeWidth={2.5} />
-                    Bulk Reassign
+                    Bulk Re-assign
                   </motion.button>
                 )}
               </motion.div>
@@ -998,7 +998,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         </button>
                         <button
                           onClick={() => handleOpenReassignModal([task.TaskID])}
-                          title="Reassign Task"
+                          title="Re-assign Task"
                           className="btn-action-reassign"
                         >
                           <User size={12} strokeWidth={2.5} />
@@ -1104,7 +1104,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   {/* Modal Header */}
                   <div className="taskboard-modal-header">
                     <h3>
-                      Reassign {reassignTaskIds.length === 1 ? 'Task' : `${reassignTaskIds.length} Tasks`}
+                      Re-assign {reassignTaskIds.length === 1 ? 'Task' : `${reassignTaskIds.length} Tasks`}
                     </h3>
                     <button
                       onClick={() => setIsReassignOpen(false)}
@@ -1119,7 +1119,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     {/* Task Display */}
                     <div>
                       <label className="taskboard-field-label">
-                        {reassignTaskIds.length === 1 ? 'Task to Reassign' : `Tasks to Reassign (${reassignTaskIds.length})`}
+                        {reassignTaskIds.length === 1 ? 'Task to Re-assign' : `Tasks to Re-assign (${reassignTaskIds.length})`}
                       </label>
                       {selectedTasks.length === 1 ? (
                         <div
@@ -1151,7 +1151,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                         <span className={`trigger-text${selectedStaffId ? ' has-value' : ''}`}>
                           {selectedStaffId
                             ? staffList.find(s => s.Value === selectedStaffId)?.Display
-                            : 'select assignee...'}
+                            : 'Select assignee...'}
                         </span>
                         <span className={`trigger-icon${isDropdownOpen ? ' open' : ''}`}>
                           <ChevronDown size={18} />
@@ -1194,17 +1194,27 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
                             return filteredStaff.map(staff => {
                               const isSelected = selectedStaffId === staff.Value;
+                              const isAlreadyAssigned = selectedTasks.some(t => {
+                                const currentAssignee = String(t.AssignedTo).replace(/<[^>]*>?/gm, '').trim();
+                                return currentAssignee === staff.Display.trim();
+                              });
+
                               return (
                                 <div
                                   key={staff.Value}
                                   onClick={(e) => {
                                     e.stopPropagation();
+                                    if (isAlreadyAssigned) return;
                                     setSelectedStaffId(staff.Value);
                                     setIsDropdownOpen(false);
                                   }}
-                                  className={`taskboard-dropdown-option${isSelected ? ' selected' : ''}`}
+                                  className={`taskboard-dropdown-option${isSelected ? ' selected' : ''}${isAlreadyAssigned ? ' option-disabled' : ''}`}
+                                  style={isAlreadyAssigned ? { opacity: 0.5, cursor: 'not-allowed', backgroundColor: '#F3F4F6', pointerEvents: 'none' } : {}}
                                 >
-                                  <span>{staff.Display}</span>
+                                  <span>
+                                    {staff.Display} 
+                                    {isAlreadyAssigned && <span style={{ fontSize: '12px', fontStyle: 'italic', marginLeft: '6px' }}>(Already Assigned)</span>}
+                                  </span>
                                   {isSelected && (
                                     <span className="check-icon">
                                       <Check size={14} strokeWidth={2.5} />
@@ -1232,7 +1242,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                       disabled={!selectedStaffId}
                       className="taskboard-btn-primary blue"
                     >
-                      Reassign
+                      Re-assign
                     </button>
                   </div>
                 </motion.div>
