@@ -959,7 +959,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                       setDocumentationFile(null);
                                       return;
                                     }
-                                    setError(null);
+                                    setError('');
                                   }
                                   setDocumentationFile(file);
                                 }}
