@@ -351,6 +351,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
   const [documentationFile, setDocumentationFile] = useState<File | null>(null);
   const [notes, setNotes] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [isDateTimeModified, setIsDateTimeModified] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -372,6 +373,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
       setDocumentationFile(null);
       setNotes('');
       setError(null);
+      setIsDateTimeModified(false);
 
       if (selectedTaskIds.length > 0) {
         getWhereaboutsTaskDetails(selectedTaskIds[0])
@@ -467,12 +469,28 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
 
     setSaving(true);
     setError(null);
+    
+    let finalContactDate = contactDate;
+    let finalContactTime = contactTime;
+
+    if (!isDateTimeModified) {
+      const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+      const yr = estNow.getFullYear();
+      const mo = String(estNow.getMonth() + 1).padStart(2, '0');
+      const da = String(estNow.getDate()).padStart(2, '0');
+      finalContactDate = `${yr}-${mo}-${da}`;
+      
+      const hr = String(estNow.getHours()).padStart(2, '0');
+      const mi = String(estNow.getMinutes()).padStart(2, '0');
+      finalContactTime = `${hr}:${mi}`;
+    }
+    
     try {
       const res = await completeWhereaboutsTasks({
         listids: selectedTaskIds.join(','),
         methodId: methodId,
-        contactDate: contactDate,
-        contactTime: contactTime,
+        contactDate: finalContactDate,
+        contactTime: finalContactTime,
         reasonId: reason,
         dispositionId: disposition,
         isConsent: consent === 'yes' ? 1 : 0,
@@ -571,7 +589,10 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                       <div className="wc-input-wrapper">
                         <FormattedDateInput
                           value={contactDate}
-                          onChange={setContactDate}
+                          onChange={(val) => {
+                            setContactDate(val);
+                            setIsDateTimeModified(true);
+                          }}
                           required
                           className="wc-input-date"
                         />
@@ -583,7 +604,10 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                       <label className="wc-input-label">Time <span className="wc-required-star">*</span></label>
                       <CustomTimePicker
                         value={contactTime}
-                        onChange={setContactTime}
+                        onChange={(val) => {
+                          setContactTime(val);
+                          setIsDateTimeModified(true);
+                        }}
                       />
                     </div>
 

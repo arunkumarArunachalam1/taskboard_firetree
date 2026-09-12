@@ -284,6 +284,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
   const [rescheduledTime, setRescheduledTime] = useState('');
   const [comments, setComments] = useState('');
   const [documentationFile, setDocumentationFile] = useState<File | null>(null);
+  const [isDateTimeModified, setIsDateTimeModified] = useState(false);
 
 
 
@@ -310,6 +311,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
     setRescheduledTime('');
     setComments('');
     setDocumentationFile(null);
+    setIsDateTimeModified(false);
     setMethodId('');
 
     try {
@@ -414,12 +416,29 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
     setSaving(true);
     setError('');
 
+    let finalContactDate = contactDate;
+    let finalContactTime = contactTime;
+
+    // If the user hasn't manually edited the date/time, 
+    // capture the exact exact EST time at the moment of submission to match the database timestamp.
+    if (!isDateTimeModified) {
+      const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+      const yr = estNow.getFullYear();
+      const mo = String(estNow.getMonth() + 1).padStart(2, '0');
+      const da = String(estNow.getDate()).padStart(2, '0');
+      finalContactDate = `${yr}-${mo}-${da}`;
+      
+      const hr = String(estNow.getHours()).padStart(2, '0');
+      const mi = String(estNow.getMinutes()).padStart(2, '0');
+      finalContactTime = `${hr}:${mi}`;
+    }
+
     try {
       const payload: any = {
         methodId: 1, // Phone by default
         dispositionId,
-        contactDate,
-        contactTime,
+        contactDate: finalContactDate,
+        contactTime: finalContactTime,
         notes: comments
       };
 
@@ -818,7 +837,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                             <div className="task-input-icon-wrapper followup-date-wrapper">
                               <FormattedDateInput
                                 value={contactDate}
-                                onChange={setContactDate}
+                                onChange={(val) => { setContactDate(val); setIsDateTimeModified(true); }}
                                 required
                                 className="task-form-input task-form-input-with-icon-left followup-date-input"
                               />
@@ -827,7 +846,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           </div>
                           <div className="task-form-group">
                             <label className="task-form-label">Call Time <span className="followup-required-star">*</span></label>
-                            <CustomTimePicker value={contactTime} onChange={(val) => setContactTime(val)} required />
+                            <CustomTimePicker value={contactTime} onChange={(val) => { setContactTime(val); setIsDateTimeModified(true); }} required />
                           </div>
                           <div className="task-form-group">
                             <label className="task-form-label">Contact Phone/Email</label>
