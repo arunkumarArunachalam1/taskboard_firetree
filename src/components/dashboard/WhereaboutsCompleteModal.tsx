@@ -710,7 +710,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                       <input
                         type="file"
                         id="wc-documentation-upload"
-                        accept=".pdf,.png,.jpg,.jpeg"
+                        accept=".pdf,.png,.jpg,.jpeg,.csv,.xls,.xlsx"
                         onChange={(e) => {
                           const file = e.target.files ? e.target.files[0] : null;
                           if (file) {
@@ -720,9 +720,15 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                               setDocumentationFile(null);
                               return;
                             }
-                            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-                            if (!allowedTypes.includes(file.type)) {
-                              setError('Invalid file type. Only PDF, PNG, and JPG are allowed.');
+                            const allowedTypes = [
+                              'application/pdf', 'image/jpeg', 'image/png', 'image/jpg',
+                              'text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                            ];
+                            const extension = file.name.split('.').pop()?.toLowerCase();
+                            const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'csv', 'xls', 'xlsx'];
+                            
+                            if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(extension || '')) {
+                              setError('Invalid file type. Only PDF, PNG, JPG, CSV, and Excel files are allowed.');
                               e.target.value = '';
                               setDocumentationFile(null);
                               return;
