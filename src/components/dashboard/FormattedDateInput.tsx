@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 interface FormattedDateInputProps {
   value: string;
@@ -14,10 +14,14 @@ interface FormattedDateInputProps {
  * regardless of their browser/OS locale settings.
  * Internally stores and emits dates in YYYY-MM-DD format.
  *
- * Strategy: renders a read-only text input for display and swaps it for
- * a real type="date" input on click. The ref callback fires synchronously
- * when the date input mounts, so showPicker() is called within the same
- * user-gesture activation window — no setTimeout or useEffect needed.
+ * Debug findings:
+ * 1. showPicker() succeeds on click #1 via native addEventListener (bypassing React's batchedUpdates).
+ * 2. User selects a date — the native input value changes.
+ * 3. BUT the display never updates because pointerEvents:'none' on the date input prevents
+ *    React's synthetic onChange from firing for the picker's change event.
+ *
+ * Fix: native 'change' addEventListener on the date input directly calls onChange,
+ * bypassing React's event system entirely for both click and change events.
  */
 const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
   value,
@@ -27,8 +31,11 @@ const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
   required,
   className = 'task-form-input task-form-input-with-icon-left task-form-input-h38',
 }) => {
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
-  const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const displayRef = useRef<HTMLInputElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  // Keep onChange in a ref so the stable native listener always calls the latest version
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
 
   const displayValue = React.useMemo(() => {
     if (!value) return '';
@@ -39,60 +46,79 @@ const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
     return value;
   }, [value]);
 
-  // Ref callback: fires synchronously the moment the date <input> is inserted
-  // into the DOM — still within the browser's user-gesture activation window.
-  const dateInputRefCallback = useCallback((el: HTMLInputElement | null) => {
-    if (el) {
-      el.focus();
+  useEffect(() => {
+    const displayEl = displayRef.current;
+    const dateEl = dateRef.current;
+    if (!displayEl || !dateEl) return;
+
+    // Native click → open picker (bypasses React batchedUpdates, preserves user-gesture token)
+    const handleClick = () => {
+      dateEl.focus();
       if ('showPicker' in HTMLInputElement.prototype) {
-        try { (el as any).showPicker(); } catch (_) {}
+        try { (dateEl as any).showPicker(); } catch (_) {}
       }
-    }
-  }, []);
+    };
 
-  const handleBlur = () => {
-    // Small delay to allow date selection click to register before hiding
-    blurTimeoutRef.current = setTimeout(() => {
-      setIsPickerOpen(false);
-    }, 150);
-  };
+    // Native change → call onChange directly (pointerEvents:none prevents React's synthetic
+    // onChange from receiving change events fired by showPicker())
+    const handleChange = () => {
+      onChangeRef.current(dateEl.value);
+    };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-    // Keep picker open until blur (user may want to see selected date briefly)
-  };
+    // Keyboard accessibility: Enter/Space opens picker
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleClick();
+      }
+    };
 
-  if (isPickerOpen || !value) {
-    // Render the real date picker input
-    return (
+    displayEl.addEventListener('click', handleClick);
+    displayEl.addEventListener('keydown', handleKey);
+    dateEl.addEventListener('change', handleChange);
+
+    return () => {
+      displayEl.removeEventListener('click', handleClick);
+      displayEl.removeEventListener('keydown', handleKey);
+      dateEl.removeEventListener('change', handleChange);
+    };
+  }, []); // stable — onChange accessed via ref
+
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      {/* Hidden native date input — opened via showPicker(), reports changes via native listener */}
       <input
-        ref={dateInputRefCallback}
+        ref={dateRef}
         type="date"
-        value={value}
+        defaultValue={value}
         min={min}
         max={max}
         required={required}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={className}
-        style={{ cursor: 'pointer' }}
+        tabIndex={-1}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          opacity: 0,
+          pointerEvents: 'none',
+          cursor: 'pointer',
+          zIndex: 0,
+        }}
       />
-    );
-  }
 
-  // Render a display-only text input showing MM/DD/YYYY
-  return (
-    <input
-      type="text"
-      value={displayValue}
-      readOnly
-      placeholder="MM/DD/YYYY"
-      required={required}
-      onFocus={() => setIsPickerOpen(true)}
-      onClick={() => setIsPickerOpen(true)}
-      className={className}
-      style={{ cursor: 'pointer' }}
-    />
+      {/* Styled MM/DD/YYYY display — click/keydown handled via native listeners above */}
+      <input
+        ref={displayRef}
+        type="text"
+        value={displayValue}
+        readOnly
+        placeholder="MM/DD/YYYY"
+        required={required && !value}
+        className={className}
+        style={{ cursor: 'pointer', position: 'relative', zIndex: 1, width: '100%' }}
+      />
+    </div>
   );
 };
 

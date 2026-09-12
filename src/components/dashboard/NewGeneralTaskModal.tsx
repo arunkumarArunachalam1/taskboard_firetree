@@ -411,10 +411,12 @@ export const NewGeneralTaskModal: React.FC<NewGeneralTaskModalProps> = ({
                         <FormattedDateInput
                           value={formData.ExpectedStartDate}
                           onChange={(val) => {
-                            handleChange({ target: { name: 'ExpectedStartDate', value: val } } as React.ChangeEvent<HTMLInputElement>);
-                            if (formData.ExpectedDueDate && formData.ExpectedDueDate < val) {
-                              handleChange({ target: { name: 'ExpectedDueDate', value: val } } as React.ChangeEvent<HTMLInputElement>);
-                            }
+                            setFormData(prev => ({
+                              ...prev,
+                              ExpectedStartDate: val,
+                              // Also advance DueDate if it's now before StartDate
+                              ExpectedDueDate: prev.ExpectedDueDate < val ? val : prev.ExpectedDueDate,
+                            }));
                           }}
                           min={today}
                           required

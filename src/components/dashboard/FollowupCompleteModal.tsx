@@ -285,6 +285,8 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
   const [comments, setComments] = useState('');
   const [documentationFile, setDocumentationFile] = useState<File | null>(null);
 
+  const [historySortConfig, setHistorySortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
   const [error, setError] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -466,6 +468,39 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
     }
   };
 
+  const sortedAttemptHistory = React.useMemo(() => {
+    const history = details?.AttemptHistory || details?.ATTEMPTHISTORY || [];
+    if (!historySortConfig) return history;
+
+    return [...history].sort((a, b) => {
+      let aVal = String(a[historySortConfig.key] || '').toLowerCase();
+      let bVal = String(b[historySortConfig.key] || '').toLowerCase();
+      
+      if (historySortConfig.key === 'ContactDate') {
+        const dA = new Date(`${a.ContactDate} ${a.ContactTime || ''}`).getTime();
+        const dB = new Date(`${b.ContactDate} ${b.ContactTime || ''}`).getTime();
+        if (!isNaN(dA) && !isNaN(dB)) {
+          aVal = String(dA);
+          bVal = String(dB);
+          return historySortConfig.direction === 'asc' ? dA - dB : dB - dA;
+        }
+      }
+
+      if (aVal < bVal) return historySortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return historySortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [details, historySortConfig]);
+
+  const handleSortHistory = (key: string) => {
+    setHistorySortConfig(prev => {
+      if (prev && prev.key === key) {
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -526,6 +561,12 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                 <div className="vt-loading">Loading followup details...</div>
               ) : (
                 <div>
+                  {error && (
+                    <div className="task-alert task-alert-error followup-grid-full-span">
+                      <AlertCircle size={16} />
+                      <span>{error}</span>
+                    </div>
+                  )}
                   {(details?.ClientHeader || details?.CLIENTHEADER) && (() => {
                     const headerData = details?.ClientHeader || details?.CLIENTHEADER;
                     let data: any = {};
@@ -643,12 +684,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
 
 
                   <form id="followupForm" onSubmit={handleSubmit} className="task-form-layout followup-form-margin-top">
-                    {error && (
-                      <div className="task-alert task-alert-error followup-grid-full-span">
-                        <AlertCircle size={16} />
-                        <span>{error}</span>
-                      </div>
-                    )}
+
 
 
 
@@ -1030,14 +1066,22 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           <table className="attempt-history-table">
                             <thead>
                               <tr className="attempt-history-th">
-                                <th className="attempt-history-th">Attempt Date <ArrowUpDown size={12} className="sort-icon" /></th>
-                                <th className="attempt-history-th">Attempted By <ArrowUpDown size={12} className="sort-icon" /></th>
-                                <th className="attempt-history-th">Contact <ArrowUpDown size={12} className="sort-icon" /></th>
-                                <th className="attempt-history-th">Call Disposition <ArrowUpDown size={12} className="sort-icon" /></th>
+                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('ContactDate')} style={{ cursor: 'pointer' }}>
+                                  Attempt Date <ArrowUpDown size={12} className="sort-icon" />
+                                </th>
+                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('CreatedByName')} style={{ cursor: 'pointer' }}>
+                                  Attempted By <ArrowUpDown size={12} className="sort-icon" />
+                                </th>
+                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('ContactMethod')} style={{ cursor: 'pointer' }}>
+                                  Contact <ArrowUpDown size={12} className="sort-icon" />
+                                </th>
+                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('Disposition')} style={{ cursor: 'pointer' }}>
+                                  Call Disposition <ArrowUpDown size={12} className="sort-icon" />
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
-                              {(details?.AttemptHistory || details?.ATTEMPTHISTORY).map((attempt: any, i: number) => (
+                              {sortedAttemptHistory.map((attempt: any, i: number) => (
                                 <tr key={i} className="attempt-history-tr">
                                   <td className="attempt-history-td">{attempt.ContactDate} {attempt.ContactTime}</td>
                                   <td className="attempt-history-td">{attempt.CreatedByName}</td>
