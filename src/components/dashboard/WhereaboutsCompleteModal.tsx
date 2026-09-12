@@ -746,7 +746,7 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
                           {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
                         </span>
                         {!documentationFile && (
-                          <span className="wc-upload-hint">PDF, PNG, JPG up to 10MB</span>
+                          <span className="wc-upload-hint">PDF, PNG, Excel, CSV,JPG up to 10MB</span>
                         )}
                       </div>
                       {documentationFile && (
