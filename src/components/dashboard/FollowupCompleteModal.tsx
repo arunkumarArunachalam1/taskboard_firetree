@@ -704,7 +704,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           <div className="followup-attempt-warning">
                             <AlertCircle size={15} />
                             <span>
-                              {attemptHistory.length} previous attempt{attemptHistory.length > 1 ? 's were' : ' was'} made without successfully reaching the client.
+                              {attemptHistory.length} previous attempt{attemptHistory.length > 1 ? 's were' : ' was'} made without successfully reaching the client. <strong>Note: Reaching 3 attempts will close this task as complete.</strong>
                             </span>
                           </div>
                         )}
