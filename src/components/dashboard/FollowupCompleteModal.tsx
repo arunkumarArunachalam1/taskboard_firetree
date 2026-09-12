@@ -1044,7 +1044,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                     {documentationFile ? documentationFile.name : 'Upload supporting documents, images or files (optional)'}
                                   </span>
                                   {!documentationFile && (
-                                    <span style={{ fontSize: '12px', color: '#6B7280' }}>PDF, PNG, Excel, CSV,JPG up to 10MB</span>
+                                    <span style={{ fontSize: '12px', color: '#6B7280' }}>PDF, PNG, Excel, CSV, JPG up to 10MB</span>
                                   )}
                                 </div>
                               </label>
