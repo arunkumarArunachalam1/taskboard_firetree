@@ -354,15 +354,15 @@ export const WhereaboutsCompleteModal: React.FC<WhereaboutsCompleteModalProps> =
 
   useEffect(() => {
     if (isOpen) {
-      const today = new Date().toISOString().split('T')[0];
-      setContactDate(today);
+      const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+      const yr = estNow.getFullYear();
+      const mo = String(estNow.getMonth() + 1).padStart(2, '0');
+      const da = String(estNow.getDate()).padStart(2, '0');
+      setContactDate(`${yr}-${mo}-${da}`);
       
-      const now = new Date();
-      const timeString = now.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      setContactTime(timeString);
+      const hr = String(estNow.getHours()).padStart(2, '0');
+      const mi = String(estNow.getMinutes()).padStart(2, '0');
+      setContactTime(`${hr}:${mi}`);
       
       setReason('10');
       setMethodId('1');

@@ -335,23 +335,23 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
         setComments(followupDetails.Comments || followupDetails.COMMENTS || followupDetails.notes || followupDetails.NOTES || '');
       }
 
-      // Default Date/Time (Use existing if available, otherwise current)
+      // Generate default Date/Time in EST (America/New_York)
+      const estNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+
       if (followupDetails && (followupDetails.ContactDate || followupDetails.CONTACTDATE)) {
         setContactDate(followupDetails.ContactDate || followupDetails.CONTACTDATE);
       } else {
-        const now = new Date();
-        const yr = now.getFullYear();
-        const mo = String(now.getMonth() + 1).padStart(2, '0');
-        const da = String(now.getDate()).padStart(2, '0');
+        const yr = estNow.getFullYear();
+        const mo = String(estNow.getMonth() + 1).padStart(2, '0');
+        const da = String(estNow.getDate()).padStart(2, '0');
         setContactDate(`${yr}-${mo}-${da}`);
       }
 
       if (followupDetails && (followupDetails.ContactTime || followupDetails.CONTACTTIME)) {
         setContactTime(followupDetails.ContactTime || followupDetails.CONTACTTIME);
       } else {
-        const now = new Date();
-        const hr = String(now.getHours()).padStart(2, '0');
-        const mi = String(now.getMinutes()).padStart(2, '0');
+        const hr = String(estNow.getHours()).padStart(2, '0');
+        const mi = String(estNow.getMinutes()).padStart(2, '0');
         setContactTime(`${hr}:${mi}`);
       }
 
