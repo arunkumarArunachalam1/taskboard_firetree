@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Calendar, Clock, User, Search, ChevronDown, ChevronUp, AlertCircle, MessageSquare, Minus, ArrowUpDown, Upload, FileText, Eye } from 'lucide-react';
+import { X, Save, Calendar, Clock, User, Search, ChevronDown, ChevronUp, AlertCircle, MessageSquare, Minus, Upload, FileText, Eye, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { getFollowupModalData, saveFollowupTask, getFollowupContactPhoneNumbers, getFollowupDispositions } from '../../services/dashboard.service';
 import FormattedDateInput from './FormattedDateInput';
 import './FollowupCompleteModal.css';
@@ -285,7 +285,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
   const [comments, setComments] = useState('');
   const [documentationFile, setDocumentationFile] = useState<File | null>(null);
 
-  const [historySortConfig, setHistorySortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
 
   const [error, setError] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
@@ -468,37 +468,40 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
     }
   };
 
+  const [historySortConfig, setHistorySortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
   const sortedAttemptHistory = React.useMemo(() => {
     const history = details?.AttemptHistory || details?.ATTEMPTHISTORY || [];
     if (!historySortConfig) return history;
-
     return [...history].sort((a, b) => {
-      let aVal = String(a[historySortConfig.key] || '').toLowerCase();
-      let bVal = String(b[historySortConfig.key] || '').toLowerCase();
-      
       if (historySortConfig.key === 'ContactDate') {
         const dA = new Date(`${a.ContactDate} ${a.ContactTime || ''}`).getTime();
         const dB = new Date(`${b.ContactDate} ${b.ContactTime || ''}`).getTime();
-        if (!isNaN(dA) && !isNaN(dB)) {
-          aVal = String(dA);
-          bVal = String(dB);
-          return historySortConfig.direction === 'asc' ? dA - dB : dB - dA;
-        }
+        if (!isNaN(dA) && !isNaN(dB)) return historySortConfig.direction === 'asc' ? dA - dB : dB - dA;
       }
-
+      const aVal = String(a[historySortConfig.key] || '').toLowerCase();
+      const bVal = String(b[historySortConfig.key] || '').toLowerCase();
       if (aVal < bVal) return historySortConfig.direction === 'asc' ? -1 : 1;
       if (aVal > bVal) return historySortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
   }, [details, historySortConfig]);
 
+  const attemptHistory = details?.AttemptHistory || details?.ATTEMPTHISTORY || [];
+
   const handleSortHistory = (key: string) => {
-    setHistorySortConfig(prev => {
-      if (prev && prev.key === key) {
-        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
-      }
-      return { key, direction: 'asc' };
-    });
+    setHistorySortConfig(prev =>
+      prev && prev.key === key
+        ? { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
+        : { key, direction: 'asc' }
+    );
+  };
+
+  const SortIcon = ({ col }: { col: string }) => {
+    if (!historySortConfig || historySortConfig.key !== col) return <ArrowUpDown size={12} className="sort-icon sort-icon-inactive" />;
+    return historySortConfig.direction === 'asc'
+      ? <ArrowUp size={12} className="sort-icon sort-icon-active" />
+      : <ArrowDown size={12} className="sort-icon sort-icon-active" />;
   };
 
   if (!isOpen) return null;
@@ -695,8 +698,16 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                       {/* Attempt Header */}
                       <div className="followup-attempt-header">
                         <h3 className="followup-attempt-heading">
-                          Attempt #{(details?.AttemptHistory || details?.ATTEMPTHISTORY || []).length + 1}
+                          Attempt #{attemptHistory.length + 1}
                         </h3>
+                        {attemptHistory.length > 0 && (
+                          <div className="followup-attempt-warning">
+                            <AlertCircle size={15} />
+                            <span>
+                              {attemptHistory.length} previous attempt{attemptHistory.length > 1 ? 's were' : ' was'} made without successfully reaching the client.
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Attempt Body Wrapper */}
@@ -1066,17 +1077,17 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                           <table className="attempt-history-table">
                             <thead>
                               <tr className="attempt-history-th">
-                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('ContactDate')} style={{ cursor: 'pointer' }}>
-                                  Attempt Date <ArrowUpDown size={12} className="sort-icon" />
+                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('ContactDate')}>
+                                  Attempt Date <SortIcon col="ContactDate" />
                                 </th>
-                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('CreatedByName')} style={{ cursor: 'pointer' }}>
-                                  Attempted By <ArrowUpDown size={12} className="sort-icon" />
+                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('CreatedByName')}>
+                                  Attempted By <SortIcon col="CreatedByName" />
                                 </th>
-                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('ContactMethod')} style={{ cursor: 'pointer' }}>
-                                  Contact <ArrowUpDown size={12} className="sort-icon" />
+                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('ContactMethod')}>
+                                  Contact <SortIcon col="ContactMethod" />
                                 </th>
-                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('Disposition')} style={{ cursor: 'pointer' }}>
-                                  Call Disposition <ArrowUpDown size={12} className="sort-icon" />
+                                <th className="attempt-history-th th-sortable" onClick={() => handleSortHistory('Disposition')}>
+                                  Call Disposition <SortIcon col="Disposition" />
                                 </th>
                               </tr>
                             </thead>

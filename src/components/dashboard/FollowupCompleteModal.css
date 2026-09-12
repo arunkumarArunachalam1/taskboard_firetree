@@ -127,6 +127,31 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.th-sortable:hover {
+  color: #7c3aed;
+}
+
+.sort-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.sort-icon-inactive {
+  opacity: 0.35;
+}
+
+.sort-icon-active {
+  color: #7c3aed;
+  opacity: 1;
+}
+
 .attempt-history-tr {
   border-bottom: 1px solid #f1f5f9;
 }
@@ -329,7 +354,21 @@
   font-size: 15px;
   font-weight: 600;
   color: #475569;
-  margin: 0;
+  margin: 0 0 8px 0;
+}
+
+/* Attempt warning banner */
+.followup-attempt-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background-color: #FFFBEB;
+  border: 1px solid #FCD34D;
+  border-radius: 8px;
+  color: #92400E;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* Attempt body wrapper */
