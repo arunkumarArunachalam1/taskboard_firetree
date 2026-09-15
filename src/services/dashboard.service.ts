@@ -299,10 +299,15 @@ export async function getTaskList(
     
     if (tableListingInfo.listColumns) {
       const actualCols = tableListingInfo.listColumns.split(',').map(c => c.trim().toLowerCase());
+      
+      let searchCol = options.sortColumn!.toLowerCase();
+      if (searchCol === 'expectedstartdate') searchCol = 'expectedstartdatetime';
+      if (searchCol === 'expectedduedate') searchCol = 'expectedduedatetime';
+
       const actualIndex = actualCols.findIndex(c => 
-        c === options.sortColumn!.toLowerCase() || 
-        c === options.sortColumn!.toLowerCase() + 'name' || 
-        c === options.sortColumn!.toLowerCase() + 'datetime'
+        c === searchCol || 
+        c === searchCol + 'name' || 
+        c === searchCol + 'datetime'
       );
       if (actualIndex !== -1) {
         finalSortIndex = actualIndex;
