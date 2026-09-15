@@ -300,14 +300,16 @@ export async function getTaskList(
     if (tableListingInfo.listColumns) {
       const actualCols = tableListingInfo.listColumns.split(',').map(c => c.trim().toLowerCase());
       
-      let searchCol = options.sortColumn!.toLowerCase();
-      if (searchCol === 'expectedstartdate') searchCol = 'expectedstartdatetime';
-      if (searchCol === 'expectedduedate') searchCol = 'expectedduedatetime';
+      const searchCol = options.sortColumn!.toLowerCase();
 
       const actualIndex = actualCols.findIndex(c => 
         c === searchCol || 
         c === searchCol + 'name' || 
-        c === searchCol + 'datetime'
+        c === searchCol + 'datetime' ||
+        (searchCol === 'expectedstartdate' && c === 'expectedstartdatetime') ||
+        (searchCol === 'expectedduedate' && c === 'expectedduedatetime') ||
+        (searchCol === 'client' && c === 'clientname') ||
+        (searchCol === 'facility' && c === 'facilityname')
       );
       if (actualIndex !== -1) {
         finalSortIndex = actualIndex;
