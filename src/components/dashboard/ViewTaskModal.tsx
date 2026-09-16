@@ -11,7 +11,7 @@ import {
   CircleCheck,
   ClipboardList
 } from 'lucide-react';
-import { getTaskDetails, extractTextFromHTML } from '../../services/dashboard.service';
+import { getTaskDetails, extractTextFromHTML, getFollowupModalData } from '../../services/dashboard.service';
 import { appendOrUpdateReturnTo } from './TaskTable';
 
 interface ViewTaskModalProps {
@@ -77,11 +77,24 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
       setLoading(true);
       setError(null);
       getTaskDetails(taskId)
-        .then((res) => {
+        .then(async (res) => {
           console.log('RAW API RES:', JSON.stringify(res, null, 2));
           const taskObj = extractTaskData(res);
           console.log('EXTRACTED TASK OBJ:', JSON.stringify(taskObj, null, 2));
           if (taskObj) {
+            // If it's a followup task, fetch attempt history
+            const typeStr = String(taskObj.TaskType || taskObj.taskType || taskObj.TaskTypeName || taskObj.Type || '').toLowerCase();
+            const typeId = Number(taskObj.TaskTypeID || taskObj.taskTypeId);
+            if (typeId === 3 || typeStr.includes('follow')) {
+              try {
+                const followupData = await getFollowupModalData(taskId);
+                if (followupData && (followupData.AttemptHistory || followupData.ATTEMPTHISTORY)) {
+                  taskObj.AttemptHistory = followupData.AttemptHistory || followupData.ATTEMPTHISTORY;
+                }
+              } catch (e) {
+                console.error("Failed to fetch followup attempt history", e);
+              }
+            }
             setData(taskObj);
           } else {
             setError(res?.errorMessage || 'Failed to load task details.');
@@ -254,6 +267,45 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
     );
   };
 
+  const getAttemptHistory = () => {
+    const attempts = getProp(data, 'AttemptHistory', 'ATTEMPTHISTORY');
+    if (Array.isArray(attempts) && attempts.length > 0) {
+      return (
+        <div className="vt-detail-card vt-detail-card--full" style={{ marginTop: '16px' }}>
+          <div className="vt-card-header">
+            <div className="vt-card-icon vt-icon-purple">
+              <History size={15} strokeWidth={2} />
+            </div>
+            <div className="vt-card-label">ATTEMPT HISTORY</div>
+          </div>
+          <div className="table-responsive" style={{ marginTop: '12px' }}>
+            <table className="attempt-history-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #E2E8F0', textAlign: 'left', color: '#64748B' }}>
+                  <th style={{ padding: '8px' }}>Attempt Date</th>
+                  <th style={{ padding: '8px' }}>Attempted By</th>
+                  <th style={{ padding: '8px' }}>Contact</th>
+                  <th style={{ padding: '8px' }}>Call Disposition</th>
+                </tr>
+              </thead>
+              <tbody>
+                {attempts.map((attempt: any, idx: number) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                    <td style={{ padding: '8px', color: '#334155' }}>{attempt.ContactDate} {attempt.ContactTime}</td>
+                    <td style={{ padding: '8px', color: '#334155' }}>{attempt.CreatedByName}</td>
+                    <td style={{ padding: '8px', color: '#334155' }}>{attempt.ContactMethod || ''}</td>
+                    <td style={{ padding: '8px', color: '#334155' }}>{attempt.Disposition}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return createPortal(
     <AnimatePresence>
       {isOpen && (
@@ -382,6 +434,9 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
                       <div className="vt-date-value">{getCompletedDate()}</div>
                     </div>
                   </div>
+
+                  {/* ── ATTEMPT HISTORY (If available) ── */}
+                  {getAttemptHistory()}
                 </>
               )}
             </div>
