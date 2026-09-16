@@ -51,6 +51,9 @@ const CompletionTrendChart: React.FC<Props> = ({ data, chartRef }) => {
     responsive: true,
     maintainAspectRatio: false,
     animation: false,
+    layout: {
+      padding: { right: 20, top: 10 }
+    },
     plugins: {
       legend: { display: false },
       tooltip: {

@@ -32,6 +32,9 @@ const DailyCompletion30DaysChart: React.FC<Props> = ({ data, chartRef }) => {
     responsive: true,
     maintainAspectRatio: false,
     animation: false,
+    layout: {
+      padding: { right: 20, top: 10 }
+    },
     interaction: {
       mode: 'index',
       intersect: false,

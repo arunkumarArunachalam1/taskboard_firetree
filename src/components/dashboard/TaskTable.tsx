@@ -753,7 +753,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     onMouseLeave={(e) => e.currentTarget.style.color = '#64748B'}
                     title="Deselect All"
                   >
-                    <X size={14} strokeWidth={3} />
+                    <X size={17} strokeWidth={2.5} />
                   </button>
                 </div>
 
@@ -765,7 +765,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     onClick={handleMarkSelectedComplete}
                     className="btn-bulk-complete"
                   >
-                    <CheckCircle2 size={14} strokeWidth={2.5} />
+                    <CheckCircle2 size={17} strokeWidth={2.5} />
                     Bulk Complete
                   </motion.button>
                 )}
@@ -778,7 +778,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     onClick={() => handleOpenReassignModal(selectedIds)}
                     className="btn-bulk-reassign"
                   >
-                    <UserPlus size={14} strokeWidth={2.5} />
+                    <UserPlus size={17} strokeWidth={2.5} />
                     Bulk Re-assign
                   </motion.button>
                 )}
@@ -1212,7 +1212,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                                   style={isAlreadyAssigned ? { opacity: 0.5, cursor: 'not-allowed', backgroundColor: '#F3F4F6', pointerEvents: 'none' } : {}}
                                 >
                                   <span>
-                                    {staff.Display} 
+                                    {staff.Display}
                                     {isAlreadyAssigned && <span style={{ fontSize: '12px', fontStyle: 'italic', marginLeft: '6px' }}>(Already Assigned)</span>}
                                   </span>
                                   {isSelected && (
