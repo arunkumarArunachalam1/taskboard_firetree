@@ -753,7 +753,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     onMouseLeave={(e) => e.currentTarget.style.color = '#64748B'}
                     title="Deselect All"
                   >
-                    <X size={17} strokeWidth={2.5} />
+                    <X size={16} strokeWidth={2.5} />
                   </button>
                 </div>
 
@@ -765,7 +765,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     onClick={handleMarkSelectedComplete}
                     className="btn-bulk-complete"
                   >
-                    <CheckCircle2 size={17} strokeWidth={2.5} />
+                    <CheckCircle2 size={18} strokeWidth={2.5} />
                     Bulk Complete
                   </motion.button>
                 )}
@@ -778,7 +778,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     onClick={() => handleOpenReassignModal(selectedIds)}
                     className="btn-bulk-reassign"
                   >
-                    <UserPlus size={17} strokeWidth={2.5} />
+                    <UserPlus size={18} strokeWidth={2.5} />
                     Bulk Re-assign
                   </motion.button>
                 )}

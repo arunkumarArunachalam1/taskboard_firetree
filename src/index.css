@@ -602,6 +602,12 @@
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 
+    & svg {
+      width: 16px !important;
+      height: 16px !important;
+      flex-shrink: 0;
+    }
+
     &:hover {
       transform: translateY(-1px);
       background: rgba(34, 197, 94, 0.1);
@@ -631,6 +637,12 @@
     white-space: nowrap;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+
+    & svg {
+      width: 16px !important;
+      height: 16px !important;
+      flex-shrink: 0;
+    }
 
     &:hover {
       transform: translateY(-1px);
@@ -4141,6 +4153,7 @@ h1.page-title {
 }
 
 @media (max-width: 768px) {
+
   .vt-details-grid,
   .vt-dates-row {
     grid-template-columns: 1fr;
@@ -4603,6 +4616,7 @@ h1.page-title {
   color: #6b7280;
   cursor: pointer;
 }
+
 .wc-close-btn:hover {
   background-color: #f9fafb;
 }
@@ -4840,6 +4854,7 @@ h1.page-title {
   font-weight: 600;
   color: #6d28d9;
 }
+
 .wc-upload-btn:hover {
   background-color: #faf5ff;
 }
@@ -4892,6 +4907,7 @@ h1.page-title {
   font-weight: 500;
   cursor: pointer;
 }
+
 .wc-btn-cancel:hover {
   background-color: #f9fafb;
 }
@@ -4909,9 +4925,11 @@ h1.page-title {
   font-weight: 500;
   cursor: pointer;
 }
+
 .wc-btn-save:hover:not(:disabled) {
   background-color: #4c1d95;
 }
+
 .wc-btn-save:disabled {
   opacity: 0.7;
   cursor: not-allowed;
