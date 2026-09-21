@@ -322,7 +322,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const navigateToTask = (task: Task) => {
     const rawUrl = extractHrefFromHTML(task.TaskDescription) || extractHrefFromHTML(task.TaskName) || extractHrefFromHTML(task.ClientName);
     if (rawUrl) {
-      let url = rawUrl;
+      let url = rawUrl.trim();
       // Resolve relative URLs to the index.cfm base path
       if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/')) {
         const path = window.location.pathname;
@@ -428,7 +428,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
       if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
         e.preventDefault();
 
-        let url = href;
+        let url = href.trim();
         if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/')) {
           const path = window.location.pathname;
           const indexCFMIdx = path.toLowerCase().indexOf('index.cfm');
