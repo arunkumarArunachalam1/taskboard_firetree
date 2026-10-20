@@ -136,14 +136,36 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleKpiCardClick = async (kpiType: 'dueToday' | 'overdue' | 'pending' | 'completed') => {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    
-    const yesterday = new Date(Date.now() - 86400000);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
-    
-    const tomorrow = new Date(Date.now() + 86400000);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    // Resolve base date using authoritative server date or facility timezone (America/New_York)
+    const serverDateStr = context?.serverDate || (typeof window !== 'undefined' ? (window as any).__SERVER_DATE__ : '');
+    let baseDate: Date;
+    if (serverDateStr && /^\d{4}-\d{2}-\d{2}$/.test(serverDateStr)) {
+      const [y, m, d] = serverDateStr.split('-').map(Number);
+      baseDate = new Date(y, m - 1, d);
+    } else {
+      try {
+        baseDate = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+      } catch (e) {
+        baseDate = new Date();
+      }
+    }
+
+    const formatYMD = (d: Date) => {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    const todayStr = formatYMD(baseDate);
+
+    const yesterday = new Date(baseDate);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = formatYMD(yesterday);
+
+    const tomorrow = new Date(baseDate);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = formatYMD(tomorrow);
 
     if (activeCard === kpiType) {
       await handleListingClearFilters();
@@ -181,7 +203,7 @@ const DashboardPage: React.FC = () => {
       };
     } else if (kpiType === 'overdue') {
       let finalEndDate = yesterdayStr;
-      if (kpiEnd && new Date(kpiEnd) < new Date(yesterdayStr)) {
+      if (kpiEnd && kpiEnd < yesterdayStr) {
         finalEndDate = kpiEnd;
       }
       newFilters = {
@@ -192,7 +214,7 @@ const DashboardPage: React.FC = () => {
       };
     } else if (kpiType === 'pending') {
       let finalStartDate = tomorrowStr;
-      if (kpiStart && new Date(kpiStart) > new Date(tomorrowStr)) {
+      if (kpiStart && kpiStart > tomorrowStr) {
         finalStartDate = kpiStart;
       }
       newFilters = {

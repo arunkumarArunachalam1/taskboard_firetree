@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { NewWhereaboutsTaskModal } from '../NewWhereaboutsTaskModal';
 import * as dashboardService from '../../../services/dashboard.service';
@@ -70,5 +70,45 @@ describe('NewWhereaboutsTaskModal', () => {
     // We can at least check if dependencies were triggered if we could mock the selection
     // Since combobox has custom implementations, we just test if the modal renders.
     expect(screen.getByText(/New Whereabouts Task/i)).toBeInTheDocument();
+  });
+
+  it('keeps Expected End Date and Expected End Time optional by default without asterisks', async () => {
+    render(<NewWhereaboutsTaskModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/New Whereabouts Task/i)).toBeInTheDocument();
+    });
+
+    // Check Expected End Date label does not have asterisk
+    const endDateLabel = screen.getByText(/^Expected End Date/i);
+    expect(endDateLabel).not.toHaveTextContent('*');
+
+    // Expected End Date input defaults to start date (today)
+    const dateInputs = screen.getAllByPlaceholderText('MM/DD/YYYY') as HTMLInputElement[];
+    expect(dateInputs[1].value).toBe(dateInputs[0].value);
+
+    // Both time labels - start time has asterisk, end time does not
+    const timeLabels = screen.getAllByText(/^Time/i);
+    expect(timeLabels[0]).toHaveTextContent('*');
+    expect(timeLabels[1]).not.toHaveTextContent('*');
+  });
+
+  it('keeps Expected End Time optional even when Expected End Date is selected', async () => {
+    render(<NewWhereaboutsTaskModal {...defaultProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/New Whereabouts Task/i)).toBeInTheDocument();
+    });
+
+    const nativeDateInputs = document.querySelectorAll('input[type="date"]') as NodeListOf<HTMLInputElement>;
+    expect(nativeDateInputs.length).toBeGreaterThanOrEqual(2);
+
+    // Set Expected End Date on the second date input
+    const endDateInput = nativeDateInputs[1];
+    fireEvent.change(endDateInput, { target: { value: '2026-10-25' } });
+
+    // Time label for end time should still NOT have asterisk
+    const timeLabels = screen.getAllByText(/^Time/i);
+    expect(timeLabels[1]).not.toHaveTextContent('*');
   });
 });

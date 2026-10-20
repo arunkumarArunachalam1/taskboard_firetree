@@ -6,6 +6,7 @@ interface FormattedDateInputProps {
   min?: string;
   max?: string;
   required?: boolean;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -29,6 +30,7 @@ const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
   min,
   max,
   required,
+  disabled = false,
   className = 'task-form-input task-form-input-with-icon-left task-form-input-h38',
 }) => {
   const displayRef = useRef<HTMLInputElement>(null);
@@ -49,7 +51,7 @@ const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
   useEffect(() => {
     const displayEl = displayRef.current;
     const dateEl = dateRef.current;
-    if (!displayEl || !dateEl) return;
+    if (!displayEl || !dateEl || disabled) return;
 
     // Native click → open picker (bypasses React batchedUpdates, preserves user-gesture token)
     const handleClick = () => {
@@ -82,7 +84,7 @@ const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
       displayEl.removeEventListener('keydown', handleKey);
       dateEl.removeEventListener('change', handleChange);
     };
-  }, []); // stable — onChange accessed via ref
+  }, [disabled]); // re-bind if disabled changes
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
@@ -94,6 +96,7 @@ const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
         min={min}
         max={max}
         required={required}
+        disabled={disabled}
         tabIndex={-1}
         style={{
           position: 'absolute',
@@ -102,7 +105,7 @@ const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
           height: '100%',
           opacity: 0,
           pointerEvents: 'none',
-          cursor: 'pointer',
+          cursor: disabled ? 'not-allowed' : 'pointer',
           zIndex: 0,
         }}
       />
@@ -113,10 +116,18 @@ const FormattedDateInput: React.FC<FormattedDateInputProps> = ({
         type="text"
         value={displayValue}
         readOnly
+        disabled={disabled}
         placeholder="MM/DD/YYYY"
         required={required && !value}
         className={className}
-        style={{ cursor: 'pointer', position: 'relative', zIndex: 1, width: '100%' }}
+        style={{
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          backgroundColor: disabled ? '#F3F4F6' : undefined,
+          color: disabled ? '#4B5563' : undefined,
+          position: 'relative',
+          zIndex: 1,
+          width: '100%'
+        }}
       />
     </div>
   );

@@ -2675,8 +2675,18 @@ h1.page-title {
   transition: background-color 0.1s;
 }
 
-.combobox-option:hover {
-  background-color: #F9FAFB;
+.combobox-option:hover,
+.combobox-option.combobox-option-highlighted {
+  background-color: #F3F4F6;
+}
+
+.combobox-option.combobox-option-selected {
+  background-color: #EFF6FF;
+}
+
+.combobox-option.combobox-option-selected .combobox-option-label {
+  color: #2563EB;
+  font-weight: 600;
 }
 
 .combobox-option-label {
@@ -2700,10 +2710,23 @@ h1.page-title {
 
 .combobox-highlight {
   color: #2563EB;
-  background-color: #EFF6FF;
-  padding: 0 2px;
-  border-radius: 2px;
+  background-color: #DBEAFE;
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-weight: 600;
+  display: inline;
 }
+
+.combobox-option.combobox-option-highlighted .combobox-highlight {
+  background-color: #DBEAFE;
+  color: #1D4ED8;
+}
+
+.combobox-option.combobox-option-selected .combobox-highlight {
+  background-color: #BFDBFE;
+  color: #1E40AF;
+}
+
 
 /*  Custom Time Picker  */
 .timepicker-wrapper {

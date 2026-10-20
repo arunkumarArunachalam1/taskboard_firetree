@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ClipboardCheck, Save, Calendar, Clock, User, Phone, Paperclip, MessageSquare, Upload, Search, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { X, ClipboardCheck, Save, Calendar, Clock, User, Phone, Paperclip, MessageSquare, Upload, Eye } from 'lucide-react';
 import { completeWhereaboutsTasks, getWhereaboutsContactMethods, getWhereaboutsTaskDetails, getWhereaboutsReasons, getWhereaboutsDispositions } from '../../services/dashboard.service';
 import FormattedDateInput from './FormattedDateInput';
 
@@ -13,139 +13,7 @@ interface WhereaboutsCompleteModalProps {
   selectedClientId: number;
 }
 
-interface ComboboxOption {
-  label: string;
-  value: string | number;
-  secondary?: string;
-}
-
-interface SearchableComboboxProps {
-  options: ComboboxOption[];
-  value: string | number;
-  onChange: (value: string | number) => void;
-  placeholder?: string;
-  required?: boolean;
-  icon?: React.ReactNode;
-}
-
-const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value, onChange, placeholder, required, icon }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const selectedOption = options.find(o => String(o.value) === String(value));
-
-  const filteredOptions = options.filter(o =>
-    o.label.toLowerCase().includes(search.toLowerCase()) ||
-    (o.secondary && o.secondary.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  return (
-    <div ref={wrapperRef} className="combobox-container">
-      <div
-        className={`combobox-input combobox-input-flex ${icon ? 'task-form-input-with-icon-left' : ''}`}
-        onClick={() => {
-          if (isOpen) {
-             setIsOpen(false);
-             setSearch('');
-          } else {
-             setIsOpen(true);
-          }
-        }}
-      >
-        <span className={`combobox-value-span ${!selectedOption ? 'combobox-value-placeholder' : ''}`}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-      </div>
-      {icon && (
-        <div className="task-input-icon-left task-input-icon-none">
-          {icon}
-        </div>
-      )}
-      <div className="combobox-chevron">
-        {isOpen ? (
-          <ChevronUp 
-            size={16} 
-            className="combobox-toggle-icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(false);
-              setSearch('');
-            }} 
-          />
-        ) : (
-          <ChevronDown 
-            size={16} 
-            className="combobox-toggle-icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(true);
-            }} 
-          />
-        )}
-      </div>
-      {required && !value && <input type="text" className="combobox-hidden-input" required />}
-
-      {isOpen && (
-        <div className="combobox-panel">
-          <div className="combobox-search-header">
-            <div className="combobox-search-input-wrapper">
-              <Search size={14} className="combobox-search-icon" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (filteredOptions.length > 0) {
-                      onChange(filteredOptions[0].value);
-                      setIsOpen(false);
-                      setSearch('');
-                    }
-                  } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    setIsOpen(false);
-                  }
-                }}
-                autoFocus
-                className="combobox-search-input"
-              />
-            </div>
-          </div>
-          <div className="combobox-options-list">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map(option => (
-                <div
-                  key={option.value}
-                  onClick={() => { onChange(option.value); setIsOpen(false); setSearch(''); }}
-                  className="combobox-option"
-                >
-                  <div className="combobox-option-label">{option.label}</div>
-                  {option.secondary && <div className="combobox-option-secondary">{option.secondary}</div>}
-                </div>
-              ))
-            ) : (
-              <div className="combobox-empty">No matches found</div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+import { SearchableCombobox } from './SearchableCombobox';
 
 
 interface CustomTimePickerProps {

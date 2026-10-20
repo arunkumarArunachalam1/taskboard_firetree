@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronDown, ChevronUp, MapPin, Calendar, Info, Settings, User, Phone, Save, Search, Clock } from 'lucide-react';
+import { X, MapPin, Calendar, Info, Settings, User, Phone, Save, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFacilityStaff, getClientList, getClientEventDestinations, getClientContacts, getContactMethods, saveWhereaboutsTask, getContactPhoneNumbers } from '../../services/dashboard.service';
 import { useAppContext } from '../../context/AppContext';
@@ -13,22 +13,7 @@ interface NewWhereaboutsTaskModalProps {
   showToast?: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
-// Reusable Combobox component
-interface ComboboxOption {
-  label: string;
-  value: string | number; // ClientCaseFileID
-  clientId?: string | number; // Actual ClientID
-  secondary?: string;
-}
-
-interface SearchableComboboxProps {
-  options: ComboboxOption[];
-  value: string | number;
-  onChange: (value: string | number) => void;
-  placeholder?: string;
-  required?: boolean;
-  icon?: React.ReactNode;
-}
+import { SearchableCombobox, type ComboboxOption } from './SearchableCombobox';
 
 interface StaffResponse {
   Value?: number;
@@ -38,115 +23,6 @@ interface StaffResponse {
   DISPLAY?: string;
   display?: string;
 }
-
-
-
-const SearchableCombobox: React.FC<SearchableComboboxProps> = ({ options, value, onChange, placeholder, required, icon }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const selectedOption = options.find(o => String(o.value) === String(value));
-  // const _displayValue = isOpen ? search : (selectedOption ? selectedOption.label : '');
-
-  const filteredOptions = options.filter(o =>
-    o.label.toLowerCase().includes(search.toLowerCase()) ||
-    (o.secondary && o.secondary.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  return (
-    <div ref={wrapperRef} className="combobox-container">
-      <div
-        className={`combobox-input combobox-input-flex ${icon ? 'task-form-input-with-icon-left' : ''}`}
-        onClick={() => {
-          if (isOpen) {
-             setIsOpen(false);
-             setSearch('');
-          } else {
-             setIsOpen(true);
-          }
-        }}
-      >
-        <span className={`combobox-value-span ${!selectedOption ? 'combobox-value-placeholder' : ''}`}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-      </div>
-      {icon && (
-        <div className="task-input-icon-left task-input-icon-none">
-          {icon}
-        </div>
-      )}
-      <div className="combobox-chevron">
-        {isOpen ? (
-          <ChevronUp 
-            size={16} 
-            className="combobox-toggle-icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(false);
-              setSearch('');
-            }} 
-          />
-        ) : (
-          <ChevronDown 
-            size={16} 
-            className="combobox-toggle-icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(true);
-            }} 
-          />
-        )}
-      </div>
-      {required && !value && <input type="text" className="combobox-hidden-input" required />}
-
-      {isOpen && (
-        <div className="combobox-panel">
-          <div className="combobox-search-header">
-            <div className="combobox-search-input-wrapper">
-              <Search size={14} className="combobox-search-icon" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                autoFocus
-                className="combobox-search-input"
-              />
-            </div>
-          </div>
-          <div className="combobox-options-list">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map(option => (
-                <div
-                  key={option.value}
-                  onClick={() => { onChange(option.value); setIsOpen(false); setSearch(''); }}
-                  className="combobox-option"
-                >
-                  <div className="combobox-option-label">{option.label}</div>
-                  {option.secondary && <div className="combobox-option-secondary">{option.secondary}</div>}
-                </div>
-              ))
-            ) : (
-              <div className="combobox-empty">No matches found</div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 interface CustomTimePickerProps {
   value: string;
@@ -209,6 +85,10 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInputValue(val);
+    if (!val.trim()) {
+      onChange('');
+      return;
+    }
     const parsed24h = formatTo24h(val);
     if (parsed24h) {
       onChange(parsed24h);
@@ -216,6 +96,11 @@ const CustomTimePicker: React.FC<CustomTimePickerProps> = ({ value, onChange, re
   };
 
   const handleBlur = () => {
+    if (!inputValue.trim()) {
+      onChange('');
+      setInputValue('');
+      return;
+    }
     const parsed24h = formatTo24h(inputValue);
     if (parsed24h) {
       onChange(parsed24h);
@@ -367,7 +252,9 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
       // Reset form fields
       setClientId('');
       setMethodId('');
+      setExpectedStartDate(todayStr);
       setExpectedStartTime('');
+      setExpectedEndDate(todayStr);
       setExpectedEndTime('');
       setDestinationId('');
       setContactId('');
@@ -483,21 +370,13 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
     setIsSubmitting(true);
 
     try {
-      if (expectedStartDate && expectedEndDate && expectedEndDate < expectedStartDate) {
-        const errMsg = 'Expected End Date cannot be before Expected Start Date.';
-        if (showToast) showToast(errMsg, 'error');
-        else setError(errMsg);
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (expectedStartDate === expectedEndDate && expectedStartTime && expectedEndTime) {
+      if (expectedStartTime && expectedEndTime) {
         const sTime24 = formatTo24h(expectedStartTime) || expectedStartTime;
         const eTime24 = formatTo24h(expectedEndTime) || expectedEndTime;
         if (sTime24 > eTime24) {
           const errMsg = 'Expected Start Time cannot be greater than Expected End Time on the same day.';
           if (showToast) showToast(errMsg, 'error');
-          else setError(errMsg);
+          setError(errMsg);
           setIsSubmitting(false);
           return;
         }
@@ -507,8 +386,8 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
       const actualClientId = selectedClient?.clientId || clientId;
 
       const payload = {
-        clientId: actualClientId, methodId, expectedStartDate, expectedStartTime,
-        expectedEndDate, expectedEndTime, destinationId, contactId,
+        clientId: actualClientId, methodId, expectedStartDate: todayStr, expectedStartTime,
+        expectedEndDate: todayStr, expectedEndTime, destinationId, contactId,
         contactPhoneNumberId: phoneNumber, assignedTo
       };
 
@@ -588,55 +467,46 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
 
                 <div className="task-form-row">
                   <div className="task-form-col">
-                    <label className="task-form-label">Expected Start Date <span className="task-required-asterisk">*</span></label>
+                    <label className="task-form-label">Expected Start Date</label>
                     <div className="task-input-wrapper">
                       <div className="task-input-icon-left">
                         <Calendar size={16} />
                       </div>
                       <FormattedDateInput
-                        value={expectedStartDate}
-                        onChange={(newStart: string) => {
-                          setExpectedStartDate(newStart);
-                          if (expectedEndDate && expectedEndDate < newStart) {
-                            setExpectedEndDate(newStart);
-                          }
-                        }}
-                        min={todayStr}
-                        required
+                        value={expectedStartDate || todayStr}
+                        onChange={() => {}}
+                        disabled={true}
                       />
                     </div>
                   </div>
                   <div className="task-form-col">
-                    <label className="task-form-label">Time <span className="task-required-asterisk">*</span></label>
+                    <label className="task-form-label">Time</label>
                     <CustomTimePicker
                       value={expectedStartTime}
                       onChange={setExpectedStartTime}
-                      required
                     />
                   </div>
                 </div>
 
                 <div className="task-form-row">
                   <div className="task-form-col">
-                    <label className="task-form-label">Expected End Date <span className="task-required-asterisk">*</span></label>
+                    <label className="task-form-label">Expected End Date</label>
                     <div className="task-input-wrapper">
                       <div className="task-input-icon-left">
                         <Calendar size={16} />
                       </div>
                       <FormattedDateInput
-                        value={expectedEndDate}
-                        onChange={setExpectedEndDate}
-                        min={expectedStartDate}
-                        required
+                        value={expectedEndDate || todayStr}
+                        onChange={() => {}}
+                        disabled={true}
                       />
                     </div>
                   </div>
                   <div className="task-form-col">
-                    <label className="task-form-label">Time <span className="task-required-asterisk">*</span></label>
+                    <label className="task-form-label">Time</label>
                     <CustomTimePicker
                       value={expectedEndTime}
                       onChange={setExpectedEndTime}
-                      required
                     />
                   </div>
                 </div>
@@ -649,8 +519,8 @@ export const NewWhereaboutsTaskModal: React.FC<NewWhereaboutsTaskModalProps> = (
 
                 <div className="task-form-row">
                   <div className="task-form-col">
-                    <label className="task-form-label">Contact Name <span className="task-required-asterisk">*</span></label>
-                    <SearchableCombobox options={contacts.map(c => ({ value: c.value, label: c.label }))} value={contactId} onChange={setContactId} placeholder="Select a contact..." required icon={<User size={16} />} />
+                    <label className="task-form-label">Contact Name</label>
+                    <SearchableCombobox options={contacts.map(c => ({ value: c.value, label: c.label }))} value={contactId} onChange={setContactId} placeholder="Select a contact..." icon={<User size={16} />} />
                   </div>
                   <div className="task-form-col">
                     <label className="task-form-label">Phone Number</label>

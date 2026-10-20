@@ -10,12 +10,14 @@ export interface AppUser {
   facilities: { id: string | number, name: string }[];
   currentFacilityID: string | number;
   csrfToken: string;
+  serverDate?: string;
 }
 
-// Ensure TypeScript knows about window.__APP_CONTEXT__
+// Ensure TypeScript knows about window.__APP_CONTEXT__ and window.__SERVER_DATE__
 declare global {
   interface Window {
     __APP_CONTEXT__?: AppUser;
+    __SERVER_DATE__?: string;
   }
 }
 
@@ -69,7 +71,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               name: getCaseInsensitiveProp(fac, 'name', getCaseInsensitiveProp(fac, 'facilityname', ''))
             })),
             currentFacilityID: getCaseInsensitiveProp(data, 'currentFacilityID', ''),
-            csrfToken: String(getCaseInsensitiveProp(data, 'csrfToken', ''))
+            csrfToken: String(getCaseInsensitiveProp(data, 'csrfToken', '')),
+            serverDate: String(getCaseInsensitiveProp(data, 'serverDate', (typeof window !== 'undefined' ? window.__SERVER_DATE__ : '') || ''))
           };
 
           if (normalizedUser.userID > 0) {
