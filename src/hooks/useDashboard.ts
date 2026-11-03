@@ -30,37 +30,19 @@ export const initialKpiFilters: DashboardFilters = {
   endDate: ''
 };
 
-function parseLocalDate(dateStr: string) {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d);
-}
-
-function loadStickyFilters(defaultFilters: DashboardFilters, key: string): DashboardFilters {
+export function loadStickyFilters(defaultFilters: DashboardFilters, key: string): DashboardFilters {
   try {
     const saved = localStorage.getItem(key);
     if (saved) {
       const parsed = JSON.parse(saved);
-      let startDate = parsed.startDate || '';
-      let endDate = parsed.endDate || '';
-      
-      const rollingDaysForward = parsed.rollingDaysForward;
-      const rollingDaysBackward = parsed.rollingDaysBackward;
-      const currentToday = new Date();
-      const todayStr = formatDate(currentToday);
-
-      if (typeof rollingDaysForward === 'number') {
-         startDate = todayStr;
-         const newEnd = new Date(currentToday);
-         newEnd.setDate(newEnd.getDate() + rollingDaysForward);
-         endDate = formatDate(newEnd);
-      } else if (typeof rollingDaysBackward === 'number') {
-         endDate = todayStr;
-         const newStart = new Date(currentToday);
-         newStart.setDate(newStart.getDate() - rollingDaysBackward);
-         startDate = formatDate(newStart);
-      }
-      
-      return { ...defaultFilters, ...parsed, startDate, endDate };
+      return {
+        assignedTo: parsed.assignedTo ?? defaultFilters.assignedTo,
+        role: parsed.role ?? defaultFilters.role,
+        status: parsed.status !== undefined ? parsed.status : defaultFilters.status,
+        taskType: parsed.taskType ?? defaultFilters.taskType,
+        startDate: parsed.startDate !== undefined ? parsed.startDate : defaultFilters.startDate,
+        endDate: parsed.endDate !== undefined ? parsed.endDate : defaultFilters.endDate,
+      };
     }
   } catch (e) {
     console.error(`Failed to load filters for ${key}`, e);
@@ -68,27 +50,10 @@ function loadStickyFilters(defaultFilters: DashboardFilters, key: string): Dashb
   return defaultFilters;
 }
 
-function saveStickyFilters(filters: DashboardFilters, key: string) {
+export function saveStickyFilters(filters: DashboardFilters, key: string) {
   try {
-    let payload: any = { ...filters };
-    if (filters.startDate && filters.endDate) {
-      const start = parseLocalDate(filters.startDate);
-      const end = parseLocalDate(filters.endDate);
-      const todayStr = formatDate(new Date());
-      
-      if (filters.startDate === todayStr) {
-        // Forward looking
-        const diffTime = end.getTime() - start.getTime();
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-        payload.rollingDaysForward = diffDays;
-      } else if (filters.endDate === todayStr) {
-        // Backward looking
-        const diffTime = end.getTime() - start.getTime();
-        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-        payload.rollingDaysBackward = diffDays;
-      }
-    }
-    localStorage.setItem(key, JSON.stringify(payload));
+    localStorage.removeItem(key);
+    localStorage.setItem(key, JSON.stringify(filters));
   } catch (e) {
     console.error(`Failed to save filters for ${key}`, e);
   }
@@ -108,13 +73,7 @@ export function useDashboard() {
 
 
 
-  useEffect(() => {
-    saveStickyFilters(kpiFilters, 'taskboard_kpi_filters');
-  }, [kpiFilters]);
 
-  useEffect(() => {
-    saveStickyFilters(listingFilters, 'taskboard_listing_filters');
-  }, [listingFilters]);
 
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingCharts, setLoadingCharts] = useState(true);
