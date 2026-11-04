@@ -8,7 +8,7 @@ import ChartsSection from './ChartsSection';
 import TaskTable from './TaskTable';
 import { FilterPanel } from './FilterPanel';
 import ExportDialog from './ExportDialog';
-import { useDashboard } from '../../hooks/useDashboard';
+import { useDashboard, saveStickyFilters, loadStickyFilters, initialListingFilters } from '../../hooks/useDashboard';
 import { useAppContext } from '../../context/AppContext';
 import type { DashboardFilters } from '../../types/dashboard.types';
 
@@ -77,6 +77,7 @@ const DashboardPage: React.FC = () => {
 
   const handleKpiApplyFilters = async (newKpiFilters: DashboardFilters) => {
     try {
+      saveStickyFilters(newKpiFilters, 'taskboard_kpi_filters');
       setKpiFilters(newKpiFilters);
       setIsFilterOpen(false);
       await Promise.all([
@@ -90,6 +91,8 @@ const DashboardPage: React.FC = () => {
 
   const handleListingApplyFilters = async (newListingFilters: DashboardFilters) => {
     try {
+      setActiveCard(null);
+      saveStickyFilters(newListingFilters, 'taskboard_listing_filters');
       setListingFilters(newListingFilters);
       await fetchTasks(1, undefined, undefined, undefined, undefined, newListingFilters);
     } catch (err: any) {
@@ -107,6 +110,7 @@ const DashboardPage: React.FC = () => {
         startDate: '',
         endDate: ''
       };
+      saveStickyFilters(defaultKpiFilters, 'taskboard_kpi_filters');
       setKpiFilters(defaultKpiFilters);
       await Promise.all([
         fetchSummary(defaultKpiFilters),
@@ -128,6 +132,7 @@ const DashboardPage: React.FC = () => {
         startDate: '',
         endDate: ''
       };
+      saveStickyFilters(clearedListingFilters, 'taskboard_listing_filters');
       setListingFilters(clearedListingFilters);
       await fetchTasks(1, undefined, undefined, undefined, undefined, clearedListingFilters);
     } catch (err: any) {
@@ -168,7 +173,11 @@ const DashboardPage: React.FC = () => {
     const tomorrowStr = formatYMD(tomorrow);
 
     if (activeCard === kpiType) {
-      await handleListingClearFilters();
+      // Toggle off: restore user's saved table filters
+      setActiveCard(null);
+      const savedFilters = loadStickyFilters(initialListingFilters, 'taskboard_listing_filters');
+      setListingFilters(savedFilters);
+      await fetchTasks(1, undefined, undefined, undefined, undefined, savedFilters);
       return;
     }
 
@@ -224,7 +233,11 @@ const DashboardPage: React.FC = () => {
         endDate: kpiEnd
       };
     }
-    await handleListingApplyFilters(newFilters);
+
+    // Drill-through updates table state ONLY, without saving to localStorage.
+    // This ensures that refreshing the page never gets stuck in the drill-through filter!
+    setListingFilters(newFilters);
+    await fetchTasks(1, undefined, undefined, undefined, undefined, newFilters);
   };
 
 
