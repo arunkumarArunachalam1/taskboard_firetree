@@ -269,6 +269,9 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
 
   const getAttemptHistory = () => {
     const attempts = getProp(data, 'AttemptHistory', 'ATTEMPTHISTORY');
+    const typeStr = String(data?.TaskType || data?.taskType || data?.TaskTypeName || data?.Type || '').toLowerCase();
+    const typeId = Number(data?.TaskTypeID || data?.taskTypeId);
+    const isFollowup = typeId === 3 || typeStr.includes('follow');
     if (Array.isArray(attempts) && attempts.length > 0) {
       return (
         <div className="vt-detail-card vt-detail-card--full" style={{ marginTop: '16px' }}>
@@ -299,6 +302,21 @@ export const ViewTaskModal: React.FC<ViewTaskModalProps> = ({ isOpen, onClose, t
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      );
+    }
+    if (isFollowup) {
+      return (
+        <div className="vt-detail-card vt-detail-card--full" style={{ marginTop: '16px' }}>
+          <div className="vt-card-header">
+            <div className="vt-card-icon vt-icon-purple">
+              <History size={15} strokeWidth={2} />
+            </div>
+            <div className="vt-card-label">ATTEMPT HISTORY</div>
+          </div>
+          <div style={{ marginTop: '12px', fontSize: '13px', color: '#64748B' }}>
+            No previous attempts made.
           </div>
         </div>
       );

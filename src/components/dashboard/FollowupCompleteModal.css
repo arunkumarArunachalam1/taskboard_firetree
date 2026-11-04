@@ -686,3 +686,10 @@
 .followup-doc-clear-btn:hover {
   background: #fef2f2;
 }
+
+
+.followup-no-attempts {
+  font-size: 13px;
+  color: #64748b;
+  padding: 2px 0 12px 0;
+}

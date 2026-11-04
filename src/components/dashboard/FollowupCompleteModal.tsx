@@ -368,7 +368,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
       const mo = String(estNow.getMonth() + 1).padStart(2, '0');
       const da = String(estNow.getDate()).padStart(2, '0');
       finalContactDate = `${yr}-${mo}-${da}`;
-      
+
       const hr = String(estNow.getHours()).padStart(2, '0');
       const mi = String(estNow.getMinutes()).padStart(2, '0');
       finalContactTime = `${hr}:${mi}`;
@@ -961,7 +961,7 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                                     ];
                                     const extension = file.name.split('.').pop()?.toLowerCase();
                                     const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'csv', 'xls', 'xlsx'];
-                                    
+
                                     if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(extension || '')) {
                                       setError('Invalid file type. Only PDF, PNG, JPG, CSV, and Excel files are allowed.');
                                       if (contentRef.current) contentRef.current.scrollTop = 0;
@@ -1030,12 +1030,12 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                       </div>
                     )}
 
-                    {(details?.AttemptHistory || details?.ATTEMPTHISTORY) && (details?.AttemptHistory || details?.ATTEMPTHISTORY).length > 0 && (
-                      <div className="task-form-section followup-history-section">
-                        <div className="followup-history-header">
-                          <Clock size={16} color="#7c3aed" />
-                          <span>Attempt History</span>
-                        </div>
+                    <div className="task-form-section followup-history-section">
+                      <div className="followup-history-header">
+                        <Clock size={16} color="#7c3aed" />
+                        <span>Attempt History</span>
+                      </div>
+                      {sortedAttemptHistory.length > 0 ? (
                         <div className="table-responsive">
                           <table className="attempt-history-table">
                             <thead>
@@ -1066,8 +1066,12 @@ export const FollowupCompleteModal: React.FC<FollowupCompleteModalProps> = ({
                             </tbody>
                           </table>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="followup-no-attempts">
+                          No previous attempts made.
+                        </div>
+                      )}
+                    </div>
 
                   </form>
                 </div>
